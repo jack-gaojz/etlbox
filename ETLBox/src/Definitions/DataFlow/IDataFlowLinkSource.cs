@@ -1,9 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks.Dataflow;
 
 namespace ETLBox.DataFlow
 {
-    public interface IDataFlowLinkSource<TOutput>
+    public interface IDataFlowLinkSource
+    {
+        List<IDataFlowLinkTarget> Successors { get; }
+    }
+
+    public interface IDataFlowLinkSource<TOutput> : IDataFlowLinkSource
     {
         ISourceBlock<TOutput> SourceBlock { get; }
         IDataFlowLinkSource<TOutput> LinkTo(IDataFlowLinkTarget<TOutput> target);

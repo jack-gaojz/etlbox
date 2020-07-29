@@ -10,8 +10,18 @@ namespace ETLBox.DataFlow
     {
         public Action OnCompletion { get; set; }
         public Task Completion { get; protected set; }
+        protected Task Completion2 { get; set; }
         public ITargetBlock<TInput> TargetBlock => TargetAction;
-        public virtual void Wait() => Completion.Wait();
+        public virtual void Wait()
+        {
+            //while (Completion2 == null) { }
+            //Completion2.Wait();
+            CheckCompleteAction();
+            Completion2.Wait();
+            Completion.Wait();
+            if (Completion.Status == TaskStatus.Faulted)
+                throw Completion.Exception.Flatten();
+        }
 
         protected ActionBlock<TInput> TargetAction { get; set; }
         protected List<Task> PredecessorCompletions { get; set; } = new List<Task>();
@@ -20,7 +30,12 @@ namespace ETLBox.DataFlow
         public void AddPredecessorCompletion(Task completion)
         {
             PredecessorCompletions.Add(completion);
-            completion.ContinueWith(t => CheckCompleteAction());
+            //completion.ContinueWith(t =>
+            //{
+            //    CheckCompleteAction();
+            //    //if (t.IsFaulted) throw t.Exception.Flatten();
+            //});
+
         }
 
         public void LinkErrorTo(IDataFlowLinkTarget<ETLBoxError> target)
@@ -28,14 +43,18 @@ namespace ETLBox.DataFlow
 
         protected void CheckCompleteAction()
         {
-            Task.WhenAll(PredecessorCompletions).ContinueWith(t =>
-            {
-                if (!TargetBlock.Completion.IsCompleted)
+            Completion2 = Task.WhenAll(PredecessorCompletions).ContinueWith(t =>
                 {
-                    if (t.IsFaulted) TargetBlock.Fault(t.Exception.InnerException);
-                    else TargetBlock.Complete();
-                }
-            });
+                    if (!TargetBlock.Completion.IsCompleted)
+                    {
+                        if (t.IsFaulted)
+                        {
+                            TargetBlock.Fault(t.Exception.InnerException);
+                        }
+                        else TargetBlock.Complete();
+                    }
+                });
+
         }
 
         protected void SetCompletionTask() => Completion = AwaitCompletion();
@@ -48,7 +67,7 @@ namespace ETLBox.DataFlow
             }
             catch (AggregateException ae)
             {
-                throw ae.InnerException;
+                throw ae.Flatten();
             }
             catch (Exception e)
             {

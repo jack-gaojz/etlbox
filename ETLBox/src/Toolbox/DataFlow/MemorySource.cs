@@ -1,6 +1,7 @@
 ﻿using ETLBox.ControlFlow;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks.Dataflow;
 
 namespace ETLBox.DataFlow.Connectors
@@ -39,20 +40,40 @@ namespace ETLBox.DataFlow.Connectors
             Data = data;
         }
 
-        public override void Execute()
+        public override void ExecuteSyncPart()
         {
             NLogStart();
+            InitBuffersForCurrentAndSuccessors();
+            LinkBuffers();
+
+        }
+
+        public override void ExecuteAsyncPart()
+        {
             ReadRecordAndSendIntoBuffer();
-            LogProgress();
+            //LogProgress();
             Buffer.Complete();
             NLogFinish();
         }
+
+        public override void Execute()
+        {
+            NLogStart();
+            InitBuffersForCurrentAndSuccessors();
+            LinkBuffers();
+            ReadRecordAndSendIntoBuffer();
+            //LogProgress();
+            Buffer.Complete();
+            NLogFinish();
+        }
+
+
 
         private void ReadRecordAndSendIntoBuffer()
         {
             foreach (TOutput record in Data)
             {
-                Buffer.SendAsync(record).Wait();
+                Buffer.Post(record);
                 LogProgress();
             }
         }

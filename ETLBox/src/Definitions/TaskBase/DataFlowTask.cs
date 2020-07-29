@@ -1,9 +1,13 @@
 ﻿using ETLBox.ControlFlow;
+using System.Collections.Generic;
 
 namespace ETLBox.DataFlow
 {
     public abstract class DataFlowTask : GenericTask, ITask
     {
+        public List<IDataFlowLinkSource> Predecessors { get; set; } = new List<IDataFlowLinkSource>();
+        public List<IDataFlowLinkTarget> Successors { get; set; } = new List<IDataFlowLinkTarget>();
+
         protected int? _loggingThresholdRows;
         public virtual int? LoggingThresholdRows
         {
@@ -38,6 +42,22 @@ namespace ETLBox.DataFlow
         }
 
         protected virtual void InitBufferObjects() { }
+
+        protected void InitBuffersForCurrentAndSuccessors()
+        {
+            InitBufferObjects();
+            foreach (var succesor in Successors)
+            {
+                var s = succesor as DataFlowTask; //TODO IDataFlowTask
+                s.InitBuffersForCurrentAndSuccessors();
+            }
+        }
+
+        internal virtual void LinkBuffers()
+        {
+
+        }
+
 
         protected int _maxBufferSize = -1;
 
