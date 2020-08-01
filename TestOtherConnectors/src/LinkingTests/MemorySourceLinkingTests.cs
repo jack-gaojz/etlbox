@@ -219,5 +219,75 @@ namespace ETLBoxTests.DataFlowTests
             Assert.Equal(6, dest1.Data.Count);
             Assert.Equal(6, dest2.Data.Count);
         }
+
+
+        [Fact]
+        public void LinkingWithPredicate()
+        {
+            /*                   |- p1: _ = 1 --> Dest1
+             *  Source --> Row --|
+             *                   |- p2: _ > 1 --> Dest2
+             */
+
+            //Arrange
+            MemorySource<MySimpleRow> source = new MemorySource<MySimpleRow>();
+            RowTransformation<MySimpleRow> row = new RowTransformation<MySimpleRow>();
+            row.TransformationFunc = row => row;
+            MemoryDestination<MySimpleRow> dest1 = new MemoryDestination<MySimpleRow>();
+            MemoryDestination<MySimpleRow> dest2 = new MemoryDestination<MySimpleRow>();
+
+            //Act
+            source.DataAsList = new List<MySimpleRow>()
+            {
+                new MySimpleRow() { Col1 = 1, Col2 = "Test1" },
+                new MySimpleRow() { Col1 = 2, Col2 = "Test2" },
+                new MySimpleRow() { Col1 = 3, Col2 = "Test3" }
+            };
+            Predicate<MySimpleRow> p1 = new Predicate<MySimpleRow>(row => row.Col1 == 1);
+            Predicate<MySimpleRow> p2 = new Predicate<MySimpleRow>(row => row.Col1 > 1);
+            source.LinkTo2(row);
+            row.LinkTo2(dest1, p1);
+            row.LinkTo2(dest2, p2);
+            source.Execute();
+            dest1.Wait();
+            dest2.Wait();
+
+            //Assert
+            Assert.Equal(1, dest1.Data.Count);
+            Assert.Equal(2, dest2.Data.Count);
+        }
+
+        [Fact]
+        public void LinkingWithVoidPredicate()
+        {
+            /*
+             *  Source --> Row --|- p1: _ = 1 --> Dest1
+             *                   |- p2: _ > 1 --> (Void)
+             */
+
+            //Arrange
+            MemorySource<MySimpleRow> source = new MemorySource<MySimpleRow>();
+            RowTransformation<MySimpleRow> row = new RowTransformation<MySimpleRow>();
+            row.TransformationFunc = row => row;
+            MemoryDestination<MySimpleRow> dest = new MemoryDestination<MySimpleRow>();
+
+            //Act
+            source.DataAsList = new List<MySimpleRow>()
+            {
+                new MySimpleRow() { Col1 = 1, Col2 = "Test1" },
+                new MySimpleRow() { Col1 = 2, Col2 = "Test2" },
+                new MySimpleRow() { Col1 = 3, Col2 = "Test3" }
+            };
+            Predicate<MySimpleRow> p1 = new Predicate<MySimpleRow>(row => row.Col1 == 1);
+            Predicate<MySimpleRow> p2 = new Predicate<MySimpleRow>(row => row.Col1 > 1);
+            source.LinkTo2(row);
+            row.LinkTo2(dest, p1, p2);
+            source.Execute();
+            dest.Wait();
+
+            //Assert
+            Assert.Equal(1, dest.Data.Count);
+        }
+
     }
 }

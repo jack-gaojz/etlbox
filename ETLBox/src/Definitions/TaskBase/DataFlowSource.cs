@@ -55,11 +55,19 @@ namespace ETLBox.DataFlow
             throw new ETLBoxException("One ore more errors occurred during the data processing - see inner exception for details", e);
         }
 
-        protected override void LinkBuffers(DataFlowTask successor)
+        protected override void LinkBuffers(DataFlowTask successor, Tuple<object,object> predicate)
         {
             var s = successor as IDataFlowLinkTarget<TOutput>;
-            this.SourceBlock.LinkTo<TOutput>(s.TargetBlock);
-            //s.AddPredecessorCompletion(SourceBlock.Completion);
+            Predicate<TOutput> pred = predicate?.Item1 as Predicate<TOutput>;
+            Predicate<TOutput> vp = predicate?.Item2 as Predicate<TOutput>;
+            if (pred != null)
+            {
+                this.SourceBlock.LinkTo<TOutput>(s.TargetBlock, pred);
+                if (vp != null)
+                    this.SourceBlock.LinkTo<TOutput>(DataflowBlock.NullTarget<TOutput>(), vp);
+            }
+            else
+                this.SourceBlock.LinkTo<TOutput>(s.TargetBlock);
         }
 
 
