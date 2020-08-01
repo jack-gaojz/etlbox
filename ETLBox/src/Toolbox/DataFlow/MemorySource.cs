@@ -45,7 +45,7 @@ namespace ETLBox.DataFlow.Connectors
             NLogStart();
             InitBufferRecursively();
             LinkBuffersRecursively();
-            SetCompletionTaskInDestinationsRecursively();
+            SetCompletionTaskRecursively();
 
         }
 
