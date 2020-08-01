@@ -51,6 +51,7 @@ namespace ETLBox.DataFlow
 
         protected bool WereBufferInitialized;
         protected Dictionary<DataFlowTask, bool> WasLinked = new Dictionary<DataFlowTask, bool>();
+        protected Dictionary<DataFlowTask, Tuple<object,object>> LinkPredicates= new Dictionary<DataFlowTask, Tuple<object,object>>();
 
         protected void InitBufferRecursively()
         {
@@ -79,13 +80,27 @@ namespace ETLBox.DataFlow
             return target;// as IDataFlowLinkSource<TOutput>;
         }
 
+        public DataFlowTask LinkTo2(DataFlowTask target, object predicate)
+        {
+            LinkPredicates.Add(target, Tuple.Create<object,object>(predicate, null));
+            return LinkTo2(target);
+        }
+
+        public DataFlowTask LinkTo2(DataFlowTask target, object predicate, object voidPredicate)
+        {
+            LinkPredicates.Add(target, Tuple.Create<object,object>(predicate, voidPredicate));
+            return LinkTo2(target);
+        }
+
         protected void LinkBuffersRecursively()
         {
             foreach (DataFlowTask predecessor in Predecessors)
             {
                 if (!predecessor.WasLinked.ContainsKey(this))
                 {
-                    predecessor.LinkBuffers(this);
+                    Tuple<object,object> predicate = null;
+                    LinkPredicates.TryGetValue(this, out predicate);
+                    predecessor.LinkBuffers(this, predicate);
                     predecessor.WasLinked.Add(this, true);
                     predecessor.LinkBuffersRecursively();
                 }
@@ -94,16 +109,19 @@ namespace ETLBox.DataFlow
             {
                 if (!WasLinked.ContainsKey(successor))
                 {
-                    LinkBuffers(successor);
+                    Tuple<object,object> predicate = null;
+                    LinkPredicates.TryGetValue(successor, out predicate);
+                    LinkBuffers(successor, predicate);
                     WasLinked.Add(successor, true);
                     successor.LinkBuffersRecursively();
                 }
             }
         }
-        protected virtual void LinkBuffers(DataFlowTask succesor)
+        protected virtual void LinkBuffers(DataFlowTask successor, Tuple<object,object> predicate)
         {
             //TODO throw new exception that a destionation can't link or something
         }
+
 
         protected void SetCompletionTaskRecursively()
         {
