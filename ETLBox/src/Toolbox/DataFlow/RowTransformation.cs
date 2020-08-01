@@ -78,7 +78,11 @@ namespace ETLBox.DataFlow.Transformations
                     }
                     catch (Exception e)
                     {
-                        if (!ErrorHandler.HasErrorBuffer) throw e;
+                        if (!ErrorHandler.HasErrorBuffer)
+                        {
+                            FaultPredecessorsRecursively(e);
+                            throw e;
+                        }
                         ErrorHandler.Send(e, ErrorHandler.ConvertErrorData<TInput>(row));
                         return default(TOutput);
                     }

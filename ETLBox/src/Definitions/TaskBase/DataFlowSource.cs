@@ -1,4 +1,5 @@
 ﻿using ETLBox.ControlFlow;
+using ETLBox.Exceptions;
 using NLog.Targets;
 using System;
 using System.Threading.Tasks;
@@ -6,11 +7,12 @@ using System.Threading.Tasks.Dataflow;
 
 namespace ETLBox.DataFlow
 {
-    public abstract class DataFlowSource<TOutput> : DataFlowTask, IDataFlowLinkSource<TOutput>, ITask
+    public abstract class DataFlowSource<TOutput> : DataFlowTask, IDataFlowSource<TOutput>, ITask
     {
         public ISourceBlock<TOutput> SourceBlock => this.Buffer;
         protected BufferBlock<TOutput> Buffer { get; set; } = new BufferBlock<TOutput>();
 
+        protected override Task BufferCompletion => Buffer.Completion;
         protected override void InitBufferObjects()
         {
             Buffer = new BufferBlock<TOutput>(new DataflowBlockOptions()
@@ -27,32 +29,43 @@ namespace ETLBox.DataFlow
         public virtual void ExecuteAsyncPart() { }
         public Task ExecuteAsync()
         {
+
+            Task t = new Task(ExecuteAsyncPart, TaskCreationOptions.LongRunning);
+            Completion = t;
             ExecuteSyncPart();
-            return Task.Factory.StartNew(ExecuteAsyncPart);
+            t.Start();
+            return Completion;
         }
+
+
+        //public IDataFlowLinkSource<TOutput> LinkTo(DataFlowTask target)
+        //{
+        //    this.Successors.Add(target);
+        //    target.Predecessors.Add(this);
+        //    return target as IDataFlowLinkSource<TOutput>;
+        //}
+
+        protected override void CompleteOrFaultBuffer(Task t)
+        {
+        }
+
+        protected override void FaultBuffer(Exception e)
+        {
+            SourceBlock.Fault(e);
+            throw new ETLBoxException("One ore more errors occurred during the data processing - see inner exception for details", e);
+        }
+
+        protected override void LinkBuffers(DataFlowTask successor)
+        {
+            var s = successor as IDataFlowLinkTarget<TOutput>;
+            this.SourceBlock.LinkTo<TOutput>(s.TargetBlock);
+            //s.AddPredecessorCompletion(SourceBlock.Completion);
+        }
+
+
 
         public IDataFlowLinkSource<TOutput> LinkTo(IDataFlowLinkTarget<TOutput> target)
-        {
-            this.Successors.Add(target);
-            target.Predecessors.Add(this);
-            return target as IDataFlowLinkSource<TOutput>;
-        }
-
-        internal override void LinkBuffers()
-        {
-            foreach (var succesor in Successors)
-            {
-                var s = succesor as IDataFlowLinkTarget<TOutput>;
-                this.SourceBlock.LinkTo<TOutput>(s.TargetBlock);
-                s.AddPredecessorCompletion(SourceBlock.Completion);
-                //succesor.LinkBuffers();
-                var x = succesor as DataFlowTask;
-                x.LinkBuffers();
-            }
-        }
-
-        //public IDataFlowLinkSource<TOutput> LinkTo(IDataFlowLinkTarget<TOutput> target)
-        //    => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo(target);
+            => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo(target);
 
         public IDataFlowLinkSource<TOutput> LinkTo(IDataFlowLinkTarget<TOutput> target, Predicate<TOutput> predicate)
             => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo(target, predicate);

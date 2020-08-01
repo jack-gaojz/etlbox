@@ -32,9 +32,9 @@ namespace ETLBox.DataFlow
             TargetAction = new ActionBlock<TInput>(WriteData, new ExecutionDataflowBlockOptions()
             {
                 MaxDegreeOfParallelism = 1,
-                BoundedCapacity = MaxBufferSize
+                BoundedCapacity = MaxBufferSize,
             });
-            SetCompletionTask();
+            //SetCompletionTask();
         }
 
         protected void WriteData(TInput data)

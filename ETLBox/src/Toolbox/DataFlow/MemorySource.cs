@@ -43,28 +43,22 @@ namespace ETLBox.DataFlow.Connectors
         public override void ExecuteSyncPart()
         {
             NLogStart();
-            InitBuffersForCurrentAndSuccessors();
-            LinkBuffers();
+            InitBufferRecursively();
+            LinkBuffersRecursively();
+            SetCompletionTaskInDestinationsRecursively();
 
         }
 
         public override void ExecuteAsyncPart()
         {
             ReadRecordAndSendIntoBuffer();
-            //LogProgress();
-            Buffer.Complete();
             NLogFinish();
         }
 
         public override void Execute()
         {
-            NLogStart();
-            InitBuffersForCurrentAndSuccessors();
-            LinkBuffers();
-            ReadRecordAndSendIntoBuffer();
-            //LogProgress();
-            Buffer.Complete();
-            NLogFinish();
+            ExecuteSyncPart();
+            ExecuteAsyncPart();
         }
 
 
@@ -73,9 +67,10 @@ namespace ETLBox.DataFlow.Connectors
         {
             foreach (TOutput record in Data)
             {
-                Buffer.Post(record);
+                Buffer.SendAsync(record).Wait();
                 LogProgress();
             }
+            Buffer.Complete();
         }
 
     }

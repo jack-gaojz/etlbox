@@ -11,48 +11,55 @@ namespace ETLBox.DataFlow
         public virtual ITargetBlock<TInput> TargetBlock { get; }
         public virtual ISourceBlock<TOutput> SourceBlock { get; }
 
-        protected List<Task> PredecessorCompletions { get; set; } = new List<Task>();
+        //protected List<Task> PredecessorCompletions { get; set; } = new List<Task>();
 
-        public void AddPredecessorCompletion(Task completion)
+        //public void AddPredecessorCompletion(Task completion)
+        //{
+        //    PredecessorCompletions.Add(completion);
+        //    completion.ContinueWith(t => CheckCompleteAction());
+        //}
+
+        //protected void CheckCompleteAction()
+        //{
+        //    Task.WhenAll(PredecessorCompletions).ContinueWith(t =>
+        //    {
+        //        if (!TargetBlock.Completion.IsCompleted)
+        //        {
+        //            if (t.IsFaulted) TargetBlock.Fault(t.Exception.InnerException);
+        //            else TargetBlock.Complete();
+        //        }
+        //    });
+        //}#
+
+        protected override Task BufferCompletion => TargetBlock.Completion;
+
+        protected override void CompleteOrFaultBuffer(Task t)
         {
-            PredecessorCompletions.Add(completion);
-            completion.ContinueWith(t => CheckCompleteAction());
+            if (!TargetBlock.Completion.IsCompleted)
+                {
+                if (t.IsFaulted)
+                {
+                    TargetBlock.Fault(t.Exception.Flatten());
+                    throw t.Exception.Flatten();
+                }
+                else TargetBlock.Complete();
+                }
         }
 
-        protected void CheckCompleteAction()
+        protected override void FaultBuffer(Exception e)
         {
-            Task.WhenAll(PredecessorCompletions).ContinueWith(t =>
-            {
-                if (!TargetBlock.Completion.IsCompleted)
-                {
-                    if (t.IsFaulted) TargetBlock.Fault(t.Exception.InnerException);
-                    else TargetBlock.Complete();
-                }
-            });
+            TargetBlock.Fault(e);
+        }
+
+        protected override void LinkBuffers(DataFlowTask successor)
+        {
+            var s = successor as IDataFlowLinkTarget<TOutput>;
+            this.SourceBlock.LinkTo<TOutput>(s.TargetBlock);
+            //s.AddPredecessorCompletion(SourceBlock.Completion);
         }
 
         public IDataFlowLinkSource<TOutput> LinkTo(IDataFlowLinkTarget<TOutput> target)
-        {
-            this.Successors.Add(target);
-            target.Predecessors.Add(this);
-            return target as IDataFlowLinkSource<TOutput>;
-        }
-
-        internal override void LinkBuffers()
-        {
-            foreach (var succesor in Successors)
-            {
-                var s = succesor as IDataFlowLinkTarget<TOutput>;
-                this.SourceBlock.LinkTo(s.TargetBlock);
-                s.AddPredecessorCompletion(SourceBlock.Completion);
-                //succesor.LinkBuffers();
-                var x = succesor as DataFlowTask;
-                x.LinkBuffers();
-            }
-        }
-
-        //public IDataFlowLinkSource<TOutput> LinkTo(IDataFlowLinkTarget<TOutput> target)
-        //=> (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo(target);
+        => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo(target);
 
         public IDataFlowLinkSource<TOutput> LinkTo(IDataFlowLinkTarget<TOutput> target, Predicate<TOutput> predicate)
             => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo(target, predicate);

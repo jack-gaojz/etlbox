@@ -1,19 +1,23 @@
 ﻿using ETLBox.ControlFlow;
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ETLBox.DataFlow
 {
     public abstract class DataFlowTask : GenericTask, ITask
     {
-        public List<IDataFlowLinkSource> Predecessors { get; set; } = new List<IDataFlowLinkSource>();
-        public List<IDataFlowLinkTarget> Successors { get; set; } = new List<IDataFlowLinkTarget>();
+        public List<DataFlowTask> Predecessors { get; set; } = new List<DataFlowTask>();
+        public List<DataFlowTask> Successors { get; set; } = new List<DataFlowTask>();
+
+        public Task Completion { get; set; }
 
         protected int? _loggingThresholdRows;
         public virtual int? LoggingThresholdRows
         {
             get
             {
-                if (DataFlow.HasLoggingThresholdRows)
+                if ((DataFlow.LoggingThresholdRows ?? 0) > 0)
                     return DataFlow.LoggingThresholdRows;
                 else
                     return _loggingThresholdRows;
@@ -35,31 +39,106 @@ namespace ETLBox.DataFlow
             {
                 return _maxBufferSize > 0 ? _maxBufferSize : DataFlow.MaxBufferSize;
             }
-            set {
+            set
+            {
                 _maxBufferSize = value;
-                InitBufferObjects();
             }
         }
+
+        protected int _maxBufferSize = -1;
 
         protected virtual void InitBufferObjects() { }
 
-        protected void InitBuffersForCurrentAndSuccessors()
+        protected bool WereBufferInitialized { get; set; }
+        protected Dictionary<DataFlowTask, bool> WasLinked { get; set; } = new Dictionary<DataFlowTask, bool>();
+
+        protected void InitBufferRecursively()
         {
             InitBufferObjects();
-            foreach (var succesor in Successors)
+            //WereBufferInitialized = true;
+            //foreach (DataFlowTask predecessor in Predecessors)
+            //{
+            //    if (!predecessor.WereBufferInitialized)
+            //        predecessor.InitBufferRecursively();
+            //}
+            foreach (DataFlowTask successor in Successors)
             {
-                var s = succesor as DataFlowTask; //TODO IDataFlowTask
-                s.InitBuffersForCurrentAndSuccessors();
+                //if (!successor.WereBufferInitialized)
+                    successor.InitBufferRecursively();
+            }
+
+        }
+
+        public DataFlowTask LinkTo2(DataFlowTask target)
+        {
+            this.Successors.Add(target);
+            target.Predecessors.Add(this);
+            return target;// as IDataFlowLinkSource<TOutput>;
+        }
+
+        protected void LinkBuffersRecursively()
+        {
+            //foreach (DataFlowTask predecessor in Predecessors)
+            //{
+            //    if (!predecessor.WasLinked.ContainsKey(this))
+            //    {
+            //        predecessor.LinkBuffers(this);
+            //        predecessor.WasLinked.Add(this, true);
+            //        predecessor.LinkBuffersRecursively();
+            //    }
+            //}
+            foreach (DataFlowTask successor in Successors)
+            {
+                //if (!WasLinked.ContainsKey(successor))
+                //{
+                    LinkBuffers(successor);
+                    //WasLinked.Add(successor, true);
+                    successor.LinkBuffersRecursively();
+                //}
+            }
+        }
+        protected virtual void LinkBuffers(DataFlowTask succesor)
+        {
+            //TODO throw new exception that a destionation can't link or something
+        }
+
+        protected void SetCompletionTaskInDestinationsRecursively()
+        {
+            List<Task> CompletionTasks = new List<Task>();
+            foreach (DataFlowTask pre in Predecessors)
+            {
+                CompletionTasks.Add(pre.BufferCompletion);
+            }
+            if (CompletionTasks.Count > 0)
+                Completion = Task.WhenAll(CompletionTasks).ContinueWith(CompleteOrFaultBuffer, TaskContinuationOptions.ExecuteSynchronously);
+
+            foreach (DataFlowTask succesor in Successors)
+                succesor.SetCompletionTaskInDestinationsRecursively();
+        }
+
+
+        protected void FaultPredecessorsRecursively(Exception e)
+        {
+            FaultBuffer(e);
+            foreach (DataFlowTask pre in Predecessors)
+            {
+
+                pre.FaultPredecessorsRecursively(e);
             }
         }
 
-        internal virtual void LinkBuffers()
+
+        protected virtual void FaultBuffer(Exception e)
         {
 
         }
 
+        protected virtual void CompleteOrFaultBuffer(Task t)
+        {
 
-        protected int _maxBufferSize = -1;
+        }
+
+        protected virtual Task BufferCompletion { get; }
 
         protected void NLogStart()
         {

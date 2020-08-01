@@ -7,12 +7,12 @@ namespace ETLBox.DataFlow
 {
     public interface IDataFlowLinkTarget : ITask
     {
-        List<IDataFlowLinkSource> Predecessors { get; }
+        List<DataFlowTask> Predecessors { get; }
     }
 
     public interface IDataFlowLinkTarget<TInput> : IDataFlowLinkTarget
     {
         ITargetBlock<TInput> TargetBlock { get; }
-        void AddPredecessorCompletion(Task completion);
+        //void AddPredecessorCompletion(Task completion);
     }
 }

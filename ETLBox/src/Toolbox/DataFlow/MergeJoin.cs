@@ -112,7 +112,7 @@ namespace ETLBox.DataFlow.Transformations
         protected List<Task> PredecessorCompletions { get; set; } = new List<Task>();
 
         //TODO
-        public List<IDataFlowLinkSource> Predecessors { get; set; }
+        public List<DataFlowTask> Predecessors { get; set; }
 
         public void AddPredecessorCompletion(Task completion)
         {

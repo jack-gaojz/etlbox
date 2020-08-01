@@ -29,7 +29,7 @@ namespace ETLBox.DataFlow.Connectors
                 BoundedCapacity = MaxBufferSize,
                 MaxDegreeOfParallelism = 1
             });
-            SetCompletionTask();
+            //SetCompletionTask();
         }
 
         internal MemoryDestination(ITask callingTask) : this()

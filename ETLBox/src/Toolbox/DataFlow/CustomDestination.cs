@@ -57,7 +57,7 @@ namespace ETLBox.DataFlow.Connectors
             {
                 BoundedCapacity = MaxBufferSize
             });
-            SetCompletionTask();
+            //SetCompletionTask();
         }
 
         private Action<TInput> AddLoggingAndErrorHandling(Action<TInput> writeAction)

@@ -47,23 +47,23 @@ namespace ETLBox.DataFlow
         /// Simple use the LinkTo() method of source components or transformations.
         /// </summary>
         /// <param name="completion">A task to wait for before this destination can complete.</param>
-        public new void AddPredecessorCompletion(Task completion)
-        {
-            PredecessorCompletions.Add(completion);
-            completion.ContinueWith(t => CheckCompleteAction());
-        }
+        //public new void AddPredecessorCompletion(Task completion)
+        //{
+        //    PredecessorCompletions.Add(completion);
+        //    completion.ContinueWith(t => CheckCompleteAction());
+        //}
 
-        protected new void CheckCompleteAction()
-        {
-            Task.WhenAll(PredecessorCompletions).ContinueWith(t =>
-            {
-                if (!TargetBlock.Completion.IsCompleted)
-                {
-                    if (t.IsFaulted) TargetBlock.Fault(t.Exception.InnerException);
-                    else TargetBlock.Complete();
-                }
-            });
-        }
+        //protected new void CheckCompleteAction()
+        //{
+        //    Task.WhenAll(PredecessorCompletions).ContinueWith(t =>
+        //    {
+        //        if (!TargetBlock.Completion.IsCompleted)
+        //        {
+        //            if (t.IsFaulted) TargetBlock.Fault(t.Exception.InnerException);
+        //            else TargetBlock.Complete();
+        //        }
+        //    });
+        //}
 
         protected BatchBlock<TInput> Buffer { get; set; }
 
@@ -81,7 +81,7 @@ namespace ETLBox.DataFlow
                 MaxDegreeOfParallelism = 1, //No parallel inserts on Db!
                 BoundedCapacity = boundedCapacity
             });
-            SetCompletionTask();
+            //SetCompletionTask();
             Buffer.LinkTo(TargetAction, new DataflowLinkOptions() { PropagateCompletion = true });
         }
 

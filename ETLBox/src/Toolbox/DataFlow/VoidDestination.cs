@@ -29,7 +29,7 @@ namespace ETLBox.DataFlow.Connectors
 
         public void Wait() => _voidDestination.Wait();
 
-        public void AddPredecessorCompletion(Task completion) => _voidDestination.AddPredecessorCompletion(completion);
+        //public void AddPredecessorCompletion(Task completion) => _voidDestination.AddPredecessorCompletion(completion);
 
         public Task Completion => _voidDestination.Completion;
     }

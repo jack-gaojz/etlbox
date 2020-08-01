@@ -16,7 +16,7 @@ namespace ETLBox.DataFlow
         {
             ErrorBuffer = new BufferBlock<ETLBoxError>();
             ErrorSourceBlock.LinkTo(target.TargetBlock, new DataflowLinkOptions());
-            target.AddPredecessorCompletion(ErrorSourceBlock.Completion);
+            //target.AddPredecessorCompletion(ErrorSourceBlock.Completion);
             completion.ContinueWith(t => ErrorBuffer.Complete());
         }
 

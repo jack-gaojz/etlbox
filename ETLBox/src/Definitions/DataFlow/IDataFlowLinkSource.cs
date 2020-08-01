@@ -6,7 +6,7 @@ namespace ETLBox.DataFlow
 {
     public interface IDataFlowLinkSource
     {
-        List<IDataFlowLinkTarget> Successors { get; }
+        List<DataFlowTask> Successors { get; }
     }
 
     public interface IDataFlowLinkSource<TOutput> : IDataFlowLinkSource
