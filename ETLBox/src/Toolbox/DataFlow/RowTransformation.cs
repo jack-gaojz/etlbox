@@ -40,7 +40,6 @@ namespace ETLBox.DataFlow.Transformations
 
         public RowTransformation()
         {
-            InitBufferObjects();
         }
 
         public RowTransformation(Func<TInput, TOutput> rowTransformationFunc) : this()

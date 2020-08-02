@@ -1,6 +1,7 @@
 ﻿using ETLBox.ControlFlow;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ETLBox.DataFlow
@@ -11,6 +12,10 @@ namespace ETLBox.DataFlow
         public List<DataFlowTask> Successors { get; set; } = new List<DataFlowTask>();
 
         public Task Completion { get; set; }
+
+        public Task PredecessorCompletion { get; set; }
+        //CancellationTokenSource tokenSource = new CancellationTokenSource();
+        //CancellationToken? token => tokenSource?.Token ?? null;
 
         protected int? _loggingThresholdRows;
         public virtual int? LoggingThresholdRows
@@ -55,16 +60,18 @@ namespace ETLBox.DataFlow
 
         protected void InitBufferRecursively()
         {
-            if (!WereBufferInitialized)
-            {
-                InitBufferObjects();
-                WereBufferInitialized = true;
-            }
             foreach (DataFlowTask predecessor in Predecessors)
             {
                 if (!predecessor.WereBufferInitialized)
                     predecessor.InitBufferRecursively();
             }
+
+            if (!WereBufferInitialized)
+            {
+                InitBufferObjects();
+                WereBufferInitialized = true;
+            }
+
             foreach (DataFlowTask successor in Successors)
             {
                 if (!successor.WereBufferInitialized)
@@ -125,16 +132,21 @@ namespace ETLBox.DataFlow
 
         protected void SetCompletionTaskRecursively()
         {
-            if (Completion == null)
-            {
-                List<Task> CompletionTasks = CollectBufferCompletionFromPredecessors();
-                if (CompletionTasks.Count > 0)
-                    Completion = Task.WhenAll(CompletionTasks).ContinueWith(CompleteOrFaultBuffer, TaskContinuationOptions.ExecuteSynchronously);
-            }
+
             foreach (DataFlowTask predecessor in Predecessors)
             {
                 if (predecessor.Completion == null)
                     predecessor.SetCompletionTaskRecursively();
+            }
+
+            if (Completion == null)
+            {
+                List<Task> CompletionTasks = CollectCompletionFromPredecessors();
+                if (CompletionTasks.Count > 0)
+                {
+                    PredecessorCompletion = Task.WhenAll(CompletionTasks).ContinueWith(CompleteOrFaultBuffer);
+                    Completion = Task.WhenAll(PredecessorCompletion, BufferCompletion).ContinueWith(CompleteOrFaultCompletion);
+                }
             }
 
             foreach (DataFlowTask successor in Successors)
@@ -144,11 +156,14 @@ namespace ETLBox.DataFlow
             }
         }
 
-        private List<Task> CollectBufferCompletionFromPredecessors()
+        private List<Task> CollectCompletionFromPredecessors()
         {
             List<Task> CompletionTasks = new List<Task>();
             foreach (DataFlowTask pre in Predecessors)
+            {
+                CompletionTasks.Add(pre.Completion);
                 CompletionTasks.Add(pre.BufferCompletion);
+            }
             return CompletionTasks;
         }
 
@@ -167,8 +182,35 @@ namespace ETLBox.DataFlow
 
         protected virtual void CompleteOrFaultBuffer(Task t)
         {
+        }
+
+        protected virtual void CompleteOrFaultCompletion(Task t)
+        {
+            if (t.IsFaulted)
+
+            {
+                CleanUpOnFaulted(t.Exception.Flatten());
+                //throw t.Exception.Flatten();
+            }
+            else
+                CleanUpOnSuccess();
+        }
+
+        protected virtual void CleanUpOnSuccess()
+        {
 
         }
+
+        protected virtual void CleanUpOnFaulted(Exception e)
+        {
+
+        }
+
+        //protected virtual void CompleteOrFaultCompletion(Task t)
+        //{
+        //        if (t.IsFaulted)
+        //            throw t.Exception.Flatten();
+        //}
 
         protected virtual Task BufferCompletion { get; }
 

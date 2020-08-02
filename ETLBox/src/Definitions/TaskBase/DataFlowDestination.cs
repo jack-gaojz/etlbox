@@ -59,7 +59,7 @@ namespace ETLBox.DataFlow
                 if (t.IsFaulted)
                 {
                     TargetBlock.Fault(t.Exception.Flatten());
-                    throw t.Exception.Flatten();
+                    //throw t.Exception.Flatten();
                 }
                 else TargetBlock.Complete();
             }
@@ -68,6 +68,11 @@ namespace ETLBox.DataFlow
         protected override void FaultBuffer(Exception e)
         {
             TargetBlock.Fault(e);
+        }
+
+        protected override void CleanUpOnFaulted(Exception e)
+        {
+            throw e;
         }
 
         public void LinkErrorTo(IDataFlowLinkTarget<ETLBoxError> target)

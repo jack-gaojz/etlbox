@@ -1,7 +1,10 @@
 ﻿using ETLBox.ControlFlow;
+using ETLBox.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
 namespace ETLBox.DataFlow.Connectors
@@ -57,10 +60,12 @@ namespace ETLBox.DataFlow.Connectors
 
         public override void Execute()
         {
+            //Task t = new Task(ExecuteAsyncPart, TaskCreationOptions.LongRunning);
+            //Completion = t;
             ExecuteSyncPart();
-            ExecuteAsyncPart();
+            Completion.RunSynchronously();
+            //return Completion;
         }
-
 
 
         private void ReadRecordAndSendIntoBuffer()

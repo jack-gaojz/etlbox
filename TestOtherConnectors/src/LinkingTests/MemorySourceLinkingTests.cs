@@ -52,6 +52,7 @@ namespace ETLBoxTests.DataFlowTests
         public void LinkingMemoryConnectorsWithError()
         {
             //Arrange
+            int rowsToProcess = 100000;
             MemorySource<MySimpleRow> source = new MemorySource<MySimpleRow>();
             RowTransformation<MySimpleRow> row = new RowTransformation<MySimpleRow>();
             row.TransformationFunc =
@@ -61,7 +62,7 @@ namespace ETLBoxTests.DataFlowTests
                     return row;
                 };
             MemoryDestination<MySimpleRow> dest = new MemoryDestination<MySimpleRow>();
-            for (int i = 0; i<=1000000; i++)
+            for (int i = 0; i<=rowsToProcess; i++)
             {
                 source.DataAsList.Add(new MySimpleRow() { Col1 = i, Col2 = $"Test{i}" });
             }
@@ -73,11 +74,12 @@ namespace ETLBoxTests.DataFlowTests
             {
                 source.Execute();
                 dest.Wait();
-
+                Assert.True(false);
             }
             catch (Exception e)
             {
                 Assert.True(source.SourceBlock.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
+                Assert.True(source.ProgressCount < rowsToProcess);
             }
 
         }
@@ -108,6 +110,7 @@ namespace ETLBoxTests.DataFlowTests
             {
                 await source.ExecuteAsync();
                 await dest.Completion;
+
             }
             catch (Exception e)
             {
