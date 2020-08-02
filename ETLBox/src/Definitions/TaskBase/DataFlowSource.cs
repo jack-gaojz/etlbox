@@ -12,7 +12,7 @@ namespace ETLBox.DataFlow
         public ISourceBlock<TOutput> SourceBlock => this.Buffer;
         protected BufferBlock<TOutput> Buffer { get; set; } = new BufferBlock<TOutput>();
 
-        
+
         protected override Task BufferCompletion => Buffer.Completion;
         protected override void InitBufferObjects()
         {
@@ -20,7 +20,7 @@ namespace ETLBox.DataFlow
             {
                 BoundedCapacity = MaxBufferSize
             });
-            Completion = new Task(ExecuteAsyncPart, TaskCreationOptions.LongRunning);
+            Completion = new Task(ExecuteAsyncPart, token.Value, TaskCreationOptions.LongRunning);
         }
 
         public ErrorHandler ErrorHandler { get; set; } = new ErrorHandler();
@@ -51,10 +51,11 @@ namespace ETLBox.DataFlow
         protected override void FaultBuffer(Exception e)
         {
             SourceBlock.Fault(e);
+            tokenSource.Cancel();
             //throw new ETLBoxException("One ore more errors occurred during the data processing - see inner exception for details", e);
         }
 
-        protected override void LinkBuffers(DataFlowTask successor, Tuple<object,object> predicate)
+        protected override void LinkBuffers(DataFlowTask successor, Tuple<object, object> predicate)
         {
             var s = successor as IDataFlowLinkTarget<TOutput>;
             Predicate<TOutput> pred = predicate?.Item1 as Predicate<TOutput>;

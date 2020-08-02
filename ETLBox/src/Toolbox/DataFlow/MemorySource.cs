@@ -74,6 +74,7 @@ namespace ETLBox.DataFlow.Connectors
             {
                 Buffer.SendAsync(record).Wait();
                 LogProgress();
+                token.Value.ThrowIfCancellationRequested();
             }
             Buffer.Complete();
         }

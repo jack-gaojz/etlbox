@@ -14,8 +14,8 @@ namespace ETLBox.DataFlow
         public Task Completion { get; set; }
 
         public Task PredecessorCompletion { get; set; }
-        //CancellationTokenSource tokenSource = new CancellationTokenSource();
-        //CancellationToken? token => tokenSource?.Token ?? null;
+        protected CancellationTokenSource tokenSource = new CancellationTokenSource();
+        protected CancellationToken? token => tokenSource?.Token ?? null;
 
         protected int? _loggingThresholdRows;
         public virtual int? LoggingThresholdRows
