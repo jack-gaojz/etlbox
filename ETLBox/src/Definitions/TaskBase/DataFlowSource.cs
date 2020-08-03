@@ -20,7 +20,7 @@ namespace ETLBox.DataFlow
             {
                 BoundedCapacity = MaxBufferSize
             });
-            Completion = new Task(ExecuteAsyncPart, token.Value, TaskCreationOptions.LongRunning);
+            Completion = new Task(ExecuteAsyncPart, TaskCreationOptions.LongRunning);
         }
 
         public ErrorHandler ErrorHandler { get; set; } = new ErrorHandler();
@@ -51,7 +51,7 @@ namespace ETLBox.DataFlow
         protected override void FaultBuffer(Exception e)
         {
             SourceBlock.Fault(e);
-            tokenSource.Cancel();
+            //tokenSource.Cancel();
             //throw new ETLBoxException("One ore more errors occurred during the data processing - see inner exception for details", e);
         }
 

@@ -72,9 +72,11 @@ namespace ETLBox.DataFlow.Connectors
         {
             foreach (TOutput record in Data)
             {
-                Buffer.SendAsync(record).Wait();
+                var canpost = Buffer.SendAsync(record).Result;
+                if (!canpost)
+                    throw Exception;
                 LogProgress();
-                token.Value.ThrowIfCancellationRequested();
+                //token.Value.ThrowIfCancellationRequested();
             }
             Buffer.Complete();
         }

@@ -11,11 +11,12 @@ namespace ETLBox.DataFlow
         public List<DataFlowTask> Predecessors { get; set; } = new List<DataFlowTask>();
         public List<DataFlowTask> Successors { get; set; } = new List<DataFlowTask>();
 
-        public Task Completion { get; set; }
+        public Task Completion { get; protected set; }
 
-        public Task PredecessorCompletion { get; set; }
-        protected CancellationTokenSource tokenSource = new CancellationTokenSource();
-        protected CancellationToken? token => tokenSource?.Token ?? null;
+        protected Task PredecessorCompletion;
+        public Exception Exception { get; private set; }
+        //protected CancellationTokenSource tokenSource = new CancellationTokenSource();
+        //protected CancellationToken? token => tokenSource?.Token ?? null;
 
         protected int? _loggingThresholdRows;
         public virtual int? LoggingThresholdRows
@@ -169,6 +170,7 @@ namespace ETLBox.DataFlow
 
         protected void FaultPredecessorsRecursively(Exception e)
         {
+            Exception = e;
             FaultBuffer(e);
             foreach (DataFlowTask pre in Predecessors)
                 pre.FaultPredecessorsRecursively(e);
@@ -190,7 +192,7 @@ namespace ETLBox.DataFlow
 
             {
                 CleanUpOnFaulted(t.Exception.Flatten());
-                //throw t.Exception.Flatten();
+                throw t.Exception.Flatten();
             }
             else
                 CleanUpOnSuccess();

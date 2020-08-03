@@ -79,6 +79,11 @@ namespace ETLBoxTests.DataFlowTests
             catch (Exception e)
             {
                 Assert.True(source.SourceBlock.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
+                Assert.True(dest.TargetBlock.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
+                Assert.True(row.SourceBlock.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
+                Assert.True(source.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
+                Assert.True(dest.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
+                Assert.True(row.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
                 Assert.True(source.ProgressCount < rowsToProcess);
             }
 
@@ -109,14 +114,61 @@ namespace ETLBoxTests.DataFlowTests
             row.LinkTo2(dest);
             try
             {
-                await source.ExecuteAsync();
-                await dest.Completion;
-
+                Task t1 = source.ExecuteAsync();
+                Task t2 = dest.Completion;
+                Task.WaitAll(t1, t2);
             }
             catch (Exception e)
             {
                 Assert.True(source.SourceBlock.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
+                Assert.True(dest.TargetBlock.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
+                Assert.True(row.SourceBlock.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
+                Assert.True(source.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
+                Assert.True(dest.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
+                Assert.True(row.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
                 Assert.True(source.ProgressCount < rowsToProcess);
+            }
+
+        }
+
+        [Fact]
+        public async void LinkingMemoryConnectorsWithErrorAsyncInDest()
+        {
+            //Arrange
+            int rowsToProcess = 5;
+            MemorySource<MySimpleRow> source = new MemorySource<MySimpleRow>();
+            RowTransformation<MySimpleRow> row = new RowTransformation<MySimpleRow>();
+            row.TransformationFunc =
+                row =>
+                {
+                    if (row.Col1 == 2) throw new Exception($"{row.Col2}");
+                    return row;
+                };
+            MemoryDestination<MySimpleRow> dest = new MemoryDestination<MySimpleRow>();
+            for (int i = 0; i < rowsToProcess; i++)
+            {
+                source.DataAsList.Add(new MySimpleRow() { Col1 = i, Col2 = $"Test{i}" });
+            }
+
+            //Act
+            source.LinkTo2(row);
+            row.LinkTo2(dest);
+            try
+            {
+                Task t1 = source.ExecuteAsync();
+                Task t2 = dest.Completion;
+                Task.WaitAll(t1, t2);
+
+            }
+            catch (Exception e)
+            {
+                Assert.True(source.SourceBlock.Completion.Status == System.Threading.Tasks.TaskStatus.RanToCompletion);
+                Assert.True(dest.TargetBlock.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
+                Assert.True(row.SourceBlock.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
+                Assert.True(source.Completion.Status == System.Threading.Tasks.TaskStatus.RanToCompletion);
+                Assert.True(dest.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
+                Assert.True(row.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
+                Assert.True(source.ProgressCount == rowsToProcess);
             }
 
         }

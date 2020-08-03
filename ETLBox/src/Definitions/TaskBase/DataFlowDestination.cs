@@ -59,7 +59,7 @@ namespace ETLBox.DataFlow
                 if (t.IsFaulted)
                 {
                     TargetBlock.Fault(t.Exception.Flatten());
-                    //throw t.Exception.Flatten();
+                    throw t.Exception.Flatten();
                 }
                 else TargetBlock.Complete();
             }
