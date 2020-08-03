@@ -8,95 +8,79 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Sdk;
 
 namespace ETLBoxTests.DataFlowTests
 {
     [Collection("DataFlow")]
     public class LinkingTests
     {
-        public LinkingTests()
-        {
-        }
-
         public class MySimpleRow
         {
             public int Col1 { get; set; }
             public string Col2 { get; set; }
         }
 
-        [Fact]
-        public void LinkingMemoryConnectors()
+        [Theory]
+        [InlineData("sync")]
+        [InlineData("async")]
+        public void SimpleFlow(string processing)
         {
+            /*
+             *  Source --> Row --> Destination
+             */
+
             //Arrange
             MemorySource<MySimpleRow> source = new MemorySource<MySimpleRow>();
+            source.DataAsList = CreateDemoData(1, 3);
+
             RowTransformation<MySimpleRow> row = new RowTransformation<MySimpleRow>();
             row.TransformationFunc = row => row;
             MemoryDestination<MySimpleRow> dest = new MemoryDestination<MySimpleRow>();
 
             //Act
-            source.DataAsList = new List<MySimpleRow>()
-            {
-                new MySimpleRow() { Col1 = 1, Col2 = "Test1" },
-                new MySimpleRow() { Col1 = 2, Col2 = "Test2" },
-                new MySimpleRow() { Col1 = 3, Col2 = "Test3" }
-            };
             source.LinkTo2(row);
             row.LinkTo2(dest);
-            source.Execute();
-            dest.Wait();
 
-            //Assert
-            Assert.Equal(3, dest.Data.Count);
-        }
-
-        [Fact]
-        public void LinkingMemoryConnectorsWithError()
-        {
-            //Arrange
-            int rowsToProcess = 100000;
-            MemorySource<MySimpleRow> source = new MemorySource<MySimpleRow>();
-            RowTransformation<MySimpleRow> row = new RowTransformation<MySimpleRow>();
-            row.TransformationFunc =
-                row =>
-                {
-                    if (row.Col1 == 2) throw new Exception($"{row.Col2}");
-                    return row;
-                };
-            MemoryDestination<MySimpleRow> dest = new MemoryDestination<MySimpleRow>();
-            for (int i = 0; i<=rowsToProcess; i++)
-            {
-                source.DataAsList.Add(new MySimpleRow() { Col1 = i, Col2 = $"Test{i}" });
-            }
-
-            //Act
-            source.LinkTo2(row);
-            row.LinkTo2(dest);
-            try
+            if (processing == "sync")
             {
                 source.Execute();
                 dest.Wait();
-                Assert.True(false);
             }
-            catch (Exception e)
+            else if (processing == "async")
             {
-                Assert.True(source.SourceBlock.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
-                Assert.True(dest.TargetBlock.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
-                Assert.True(row.SourceBlock.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
-                Assert.True(source.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
-                Assert.True(dest.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
-                Assert.True(row.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
-                Assert.True(source.ProgressCount < rowsToProcess);
+                Task t1 = source.ExecuteAsync();
+                Task t2 = dest.Completion;
+                Task.WaitAll(t1, t2);
             }
 
+            //Assert
+            Assert.Collection(dest.Data,
+                row => Assert.True(row.Col1 == 1 && row.Col2 == "Test1"),
+                row => Assert.True(row.Col1 == 2 && row.Col2 == "Test2"),
+                row => Assert.True(row.Col1 == 3 && row.Col2 == "Test3")
+            );
+        }
+
+        private static List<MySimpleRow> CreateDemoData(int start, int end)
+        {
+            var result = new List<MySimpleRow>();
+            for (int i = start; i <= end; i++)
+                result.Add(new MySimpleRow() { Col1 = i, Col2 = $"Test{i}" });
+            return result;
         }
 
 
-        [Fact]
-        public async void LinkingMemoryConnectorsWithErrorAsync()
+        [Theory]
+        [InlineData(5, "sync")]
+        [InlineData(100000, "sync")]
+        [InlineData(5, "async")]
+        [InlineData(100000, "async")]
+        public void ErrorWhenExecuting(int rowsToProcess, string processing)
         {
             //Arrange
-            int rowsToProcess = 100000;
             MemorySource<MySimpleRow> source = new MemorySource<MySimpleRow>();
+            source.DataAsList = CreateDemoData(1, rowsToProcess);
             RowTransformation<MySimpleRow> row = new RowTransformation<MySimpleRow>();
             row.TransformationFunc =
                 row =>
@@ -105,93 +89,70 @@ namespace ETLBoxTests.DataFlowTests
                     return row;
                 };
             MemoryDestination<MySimpleRow> dest = new MemoryDestination<MySimpleRow>();
-            for (int i = 0; i < rowsToProcess; i++)
-            {
-                source.DataAsList.Add(new MySimpleRow() { Col1 = i, Col2 = $"Test{i}" });
-            }
 
             //Act
             source.LinkTo2(row);
             row.LinkTo2(dest);
             try
             {
-                Task t1 = source.ExecuteAsync();
-                Task t2 = dest.Completion;
-                Task.WaitAll(t1, t2);
-            }
-            catch (Exception e)
-            {
-                Assert.True(source.SourceBlock.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
-                Assert.True(dest.TargetBlock.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
-                Assert.True(row.SourceBlock.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
-                Assert.True(source.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
-                Assert.True(dest.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
-                Assert.True(row.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
-                Assert.True(source.ProgressCount < rowsToProcess);
-            }
-
-        }
-
-        [Fact]
-        public async void LinkingMemoryConnectorsWithErrorAsyncInDest()
-        {
-            //Arrange
-            int rowsToProcess = 5;
-            MemorySource<MySimpleRow> source = new MemorySource<MySimpleRow>();
-            RowTransformation<MySimpleRow> row = new RowTransformation<MySimpleRow>();
-            row.TransformationFunc =
-                row =>
+                if (processing == "sync")
                 {
-                    if (row.Col1 == 2) throw new Exception($"{row.Col2}");
-                    return row;
-                };
-            MemoryDestination<MySimpleRow> dest = new MemoryDestination<MySimpleRow>();
-            for (int i = 0; i < rowsToProcess; i++)
-            {
-                source.DataAsList.Add(new MySimpleRow() { Col1 = i, Col2 = $"Test{i}" });
-            }
-
-            //Act
-            source.LinkTo2(row);
-            row.LinkTo2(dest);
-            try
-            {
-                Task t1 = source.ExecuteAsync();
-                Task t2 = dest.Completion;
-                Task.WaitAll(t1, t2);
-
+                    source.Execute();
+                    dest.Wait();
+                    Assert.True(false);
+                }
+                else if (processing == "async")
+                {
+                    Task t1 = source.ExecuteAsync();
+                    Task t2 = dest.Completion;
+                    Task.WaitAll(t1, t2);
+                }
             }
             catch (Exception e)
             {
-                Assert.True(source.SourceBlock.Completion.Status == System.Threading.Tasks.TaskStatus.RanToCompletion);
+                if (rowsToProcess < 10)
+                {
+                    Assert.True(source.SourceBlock.Completion.Status == System.Threading.Tasks.TaskStatus.RanToCompletion);
+                    Assert.True(source.Completion.Status == System.Threading.Tasks.TaskStatus.RanToCompletion);
+                }
+                else
+                {
+                    Assert.True(source.SourceBlock.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
+                    Assert.True(source.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
+                }
                 Assert.True(dest.TargetBlock.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
-                Assert.True(row.SourceBlock.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
-                Assert.True(source.Completion.Status == System.Threading.Tasks.TaskStatus.RanToCompletion);
                 Assert.True(dest.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
                 Assert.True(row.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
-                Assert.True(source.ProgressCount == rowsToProcess);
+                Assert.True(row.SourceBlock.Completion.Status == System.Threading.Tasks.TaskStatus.Faulted);
+                if (rowsToProcess < 10)
+                    Assert.True(source.ProgressCount == rowsToProcess);
+                else
+                    Assert.True(source.ProgressCount < rowsToProcess);
             }
-
         }
 
 
         [Fact]
-        public void ErrorDestination()
+        public void LinkingErrorDestination()
         {
+            /*
+             *  Source  -------> Row --> Destination
+             *    |(errors)
+             *    ---------------------> ErrorDestination
+             */
+
             //Arrange
-            int rowsToProcess = 5;
             MemorySource<MySimpleRow> source = new MemorySource<MySimpleRow>();
+            source.DataAsList = CreateDemoData(1, 5);
             RowTransformation<MySimpleRow> row = new RowTransformation<MySimpleRow>();
             row.TransformationFunc =
                 row =>
                 {
-                    if (row.Col1 == 2) throw new Exception($"{row.Col2}");
+                    if (row.Col1 == 2 || row.Col1 == 4) throw new Exception($"{row.Col2}");
                     return row;
                 };
             MemoryDestination<MySimpleRow> dest = new MemoryDestination<MySimpleRow>();
             MemoryDestination<ETLBoxError> errorDest = new MemoryDestination<ETLBoxError>();
-            for (int i = 0; i <= rowsToProcess; i++)
-                source.DataAsList.Add(new MySimpleRow() { Col1 = i, Col2 = $"Test{i}" });
 
             //Act
             source.LinkTo2(row);
@@ -201,7 +162,13 @@ namespace ETLBoxTests.DataFlowTests
             dest.Wait();
             errorDest.Wait();
 
-
+            //Assert
+            Assert.Collection(dest.Data,
+                row => Assert.True(row.Col1 == 1 && row.Col2 == "Test1"),
+                row => Assert.True(row.Col1 == 3 && row.Col2 == "Test3"),
+                row => Assert.True(row.Col1 == 5 && row.Col2 == "Test5")
+            );
+            Assert.True(errorDest.Data.Count == 2);
         }
 
         [Fact]
@@ -215,26 +182,16 @@ namespace ETLBoxTests.DataFlowTests
              */
             //Arrange
             MemorySource<MySimpleRow> source1 = new MemorySource<MySimpleRow>();
+            source1.DataAsList = CreateDemoData(1, 3);
             MemorySource<MySimpleRow> source2 = new MemorySource<MySimpleRow>();
+            source2.DataAsList = CreateDemoData(4, 5);
             RowTransformation<MySimpleRow> row = new RowTransformation<MySimpleRow>();
-            row.TransformationFunc =
-                row => row;
+            row.TransformationFunc = row => row;
             Multicast<MySimpleRow> multi = new Multicast<MySimpleRow>();
             MemoryDestination<MySimpleRow> dest1 = new MemoryDestination<MySimpleRow>();
             MemoryDestination<MySimpleRow> dest2 = new MemoryDestination<MySimpleRow>();
 
             //Act
-            source1.DataAsList = new List<MySimpleRow>()
-            {
-                new MySimpleRow() { Col1 = 1, Col2 = "Test1" },
-                new MySimpleRow() { Col1 = 2, Col2 = "Test2" },
-                new MySimpleRow() { Col1 = 3, Col2 = "Test3" }
-            };
-            source2.DataAsList = new List<MySimpleRow>()
-            {
-                new MySimpleRow() { Col1 = 4, Col2 = "Test4" },
-                new MySimpleRow() { Col1 = 5, Col2 = "Test5" }
-            };
             source1.LinkTo2(row);
             source2.LinkTo2(row);
             row.LinkTo2(multi);
@@ -247,8 +204,20 @@ namespace ETLBoxTests.DataFlowTests
             dest2.Wait();
 
             //Assert
-            Assert.Equal(5, dest1.Data.Count);
-            Assert.Equal(5, dest2.Data.Count);
+            Assert.Collection(dest1.Data,
+                row => Assert.True(row.Col1 == 1 && row.Col2 == "Test1"),
+                row => Assert.True(row.Col1 == 2 && row.Col2 == "Test2"),
+                row => Assert.True(row.Col1 == 3 && row.Col2 == "Test3"),
+                row => Assert.True(row.Col1 == 4 && row.Col2 == "Test4"),
+                row => Assert.True(row.Col1 == 5 && row.Col2 == "Test5")
+            );
+            Assert.Collection(dest2.Data,
+                row => Assert.True(row.Col1 == 1 && row.Col2 == "Test1"),
+                row => Assert.True(row.Col1 == 2 && row.Col2 == "Test2"),
+                row => Assert.True(row.Col1 == 3 && row.Col2 == "Test3"),
+                row => Assert.True(row.Col1 == 4 && row.Col2 == "Test4"),
+                row => Assert.True(row.Col1 == 5 && row.Col2 == "Test5")
+            );
         }
 
         [Fact]
@@ -263,8 +232,11 @@ namespace ETLBoxTests.DataFlowTests
              */
             //Arrange
             MemorySource<MySimpleRow> source1 = new MemorySource<MySimpleRow>();
+            source1.DataAsList = CreateDemoData(1, 3);
             MemorySource<MySimpleRow> source2 = new MemorySource<MySimpleRow>();
+            source2.DataAsList = CreateDemoData(4, 5);
             MemorySource<MySimpleRow> source3 = new MemorySource<MySimpleRow>();
+            source3.DataAsList = CreateDemoData(6, 6);
             RowTransformation<MySimpleRow> row1 = new RowTransformation<MySimpleRow>();
             row1.TransformationFunc = row => row;
             RowTransformation<MySimpleRow> row2 = new RowTransformation<MySimpleRow>();
@@ -274,21 +246,7 @@ namespace ETLBoxTests.DataFlowTests
             MemoryDestination<MySimpleRow> dest2 = new MemoryDestination<MySimpleRow>();
 
             //Act
-            source1.DataAsList = new List<MySimpleRow>()
-            {
-                new MySimpleRow() { Col1 = 1, Col2 = "Test1" },
-                new MySimpleRow() { Col1 = 2, Col2 = "Test2" },
-                new MySimpleRow() { Col1 = 3, Col2 = "Test3" }
-            };
-            source2.DataAsList = new List<MySimpleRow>()
-            {
-                new MySimpleRow() { Col1 = 4, Col2 = "Test4" },
-                new MySimpleRow() { Col1 = 5, Col2 = "Test5" }
-            };
-            source3.DataAsList = new List<MySimpleRow>()
-            {
-                new MySimpleRow() { Col1 = 6, Col2 = "Test6" }
-            };
+
             source1.LinkTo2(row1);
             source2.LinkTo2(row1);
             row1.LinkTo2(multi);
@@ -301,9 +259,24 @@ namespace ETLBoxTests.DataFlowTests
             source3.Execute();
             dest1.Wait();
             dest2.Wait();
+
             //Assert
-            Assert.Equal(6, dest1.Data.Count);
-            Assert.Equal(6, dest2.Data.Count);
+            Assert.Collection(dest1.Data,
+                row => Assert.True(row.Col1 == 1 && row.Col2 == "Test1"),
+                row => Assert.True(row.Col1 == 2 && row.Col2 == "Test2"),
+                row => Assert.True(row.Col1 == 3 && row.Col2 == "Test3"),
+                row => Assert.True(row.Col1 == 4 && row.Col2 == "Test4"),
+                row => Assert.True(row.Col1 == 5 && row.Col2 == "Test5"),
+                row => Assert.True(row.Col1 == 6 && row.Col2 == "Test6")
+            );
+            Assert.Collection(dest2.Data,
+                row => Assert.True(row.Col1 == 1 && row.Col2 == "Test1"),
+                row => Assert.True(row.Col1 == 2 && row.Col2 == "Test2"),
+                row => Assert.True(row.Col1 == 3 && row.Col2 == "Test3"),
+                row => Assert.True(row.Col1 == 4 && row.Col2 == "Test4"),
+                row => Assert.True(row.Col1 == 5 && row.Col2 == "Test5"),
+                row => Assert.True(row.Col1 == 6 && row.Col2 == "Test6")
+            );
         }
 
 
@@ -317,18 +290,13 @@ namespace ETLBoxTests.DataFlowTests
 
             //Arrange
             MemorySource<MySimpleRow> source = new MemorySource<MySimpleRow>();
+            source.DataAsList = CreateDemoData(1, 3);
             RowTransformation<MySimpleRow> row = new RowTransformation<MySimpleRow>();
             row.TransformationFunc = row => row;
             MemoryDestination<MySimpleRow> dest1 = new MemoryDestination<MySimpleRow>();
             MemoryDestination<MySimpleRow> dest2 = new MemoryDestination<MySimpleRow>();
 
             //Act
-            source.DataAsList = new List<MySimpleRow>()
-            {
-                new MySimpleRow() { Col1 = 1, Col2 = "Test1" },
-                new MySimpleRow() { Col1 = 2, Col2 = "Test2" },
-                new MySimpleRow() { Col1 = 3, Col2 = "Test3" }
-            };
             Predicate<MySimpleRow> p1 = new Predicate<MySimpleRow>(row => row.Col1 == 1);
             Predicate<MySimpleRow> p2 = new Predicate<MySimpleRow>(row => row.Col1 > 1);
             source.LinkTo2(row);
@@ -339,8 +307,13 @@ namespace ETLBoxTests.DataFlowTests
             dest2.Wait();
 
             //Assert
-            Assert.Equal(1, dest1.Data.Count);
-            Assert.Equal(2, dest2.Data.Count);
+            Assert.Collection(dest1.Data,
+               row => Assert.True(row.Col1 == 1 && row.Col2 == "Test1")
+            );
+            Assert.Collection(dest2.Data,
+              row => Assert.True(row.Col1 == 2 && row.Col2 == "Test2"),
+              row => Assert.True(row.Col1 == 3 && row.Col2 == "Test3")
+            );
         }
 
         [Fact]
@@ -353,17 +326,12 @@ namespace ETLBoxTests.DataFlowTests
 
             //Arrange
             MemorySource<MySimpleRow> source = new MemorySource<MySimpleRow>();
+            source.DataAsList = CreateDemoData(1, 3);
             RowTransformation<MySimpleRow> row = new RowTransformation<MySimpleRow>();
             row.TransformationFunc = row => row;
             MemoryDestination<MySimpleRow> dest = new MemoryDestination<MySimpleRow>();
 
             //Act
-            source.DataAsList = new List<MySimpleRow>()
-            {
-                new MySimpleRow() { Col1 = 1, Col2 = "Test1" },
-                new MySimpleRow() { Col1 = 2, Col2 = "Test2" },
-                new MySimpleRow() { Col1 = 3, Col2 = "Test3" }
-            };
             Predicate<MySimpleRow> p1 = new Predicate<MySimpleRow>(row => row.Col1 == 1);
             Predicate<MySimpleRow> p2 = new Predicate<MySimpleRow>(row => row.Col1 > 1);
             source.LinkTo2(row);
@@ -372,7 +340,9 @@ namespace ETLBoxTests.DataFlowTests
             dest.Wait();
 
             //Assert
-            Assert.Equal(1, dest.Data.Count);
+            Assert.Collection(dest.Data,
+             row => Assert.True(row.Col1 == 1 && row.Col2 == "Test1")
+            );
         }
 
     }

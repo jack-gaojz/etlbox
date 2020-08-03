@@ -95,7 +95,7 @@ namespace ETLBox.DataFlow.Transformations
 
         protected override void CleanUpOnSuccess()
         {
-            ErrorSource.SourceBlock.Complete();
+            ErrorSource?.SourceBlock.Complete();
         }
 
 
@@ -103,7 +103,7 @@ namespace ETLBox.DataFlow.Transformations
         {
             if (!WasInitialized)
             {
-                ErrorSource.ExecuteAsync().Wait();
+                ErrorSource?.ExecuteAsync().Wait();
                 InitAction?.Invoke();
                 WasInitialized = true;
                 if (!DisableLogging)
