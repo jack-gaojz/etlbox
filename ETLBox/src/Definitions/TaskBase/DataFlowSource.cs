@@ -11,8 +11,6 @@ namespace ETLBox.DataFlow
     {
         public ISourceBlock<TOutput> SourceBlock => this.Buffer;
         protected BufferBlock<TOutput> Buffer { get; set; } = new BufferBlock<TOutput>();
-
-
         protected override Task BufferCompletion => Buffer.Completion;
         protected override void InitBufferObjects()
         {
@@ -20,54 +18,53 @@ namespace ETLBox.DataFlow
             {
                 BoundedCapacity = MaxBufferSize
             });
-            Completion = new Task(ExecuteAsyncPart, TaskCreationOptions.LongRunning);
+            Completion = new Task(OnExecutionDoAsyncWork, TaskCreationOptions.LongRunning);
         }
 
         public ErrorHandler ErrorHandler { get; set; } = new ErrorHandler();
 
-        public abstract void Execute();
+        public virtual void Execute() //remove virtual
+        {
+            InitNetworkRecursively();
+            OnExecutionDoSynchronousWork();
+            Completion.RunSynchronously();
+        }
 
-        public virtual void ExecuteSyncPart() { }
-        public virtual void ExecuteAsyncPart() { }
         public Task ExecuteAsync()
         {
-            ExecuteSyncPart();
+            InitNetworkRecursively();
+            OnExecutionDoSynchronousWork();
             Completion.Start();
             return Completion;
         }
 
 
-        //public IDataFlowLinkSource<TOutput> LinkTo(DataFlowTask target)
-        //{
-        //    this.Successors.Add(target);
-        //    target.Predecessors.Add(this);
-        //    return target as IDataFlowLinkSource<TOutput>;
-        //}
+        protected virtual void OnExecutionDoSynchronousWork() { } //abstract
+        protected virtual void OnExecutionDoAsyncWork() { } //abstract
 
-        protected override void CompleteOrFaultBuffer(Task t)
-        {
-        }
-
-        protected override void FaultBuffer(Exception e)
+        protected override void FaultBufferExplicitly(Exception e)
         {
             SourceBlock.Fault(e);
-            //tokenSource.Cancel();
-            //throw new ETLBoxException("One ore more errors occurred during the data processing - see inner exception for details", e);
         }
 
-        protected override void LinkBuffers(DataFlowTask successor, Tuple<object, object> predicate)
+        //protected override void LinkBuffers(DataFlowTask successor, LinkPredicate linkPredicate)
+        //{
+        //    var s = successor as IDataFlowLinkTarget<TOutput>;
+        //    if (linkPredicate.Predicate != null)
+        //    {
+        //        this.SourceBlock.LinkTo<TOutput>(s.TargetBlock, linkPredicate.GetPredicate<TOutput>());
+        //        if (linkPredicate.VoidPredicate != null)
+        //            this.SourceBlock.LinkTo<TOutput>(DataflowBlock.NullTarget<TOutput>(), linkPredicate.GetVoidPredicate<TOutput>());
+        //    }
+        //    else
+        //        this.SourceBlock.LinkTo<TOutput>(s.TargetBlock);
+        //}
+
+        protected override void LinkBuffers(DataFlowTask successor, LinkPredicate linkPredicate)
         {
             var s = successor as IDataFlowLinkTarget<TOutput>;
-            Predicate<TOutput> pred = predicate?.Item1 as Predicate<TOutput>;
-            Predicate<TOutput> vp = predicate?.Item2 as Predicate<TOutput>;
-            if (pred != null)
-            {
-                this.SourceBlock.LinkTo<TOutput>(s.TargetBlock, pred);
-                if (vp != null)
-                    this.SourceBlock.LinkTo<TOutput>(DataflowBlock.NullTarget<TOutput>(), vp);
-            }
-            else
-                this.SourceBlock.LinkTo<TOutput>(s.TargetBlock);
+            var lp = new Linker<TOutput>(linkPredicate?.Predicate, linkPredicate?.VoidPredicate);
+            lp.LinkBlocksWithPredicates(SourceBlock, s.TargetBlock);
         }
 
 

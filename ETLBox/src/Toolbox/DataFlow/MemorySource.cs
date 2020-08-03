@@ -15,10 +15,7 @@ namespace ETLBox.DataFlow.Connectors
     /// </summary>
     public class MemorySource<TOutput> : DataFlowSource<TOutput>, ITask, IDataFlowSource<TOutput>
     {
-        /* ITask Interface */
         public override string TaskName => $"Read data from memory";
-
-        /* Public properties */
         public IEnumerable<TOutput> Data { get; set; }
         public IList<TOutput> DataAsList
         {
@@ -31,7 +28,8 @@ namespace ETLBox.DataFlow.Connectors
                 Data = value;
             }
         }
-        /* Private stuff */
+
+        #region Constructors
 
         public MemorySource()
         {
@@ -43,28 +41,19 @@ namespace ETLBox.DataFlow.Connectors
             Data = data;
         }
 
-        public override void ExecuteSyncPart()
+        #endregion
+
+        #region Execution
+
+        protected override void OnExecutionDoSynchronousWork()
         {
             NLogStart();
-            InitBufferRecursively();
-            LinkBuffersRecursively();
-            SetCompletionTaskRecursively();
-
         }
 
-        public override void ExecuteAsyncPart()
+        protected override void OnExecutionDoAsyncWork()
         {
             ReadRecordAndSendIntoBuffer();
             NLogFinish();
-        }
-
-        public override void Execute()
-        {
-            //Task t = new Task(ExecuteAsyncPart, TaskCreationOptions.LongRunning);
-            //Completion = t;
-            ExecuteSyncPart();
-            Completion.RunSynchronously();
-            //return Completion;
         }
 
 
@@ -72,14 +61,14 @@ namespace ETLBox.DataFlow.Connectors
         {
             foreach (TOutput record in Data)
             {
-                var canpost = Buffer.SendAsync(record).Result;
-                if (!canpost)
+                if (!Buffer.SendAsync(record).Result)
                     throw Exception;
                 LogProgress();
-                //token.Value.ThrowIfCancellationRequested();
             }
-            Buffer.Complete();            
+            Buffer.Complete();
         }
+
+        #endregion
 
     }
 

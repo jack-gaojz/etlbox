@@ -4,6 +4,7 @@ using ETLBox.DataFlow.Connectors;
 using ETLBox.DataFlow.Transformations;
 using ETLBoxTests.Fixtures;
 using ETLBoxTests.Helper;
+using FluentAssertions;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -204,20 +205,8 @@ namespace ETLBoxTests.DataFlowTests
             dest2.Wait();
 
             //Assert
-            Assert.Collection(dest1.Data,
-                row => Assert.True(row.Col1 == 1 && row.Col2 == "Test1"),
-                row => Assert.True(row.Col1 == 2 && row.Col2 == "Test2"),
-                row => Assert.True(row.Col1 == 3 && row.Col2 == "Test3"),
-                row => Assert.True(row.Col1 == 4 && row.Col2 == "Test4"),
-                row => Assert.True(row.Col1 == 5 && row.Col2 == "Test5")
-            );
-            Assert.Collection(dest2.Data,
-                row => Assert.True(row.Col1 == 1 && row.Col2 == "Test1"),
-                row => Assert.True(row.Col1 == 2 && row.Col2 == "Test2"),
-                row => Assert.True(row.Col1 == 3 && row.Col2 == "Test3"),
-                row => Assert.True(row.Col1 == 4 && row.Col2 == "Test4"),
-                row => Assert.True(row.Col1 == 5 && row.Col2 == "Test5")
-            );
+            dest1.Data.Should().BeEquivalentTo(CreateDemoData(1,5));
+            dest2.Data.Should().BeEquivalentTo(CreateDemoData(1, 5));
         }
 
         [Fact]
@@ -261,22 +250,8 @@ namespace ETLBoxTests.DataFlowTests
             dest2.Wait();
 
             //Assert
-            Assert.Collection(dest1.Data,
-                row => Assert.True(row.Col1 == 1 && row.Col2 == "Test1"),
-                row => Assert.True(row.Col1 == 2 && row.Col2 == "Test2"),
-                row => Assert.True(row.Col1 == 3 && row.Col2 == "Test3"),
-                row => Assert.True(row.Col1 == 4 && row.Col2 == "Test4"),
-                row => Assert.True(row.Col1 == 5 && row.Col2 == "Test5"),
-                row => Assert.True(row.Col1 == 6 && row.Col2 == "Test6")
-            );
-            Assert.Collection(dest2.Data,
-                row => Assert.True(row.Col1 == 1 && row.Col2 == "Test1"),
-                row => Assert.True(row.Col1 == 2 && row.Col2 == "Test2"),
-                row => Assert.True(row.Col1 == 3 && row.Col2 == "Test3"),
-                row => Assert.True(row.Col1 == 4 && row.Col2 == "Test4"),
-                row => Assert.True(row.Col1 == 5 && row.Col2 == "Test5"),
-                row => Assert.True(row.Col1 == 6 && row.Col2 == "Test6")
-            );
+            dest1.Data.Should().BeEquivalentTo(CreateDemoData(1, 6));
+            dest2.Data.Should().BeEquivalentTo(CreateDemoData(1, 6));
         }
 
 

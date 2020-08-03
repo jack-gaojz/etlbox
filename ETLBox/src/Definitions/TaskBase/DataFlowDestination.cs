@@ -52,7 +52,7 @@ namespace ETLBox.DataFlow
 
         protected override Task BufferCompletion => TargetBlock.Completion;
 
-        protected override void CompleteOrFaultBuffer(Task t)
+        protected override void CompleteOrFaultOnPredecssorCompletion(Task t)
         {
             if (!TargetBlock.Completion.IsCompleted)
             {
@@ -65,7 +65,7 @@ namespace ETLBox.DataFlow
             }
         }
 
-        protected override void FaultBuffer(Exception e)
+        protected override void FaultBufferExplicitly(Exception e)
         {
             TargetBlock.Fault(e);
         }

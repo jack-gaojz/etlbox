@@ -23,10 +23,11 @@ namespace ETLBox.DataFlow
         //}
 
 
-        protected override void LinkBuffers(DataFlowTask successor, Tuple<object, object> predicate)
+        protected override void LinkBuffers(DataFlowTask successor, LinkPredicate linkPredicate)
         {
             var s = successor as IDataFlowLinkTarget<ETLBoxError>;
-            this.SourceBlock.LinkTo<ETLBoxError>(s.TargetBlock);
+            var lp = new Linker<ETLBoxError>(linkPredicate?.Predicate, linkPredicate?.VoidPredicate);
+            lp.LinkBlocksWithPredicates(SourceBlock, s.TargetBlock);
         }
 
 
@@ -61,25 +62,25 @@ namespace ETLBox.DataFlow
             }
         }
 
-        public override void Execute()
-        {
-            //Task t = new Task(ExecuteAsyncPart, TaskCreationOptions.LongRunning);
-            //Completion = t;
-            ExecuteSyncPart();
-            Completion.RunSynchronously();
-            //return Completion;
-        }
+        //public override void Execute()
+        //{
+        //    //Task t = new Task(ExecuteAsyncPart, TaskCreationOptions.LongRunning);
+        //    //Completion = t;
+        //    ExecuteSyncPart();
+        //    Completion.RunSynchronously();
+        //    //return Completion;
+        //}
 
-        public override void ExecuteAsyncPart()
-        {
+        //public override void ExecuteAsyncPart()
+        //{
 
-        }
+        //}
 
-        public override void ExecuteSyncPart()
-        {
-            InitBufferRecursively();
-            LinkBuffersRecursively();
-            SetCompletionTaskRecursively();
-        }
+        //public override void ExecuteSyncPart()
+        //{
+        //    InitBufferRecursively();
+        //    LinkBuffersRecursively();
+        //    SetCompletionTaskRecursively();
+        //}
     }
 }

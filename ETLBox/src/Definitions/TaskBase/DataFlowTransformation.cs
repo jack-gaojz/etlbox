@@ -11,29 +11,9 @@ namespace ETLBox.DataFlow
         public virtual ITargetBlock<TInput> TargetBlock { get; }
         public virtual ISourceBlock<TOutput> SourceBlock { get; }
 
-        //protected List<Task> PredecessorCompletions { get; set; } = new List<Task>();
-
-        //public void AddPredecessorCompletion(Task completion)
-        //{
-        //    PredecessorCompletions.Add(completion);
-        //    completion.ContinueWith(t => CheckCompleteAction());
-        //}
-
-        //protected void CheckCompleteAction()
-        //{
-        //    Task.WhenAll(PredecessorCompletions).ContinueWith(t =>
-        //    {
-        //        if (!TargetBlock.Completion.IsCompleted)
-        //        {
-        //            if (t.IsFaulted) TargetBlock.Fault(t.Exception.InnerException);
-        //            else TargetBlock.Complete();
-        //        }
-        //    });
-        //}#
-
         protected override Task BufferCompletion => TargetBlock.Completion;
 
-        protected override void CompleteOrFaultBuffer(Task t)
+        protected override void CompleteOrFaultOnPredecssorCompletion(Task t)
         {
             if (!TargetBlock.Completion.IsCompleted)
                 {
@@ -46,41 +26,30 @@ namespace ETLBox.DataFlow
                 }
         }
 
-        protected override void FaultBuffer(Exception e)
+        protected override void FaultBufferExplicitly(Exception e)
         {
             TargetBlock.Fault(e);
         }
 
-        //protected override void LinkBuffers(DataFlowTask successor)
-        //{
-        //    var s = successor as IDataFlowLinkTarget<TOutput>;
-        //    this.SourceBlock.LinkTo<TOutput>(s.TargetBlock);
-        //    //s.AddPredecessorCompletion(SourceBlock.Completion);
-        //}
-
-        //protected override void LinkBuffers(DataFlowTask successor, object predicate)
-        //{
-        //    var s = successor as IDataFlowLinkTarget<TOutput>;
-        //    Predicate<TOutput> pred = predicate as Predicate<TOutput>;
-        //    if (pred != null)
-        //        this.SourceBlock.LinkTo<TOutput>(s.TargetBlock, pred);
-        //    else
-        //       this.SourceBlock.LinkTo<TOutput>(s.TargetBlock);
-        //}
-        protected override void LinkBuffers(DataFlowTask successor, Tuple<object, object> predicate)
+        protected override void LinkBuffers(DataFlowTask successor, LinkPredicate linkPredicate)
         {
             var s = successor as IDataFlowLinkTarget<TOutput>;
-            Predicate<TOutput> pred = predicate?.Item1 as Predicate<TOutput>;
-            Predicate<TOutput> vp = predicate?.Item2 as Predicate<TOutput>;
-            if (pred != null)
-            {
-                this.SourceBlock.LinkTo<TOutput>(s.TargetBlock, pred);
-                if (vp != null)
-                    this.SourceBlock.LinkTo<TOutput>(DataflowBlock.NullTarget<TOutput>(), vp);
-            }
-            else
-                this.SourceBlock.LinkTo<TOutput>(s.TargetBlock);
+            var lp = new Linker<TOutput>(linkPredicate?.Predicate, linkPredicate?.VoidPredicate);
+            lp.LinkBlocksWithPredicates(SourceBlock, s.TargetBlock);
         }
+        //protected override void LinkBuffers(DataFlowTask successor, LinkPredicate linkPredicate)
+        //{
+        //    var s = successor as IDataFlowLinkTarget<TOutput>;
+        //    if (linkPredicate.Predicate != null)
+        //    {
+        //        this.SourceBlock.LinkTo<TOutput>(s.TargetBlock, linkPredicate.GetPredicate<TOutput>());
+        //        if (linkPredicate.VoidPredicate != null)
+        //            this.SourceBlock.LinkTo<TOutput>(DataflowBlock.NullTarget<TOutput>(), linkPredicate.GetVoidPredicate<TOutput>());
+        //    }
+        //    else
+        //        this.SourceBlock.LinkTo<TOutput>(s.TargetBlock);
+        //}
+
 
 
 
