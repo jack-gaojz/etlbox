@@ -1,6 +1,7 @@
 ﻿using ETLBox.ControlFlow;
 using System;
 using System.Dynamic;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
 namespace ETLBox.DataFlow.Transformations
@@ -77,12 +78,12 @@ namespace ETLBox.DataFlow.Transformations
                     }
                     catch (Exception e)
                     {
-                        if (!ErrorHandler.HasErrorBuffer)
+                        if (ErrorSource == null)
                         {
                             FaultPredecessorsRecursively(e);
                             throw e;
                         }
-                        ErrorHandler.Send(e, ErrorHandler.ConvertErrorData<TInput>(row));
+                        ErrorSource.Send(e, ErrorSource.ConvertErrorData<TInput>(row));
                         return default(TOutput);
                     }
                 }, new ExecutionDataflowBlockOptions()
@@ -92,10 +93,17 @@ namespace ETLBox.DataFlow.Transformations
             );
         }
 
+        protected override void CleanUpOnSuccess()
+        {
+            ErrorSource.SourceBlock.Complete();
+        }
+
+
         private TOutput WrapTransformation(TInput row)
         {
             if (!WasInitialized)
             {
+                ErrorSource.ExecuteAsync().Wait();
                 InitAction?.Invoke();
                 WasInitialized = true;
                 if (!DisableLogging)

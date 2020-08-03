@@ -1,4 +1,5 @@
 using ETLBox.Connection;
+using ETLBox.DataFlow;
 using ETLBox.DataFlow.Connectors;
 using ETLBox.DataFlow.Transformations;
 using ETLBoxTests.Fixtures;
@@ -173,6 +174,35 @@ namespace ETLBoxTests.DataFlowTests
 
         }
 
+
+        [Fact]
+        public void ErrorDestination()
+        {
+            //Arrange
+            int rowsToProcess = 5;
+            MemorySource<MySimpleRow> source = new MemorySource<MySimpleRow>();
+            RowTransformation<MySimpleRow> row = new RowTransformation<MySimpleRow>();
+            row.TransformationFunc =
+                row =>
+                {
+                    if (row.Col1 == 2) throw new Exception($"{row.Col2}");
+                    return row;
+                };
+            MemoryDestination<MySimpleRow> dest = new MemoryDestination<MySimpleRow>();
+            MemoryDestination<ETLBoxError> errorDest = new MemoryDestination<ETLBoxError>();
+            for (int i = 0; i <= rowsToProcess; i++)
+                source.DataAsList.Add(new MySimpleRow() { Col1 = i, Col2 = $"Test{i}" });
+
+            //Act
+            source.LinkTo2(row);
+            row.LinkTo2(dest);
+            row.LinkErrorTo2(errorDest);
+            source.Execute();
+            dest.Wait();
+            errorDest.Wait();
+
+
+        }
 
         [Fact]
         public void LinkingSimpleMultitree()

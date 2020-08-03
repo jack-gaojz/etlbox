@@ -17,6 +17,7 @@ namespace ETLBox.DataFlow
         public Exception Exception { get; private set; }
         //protected CancellationTokenSource tokenSource = new CancellationTokenSource();
         //protected CancellationToken? token => tokenSource?.Token ?? null;
+        public ErrorSource ErrorSource { get; set; }
 
         protected int? _loggingThresholdRows;
         public virtual int? LoggingThresholdRows
@@ -85,6 +86,14 @@ namespace ETLBox.DataFlow
         {
             this.Successors.Add(target);
             target.Predecessors.Add(this);
+            return target;// as IDataFlowLinkSource<TOutput>;
+        }
+
+        public DataFlowTask LinkErrorTo2(DataFlowTask target)
+        {
+            if (ErrorSource == null)
+                ErrorSource = new ErrorSource();
+            ErrorSource.LinkTo2(target);
             return target;// as IDataFlowLinkSource<TOutput>;
         }
 

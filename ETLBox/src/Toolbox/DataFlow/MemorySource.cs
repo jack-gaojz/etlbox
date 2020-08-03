@@ -78,7 +78,7 @@ namespace ETLBox.DataFlow.Connectors
                 LogProgress();
                 //token.Value.ThrowIfCancellationRequested();
             }
-            Buffer.Complete();
+            Buffer.Complete();            
         }
 
     }
