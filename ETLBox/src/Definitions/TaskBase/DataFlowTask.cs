@@ -98,27 +98,6 @@ namespace ETLBox.DataFlow
             return LinkTo2(target);
         }
 
-
-        protected void InitBufferRecursively()
-        {
-            foreach (DataFlowTask predecessor in Predecessors)
-                if (!predecessor.WereBufferInitialized)
-                    predecessor.InitBufferRecursively();
-
-            if (!WereBufferInitialized)
-            {
-                InitBufferObjects();
-                WereBufferInitialized = true;
-            }
-
-            foreach (DataFlowTask successor in Successors)
-                if (!successor.WereBufferInitialized)
-                    successor.InitBufferRecursively();
-        }
-
-        protected virtual void InitBufferObjects() { } //abstract
-
-
         protected void LinkBuffersRecursively()
         {
             foreach (DataFlowTask predecessor in Predecessors)
@@ -150,6 +129,38 @@ namespace ETLBox.DataFlow
             throw new NotImplementedException("This component can't be used to link to something");
         }
 
+        #endregion
+
+        #region Network initialization
+
+        protected void InitNetworkRecursively()
+        {
+            InitBufferRecursively();
+            LinkBuffersRecursively();
+            SetCompletionTaskRecursively();
+            RunComponentInitializationRecursively();
+        }
+
+
+        protected void InitBufferRecursively()
+        {
+            foreach (DataFlowTask predecessor in Predecessors)
+                if (!predecessor.WereBufferInitialized)
+                    predecessor.InitBufferRecursively();
+
+            if (!WereBufferInitialized)
+            {
+                InitBufferObjects();
+                WereBufferInitialized = true;
+            }
+
+            foreach (DataFlowTask successor in Successors)
+                if (!successor.WereBufferInitialized)
+                    successor.InitBufferRecursively();
+        }
+
+        protected virtual void InitBufferObjects() { } //abstract
+
         protected void RunComponentInitializationRecursively()
         {
             foreach (DataFlowTask predecessor in Predecessors)
@@ -169,6 +180,9 @@ namespace ETLBox.DataFlow
 
         protected virtual void OnComponentInitialization() { } //abstract
 
+        #endregion
+
+        #region Completion tasks handling
 
         protected void SetCompletionTaskRecursively()
         {
@@ -181,7 +195,7 @@ namespace ETLBox.DataFlow
                 List<Task> PredecessorCompletionTasks = CollectCompletionFromPredecessors();
                 if (PredecessorCompletionTasks.Count > 0)
                 {
-                    PredecessorCompletion = Task.WhenAll(PredecessorCompletionTasks).ContinueWith(CompleteOrFaultOnPredecssorCompletion);
+                    PredecessorCompletion = Task.WhenAll(PredecessorCompletionTasks).ContinueWith(CompleteOrFaultOnPredecessorCompletion);
                     Completion = Task.WhenAll(PredecessorCompletion, BufferCompletion).ContinueWith(CompleteOrFaultCompletion);
                 }
             }
@@ -202,35 +216,26 @@ namespace ETLBox.DataFlow
             return CompletionTasks;
         }
 
-        protected void InitNetworkRecursively()
-        {
-            InitBufferRecursively();
-            LinkBuffersRecursively();
-            SetCompletionTaskRecursively();
-            RunComponentInitializationRecursively();
-        }
-
-
-        protected void FaultPredecessorsRecursively(Exception e)
-        {
-            Exception = e;
-            FaultBufferExplicitly(e);
-            foreach (DataFlowTask pre in Predecessors)
-                pre.FaultPredecessorsRecursively(e);
-        }
-
-
-        protected virtual void FaultBufferExplicitly(Exception e) {  } //abstract
-
         /// <summary>
         /// Predecessor completion task (Buffer of predecessors and Completion of predecessors) ran to completion or are faulted.
         /// Now complete or fault the current buffer.
         /// </summary>
         /// <param name="t">t is the continuation of Task.WhenAll of the predecessors buffer and predecessor completion tasks</param>
-        protected virtual void CompleteOrFaultOnPredecssorCompletion(Task t) {
-            //No need to implement this for sources
-            throw new NotImplementedException("No Buffer found to complete. Are you trying to writing into a dataflow source?");
+        protected void CompleteOrFaultOnPredecessorCompletion(Task t)
+        {
+            if (t.IsFaulted)
+            {
+                FaultBuffer(t.Exception.Flatten());
+                throw t.Exception.Flatten();
+            }
+            else
+            {
+                CompleteBuffer();
+            }
         }
+
+        protected virtual void CompleteBuffer() { } //abstract
+        protected virtual void FaultBuffer(Exception e) { } //abstract
 
         protected void CompleteOrFaultCompletion(Task t)
         {
@@ -248,6 +253,14 @@ namespace ETLBox.DataFlow
         protected virtual void CleanUpOnSuccess() { }
 
         protected virtual void CleanUpOnFaulted(Exception e) {  }
+
+        protected void FaultPredecessorsRecursively(Exception e)
+        {
+            Exception = e;
+            FaultBuffer(e);
+            foreach (DataFlowTask pre in Predecessors)
+                pre.FaultPredecessorsRecursively(e);
+        }
 
         #endregion
 

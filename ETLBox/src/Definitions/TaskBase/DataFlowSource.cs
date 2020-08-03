@@ -42,23 +42,15 @@ namespace ETLBox.DataFlow
         protected virtual void OnExecutionDoSynchronousWork() { } //abstract
         protected virtual void OnExecutionDoAsyncWork() { } //abstract
 
-        protected override void FaultBufferExplicitly(Exception e)
+        protected override void CompleteBuffer()
+        {
+            SourceBlock.Complete();
+        }
+
+        protected override void FaultBuffer(Exception e)
         {
             SourceBlock.Fault(e);
         }
-
-        //protected override void LinkBuffers(DataFlowTask successor, LinkPredicate linkPredicate)
-        //{
-        //    var s = successor as IDataFlowLinkTarget<TOutput>;
-        //    if (linkPredicate.Predicate != null)
-        //    {
-        //        this.SourceBlock.LinkTo<TOutput>(s.TargetBlock, linkPredicate.GetPredicate<TOutput>());
-        //        if (linkPredicate.VoidPredicate != null)
-        //            this.SourceBlock.LinkTo<TOutput>(DataflowBlock.NullTarget<TOutput>(), linkPredicate.GetVoidPredicate<TOutput>());
-        //    }
-        //    else
-        //        this.SourceBlock.LinkTo<TOutput>(s.TargetBlock);
-        //}
 
         protected override void LinkBuffers(DataFlowTask successor, LinkPredicate linkPredicate)
         {

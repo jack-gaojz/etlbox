@@ -13,20 +13,22 @@ namespace ETLBox.DataFlow
 
         protected override Task BufferCompletion => TargetBlock.Completion;
 
-        protected override void CompleteOrFaultOnPredecssorCompletion(Task t)
+        //protected override void CompleteOrFaultOnPredecessorCompletion(Task t)
+        //{
+        //    if (t.IsFaulted)
+        //    {
+        //        TargetBlock.Fault(t.Exception.Flatten());
+        //        throw t.Exception.Flatten();
+        //    }
+        //    else TargetBlock.Complete();
+        //}
+
+        protected override void CompleteBuffer()
         {
-            if (!TargetBlock.Completion.IsCompleted)
-                {
-                if (t.IsFaulted)
-                {
-                    TargetBlock.Fault(t.Exception.Flatten());
-                    throw t.Exception.Flatten();
-                }
-                else TargetBlock.Complete();
-                }
+            TargetBlock.Complete();
         }
 
-        protected override void FaultBufferExplicitly(Exception e)
+        protected override void FaultBuffer(Exception e)
         {
             TargetBlock.Fault(e);
         }
