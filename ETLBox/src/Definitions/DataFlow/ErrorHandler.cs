@@ -12,7 +12,7 @@ namespace ETLBox.DataFlow
         public bool HasErrorBuffer => ErrorBuffer != null;
 
 
-        public void LinkErrorTo(IDataFlowLinkTarget<ETLBoxError> target, Task completion)
+        public void LinkErrorTo(IDataFlowDestination<ETLBoxError> target, Task completion)
         {
             ErrorBuffer = new BufferBlock<ETLBoxError>();
             ErrorSourceBlock.LinkTo(target.TargetBlock, new DataflowLinkOptions());

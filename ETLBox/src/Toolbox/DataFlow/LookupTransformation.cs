@@ -25,7 +25,7 @@ namespace ETLBox.DataFlow.Transformations
         /* Public Properties */
         public override ISourceBlock<TInput> SourceBlock => RowTransformation.SourceBlock;
         public override ITargetBlock<TInput> TargetBlock => RowTransformation.TargetBlock;
-        public IDataFlowSource<TSourceOutput> Source
+        public IDataFlowExecutableSource<TSourceOutput> Source
         {
             get
             {
@@ -55,7 +55,7 @@ namespace ETLBox.DataFlow.Transformations
         CustomDestination<TSourceOutput> LookupBuffer { get; set; }
         RowTransformation<TInput, TInput> RowTransformation { get; set; }
         Func<TInput, TInput> _rowTransformationFunc;
-        IDataFlowSource<TSourceOutput> _source;
+        IDataFlowExecutableSource<TSourceOutput> _source;
         LookupTypeInfo TypeInfo { get; set; }
 
         public LookupTransformation()
@@ -64,18 +64,18 @@ namespace ETLBox.DataFlow.Transformations
             DefaultInitWithMatchRetrieveAttributes();
         }
 
-        public LookupTransformation(IDataFlowSource<TSourceOutput> lookupSource) : this()
+        public LookupTransformation(IDataFlowExecutableSource<TSourceOutput> lookupSource) : this()
         {
             Source = lookupSource;
         }
 
-        public LookupTransformation(IDataFlowSource<TSourceOutput> lookupSource, Func<TInput, TInput> transformationFunc)
+        public LookupTransformation(IDataFlowExecutableSource<TSourceOutput> lookupSource, Func<TInput, TInput> transformationFunc)
             : this(lookupSource)
         {
             TransformationFunc = transformationFunc;
         }
 
-        public LookupTransformation(IDataFlowSource<TSourceOutput> lookupSource, Func<TInput, TInput> transformationFunc, List<TSourceOutput> lookupList)
+        public LookupTransformation(IDataFlowExecutableSource<TSourceOutput> lookupSource, Func<TInput, TInput> transformationFunc, List<TSourceOutput> lookupList)
             : this(lookupSource, transformationFunc)
         {
             LookupData = lookupList;
@@ -157,10 +157,10 @@ namespace ETLBox.DataFlow.Transformations
             LookupData.Add(sourceRow);
         }
 
-        public void LinkLookupSourceErrorTo(IDataFlowLinkTarget<ETLBoxError> target) =>
+        public void LinkLookupSourceErrorTo(IDataFlowDestination<ETLBoxError> target) =>
             Source.LinkErrorTo(target);
 
-        public void LinkLookupTransformationErrorTo(IDataFlowLinkTarget<ETLBoxError> target) =>
+        public void LinkLookupTransformationErrorTo(IDataFlowDestination<ETLBoxError> target) =>
             RowTransformation.LinkErrorTo(target);
     }
 
@@ -173,15 +173,15 @@ namespace ETLBox.DataFlow.Transformations
         public LookupTransformation() : base()
         { }
 
-        public LookupTransformation(IDataFlowSource<ExpandoObject> lookupSource)
+        public LookupTransformation(IDataFlowExecutableSource<ExpandoObject> lookupSource)
             : base(lookupSource)
         { }
 
-        public LookupTransformation(IDataFlowSource<ExpandoObject> lookupSource, Func<ExpandoObject, ExpandoObject> transformationFunc)
+        public LookupTransformation(IDataFlowExecutableSource<ExpandoObject> lookupSource, Func<ExpandoObject, ExpandoObject> transformationFunc)
             : base(lookupSource, transformationFunc)
         { }
 
-        public LookupTransformation(IDataFlowSource<ExpandoObject> lookupSource, Func<ExpandoObject, ExpandoObject> transformationFunc, List<ExpandoObject> lookupList)
+        public LookupTransformation(IDataFlowExecutableSource<ExpandoObject> lookupSource, Func<ExpandoObject, ExpandoObject> transformationFunc, List<ExpandoObject> lookupList)
             : base(lookupSource, transformationFunc, lookupList)
         { }
     }

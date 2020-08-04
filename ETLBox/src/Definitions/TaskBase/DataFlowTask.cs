@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using TSQL.Clauses;
 
 namespace ETLBox.DataFlow
 {
@@ -79,23 +80,27 @@ namespace ETLBox.DataFlow
 
         }
 
-        public DataFlowTask LinkTo2(DataFlowTask target)
-        {
-            this.Successors.Add(target);
-            target.Predecessors.Add(this);
-            return target;// as IDataFlowLinkSource<TOutput>;
-        }
+        //public DataFlowTask LinkTo2(DataFlowTask target)
+        //{
+        //    this.Successors.Add(target);
+        //    target.Predecessors.Add(this);
+        //    return target;// as IDataFlowLinkSource<TOutput>;
+        //}
 
-        public DataFlowTask LinkTo2(DataFlowTask target, object predicate)
-        {
-            LinkPredicates.Add(target, new LinkPredicate(predicate));
-            return LinkTo2(target);
-        }
+        //public DataFlowTask LinkTo2(DataFlowTask target, object predicate)
+        //{
+        //    LinkPredicates.Add(target, new LinkPredicate(predicate));
+        //    return LinkTo2(target);
+        //}
 
-        public DataFlowTask LinkTo2(DataFlowTask target, object predicate, object voidPredicate)
+        protected IDataFlowSource<T> InternalLinkTo<T>(IDataFlowDestination target, object predicate = null, object voidPredicate = null)
         {
-            LinkPredicates.Add(target, new LinkPredicate(predicate, voidPredicate));
-            return LinkTo2(target);
+            var t = target as DataFlowTask;
+            LinkPredicates.Add(t, new LinkPredicate(predicate, voidPredicate));
+            this.Successors.Add(t);
+            t.Predecessors.Add(this);
+            var res = target as IDataFlowSource<T>;
+            return res;
         }
 
         protected void LinkBuffersRecursively()
@@ -269,12 +274,12 @@ namespace ETLBox.DataFlow
         public Exception Exception { get; private set; }
         public ErrorSource ErrorSource { get; set; }
 
-        public DataFlowTask LinkErrorTo2(DataFlowTask target)
+        public IDataFlowSource<ETLBoxError> LinkErrorTo2(IDataFlowDestination<ETLBoxError> target)
         {
             if (ErrorSource == null)
                 ErrorSource = new ErrorSource();
-            ErrorSource.LinkTo2(target);
-            return target;// as IDataFlowLinkSource<TOutput>;
+            ErrorSource.LinkTo(target);
+            return target as IDataFlowSource<ETLBoxError>;
         }
 
         #endregion

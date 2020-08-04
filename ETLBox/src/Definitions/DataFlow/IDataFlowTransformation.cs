@@ -1,7 +1,7 @@
 ﻿namespace ETLBox.DataFlow
 {
-    public interface IDataFlowTransformation<TInput, TOutput> : IDataFlowLinkSource<TOutput>, IDataFlowLinkTarget<TInput>
-    {
+    public interface IDataFlowTransformation<TInput, TOutput> : IDataFlowSource<TOutput>, IDataFlowDestination<TInput>
+    { 
 
     }
 }

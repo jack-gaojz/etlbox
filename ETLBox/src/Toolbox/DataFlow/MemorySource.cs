@@ -13,7 +13,7 @@ namespace ETLBox.DataFlow.Connectors
     /// Reads data from a memory source. While reading the data from the list, data is also asnychronously posted into the targets.
     /// Data is read a as string from the source and dynamically converted into the corresponding data format.
     /// </summary>
-    public class MemorySource<TOutput> : DataFlowSource<TOutput>, ITask, IDataFlowSource<TOutput>
+    public class MemorySource<TOutput> : DataFlowSource<TOutput>
     {
         public override string TaskName => $"Read data from memory";
         public IEnumerable<TOutput> Data { get; set; }

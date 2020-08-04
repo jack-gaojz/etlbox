@@ -14,7 +14,7 @@ namespace ETLBox.DataFlow
 
         protected override void LinkBuffers(DataFlowTask successor, LinkPredicate linkPredicate)
         {
-            var s = successor as IDataFlowLinkTarget<ETLBoxError>;
+            var s = successor as IDataFlowDestination<ETLBoxError>;
             var lp = new Linker<ETLBoxError>(linkPredicate?.Predicate, linkPredicate?.VoidPredicate);
             lp.LinkBlocksWithPredicates(SourceBlock, s.TargetBlock);
         }

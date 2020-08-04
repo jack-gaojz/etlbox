@@ -7,6 +7,7 @@ using ETLBoxTests.Helper;
 using FluentAssertions;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Sdk;
@@ -40,8 +41,8 @@ namespace ETLBoxTests.DataFlowTests
             MemoryDestination<MySimpleRow> dest = new MemoryDestination<MySimpleRow>();
 
             //Act
-            source.LinkTo2(row);
-            row.LinkTo2(dest);
+            source.LinkTo(row);
+            row.LinkTo(dest);
 
             if (processing == "sync")
             {
@@ -92,8 +93,8 @@ namespace ETLBoxTests.DataFlowTests
             MemoryDestination<MySimpleRow> dest = new MemoryDestination<MySimpleRow>();
 
             //Act
-            source.LinkTo2(row);
-            row.LinkTo2(dest);
+            source.LinkTo(row);
+            row.LinkTo(dest);
             try
             {
                 if (processing == "sync")
@@ -156,8 +157,8 @@ namespace ETLBoxTests.DataFlowTests
             MemoryDestination<ETLBoxError> errorDest = new MemoryDestination<ETLBoxError>();
 
             //Act
-            source.LinkTo2(row);
-            row.LinkTo2(dest);
+            source.LinkTo(row);
+            row.LinkTo(dest);
             row.LinkErrorTo2(errorDest);
             source.Execute();
             dest.Wait();
@@ -193,11 +194,11 @@ namespace ETLBoxTests.DataFlowTests
             MemoryDestination<MySimpleRow> dest2 = new MemoryDestination<MySimpleRow>();
 
             //Act
-            source1.LinkTo2(row);
-            source2.LinkTo2(row);
-            row.LinkTo2(multi);
-            multi.LinkTo2(dest1);
-            multi.LinkTo2(dest2);
+            source1.LinkTo(row);
+            source2.LinkTo(row);
+            row.LinkTo(multi);
+            multi.LinkTo(dest1);
+            multi.LinkTo(dest2);
 
             source1.Execute();
             source2.Execute();
@@ -205,7 +206,7 @@ namespace ETLBoxTests.DataFlowTests
             dest2.Wait();
 
             //Assert
-            dest1.Data.Should().BeEquivalentTo(CreateDemoData(1,5));
+            dest1.Data.Should().BeEquivalentTo(CreateDemoData(1, 5));
             dest2.Data.Should().BeEquivalentTo(CreateDemoData(1, 5));
         }
 
@@ -236,13 +237,13 @@ namespace ETLBoxTests.DataFlowTests
 
             //Act
 
-            source1.LinkTo2(row1);
-            source2.LinkTo2(row1);
-            row1.LinkTo2(multi);
-            multi.LinkTo2(dest1);
-            multi.LinkTo2(dest2);
-            source3.LinkTo2(row2);
-            row2.LinkTo2(multi);
+            source1.LinkTo(row1);
+            source2.LinkTo(row1);
+            row1.LinkTo(multi);
+            multi.LinkTo(dest1);
+            multi.LinkTo(dest2);
+            source3.LinkTo(row2);
+            row2.LinkTo(multi);
             source1.Execute();
             source2.Execute();
             source3.Execute();
@@ -274,9 +275,9 @@ namespace ETLBoxTests.DataFlowTests
             //Act
             Predicate<MySimpleRow> p1 = new Predicate<MySimpleRow>(row => row.Col1 == 1);
             Predicate<MySimpleRow> p2 = new Predicate<MySimpleRow>(row => row.Col1 > 1);
-            source.LinkTo2(row);
-            row.LinkTo2(dest1, p1);
-            row.LinkTo2(dest2, p2);
+            source.LinkTo(row);
+            row.LinkTo(dest1, p1);
+            row.LinkTo(dest2, p2);
             source.Execute();
             dest1.Wait();
             dest2.Wait();
@@ -309,8 +310,8 @@ namespace ETLBoxTests.DataFlowTests
             //Act
             Predicate<MySimpleRow> p1 = new Predicate<MySimpleRow>(row => row.Col1 == 1);
             Predicate<MySimpleRow> p2 = new Predicate<MySimpleRow>(row => row.Col1 > 1);
-            source.LinkTo2(row);
-            row.LinkTo2(dest, p1, p2);
+            source.LinkTo(row);
+            row.LinkTo(dest, p1, p2);
             source.Execute();
             dest.Wait();
 
@@ -318,6 +319,71 @@ namespace ETLBoxTests.DataFlowTests
             Assert.Collection(dest.Data,
              row => Assert.True(row.Col1 == 1 && row.Col2 == "Test1")
             );
+        }
+
+        [Fact]
+        public void TypeChange()
+        {
+            //Arrange
+            MemorySource<MySimpleRow> source = new MemorySource<MySimpleRow>();
+            source.DataAsList = CreateDemoData(1, 3);
+
+            RowTransformation<MySimpleRow, ExpandoObject> row = new RowTransformation<MySimpleRow, ExpandoObject>();
+            row.TransformationFunc = row =>
+            {
+                dynamic r = new ExpandoObject();
+                r.Col1 = row.Col1;
+                r.Col2 = row.Col2;
+                return r;
+            };
+            MemoryDestination dest = new MemoryDestination();
+
+            //Act
+            source.LinkTo(row);
+            row.LinkTo(dest);
+
+            source.Execute();
+            dest.Wait();
+
+            //Assert
+            Assert.Collection(dest.Data,
+                row => { dynamic r = row as ExpandoObject; Assert.True(r.Col1 == 1 && r.Col2 == "Test1"); },
+                row => { dynamic r = row as ExpandoObject; Assert.True(r.Col1 == 2 && r.Col2 == "Test2"); },
+                row => { dynamic r = row as ExpandoObject; Assert.True(r.Col1 == 3 && r.Col2 == "Test3"); }
+            );
+        }
+
+        [Fact]
+        public void Chaining()
+        {
+            //Arrange
+            MemorySource<MySimpleRow> source = new MemorySource<MySimpleRow>();
+            source.DataAsList = CreateDemoData(1, 3);
+
+            RowTransformation<MySimpleRow, ExpandoObject> row = new RowTransformation<MySimpleRow, ExpandoObject>();
+            row.TransformationFunc = row =>
+            {
+                dynamic r = new ExpandoObject();
+                r.Col1 = row.Col1;
+                r.Col2 = row.Col2;
+                return r;
+            };
+            RowTransformation<ExpandoObject, MySimpleRow> row2 = new RowTransformation<ExpandoObject, MySimpleRow>();
+            row2.TransformationFunc = row =>
+                {
+                    dynamic r = row as ExpandoObject;
+                    return new MySimpleRow { Col1 = r.Col1, Col2 = r.Col2 };
+                };
+            MemoryDestination<MySimpleRow> dest = new MemoryDestination<MySimpleRow>();
+
+            //Act
+            source.LinkTo<ExpandoObject>(row).LinkTo<MySimpleRow>(row2).LinkTo(dest);
+
+            source.Execute();
+            dest.Wait();
+
+            //Assert
+            dest.Data.Should().BeEquivalentTo(CreateDemoData(1, 3));
         }
 
     }

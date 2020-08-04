@@ -22,7 +22,7 @@ namespace ETLBox.DataFlow.Transformations
     /// join.LinkTo(dest);
     /// </code>
     /// </example>
-    public class MergeJoin<TInput1, TInput2, TOutput> : DataFlowTask, ITask, IDataFlowLinkSource<TOutput>
+    public class MergeJoin<TInput1, TInput2, TOutput> : DataFlowTask, ITask//, IDataFlowLinkSource<TOutput>
     {
         private Func<TInput1, TInput2, TOutput> _mergeJoinFunc;
 
@@ -76,29 +76,29 @@ namespace ETLBox.DataFlow.Transformations
             this.TaskName = name;
         }
 
-        public IDataFlowLinkSource<TOutput> LinkTo(IDataFlowLinkTarget<TOutput> target)
+        public IDataFlowSource<TOutput> LinkTo(IDataFlowDestination<TOutput> target)
             => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo(target);
 
-        public IDataFlowLinkSource<TOutput> LinkTo(IDataFlowLinkTarget<TOutput> target, Predicate<TOutput> predicate)
+        public IDataFlowSource<TOutput> LinkTo(IDataFlowDestination<TOutput> target, Predicate<TOutput> predicate)
             => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo(target, predicate);
 
-        public IDataFlowLinkSource<TOutput> LinkTo(IDataFlowLinkTarget<TOutput> target, Predicate<TOutput> rowsToKeep, Predicate<TOutput> rowsIntoVoid)
+        public IDataFlowSource<TOutput> LinkTo(IDataFlowDestination<TOutput> target, Predicate<TOutput> rowsToKeep, Predicate<TOutput> rowsIntoVoid)
             => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo(target, rowsToKeep, rowsIntoVoid);
 
-        public IDataFlowLinkSource<TConvert> LinkTo<TConvert>(IDataFlowLinkTarget<TOutput> target)
+        public IDataFlowSource<TConvert> LinkTo<TConvert>(IDataFlowDestination<TOutput> target)
             => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo<TConvert>(target);
 
-        public IDataFlowLinkSource<TConvert> LinkTo<TConvert>(IDataFlowLinkTarget<TOutput> target, Predicate<TOutput> predicate)
+        public IDataFlowSource<TConvert> LinkTo<TConvert>(IDataFlowDestination<TOutput> target, Predicate<TOutput> predicate)
             => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo<TConvert>(target, predicate);
 
-        public IDataFlowLinkSource<TConvert> LinkTo<TConvert>(IDataFlowLinkTarget<TOutput> target, Predicate<TOutput> rowsToKeep, Predicate<TOutput> rowsIntoVoid)
+        public IDataFlowSource<TConvert> LinkTo<TConvert>(IDataFlowDestination<TOutput> target, Predicate<TOutput> rowsToKeep, Predicate<TOutput> rowsIntoVoid)
             => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo<TConvert>(target, rowsToKeep, rowsIntoVoid);
 
-        public void LinkErrorTo(IDataFlowLinkTarget<ETLBoxError> target) =>
+        public void LinkErrorTo(IDataFlowDestination<ETLBoxError> target) =>
             Transformation.LinkErrorTo(target);
     }
 
-    public class MergeJoinTarget<TInput> : GenericTask, IDataFlowDestination<TInput>
+    public class MergeJoinTarget<TInput> : DataFlowTask, IDataFlowDestination<TInput>
     {
         public ITargetBlock<TInput> TargetBlock { get; set; }
 

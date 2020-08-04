@@ -24,7 +24,7 @@ namespace ETLBox.DataFlow
         protected override void FaultBuffer(Exception e) => TargetBlock.Fault(e);
 
 
-        public void LinkErrorTo(IDataFlowLinkTarget<ETLBoxError> target)
+        public void LinkErrorTo(IDataFlowDestination<ETLBoxError> target)
              => ErrorHandler.LinkErrorTo(target, TargetAction.Completion);
 
         protected virtual void CleanUp()

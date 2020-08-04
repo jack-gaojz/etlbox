@@ -13,15 +13,6 @@ namespace ETLBox.DataFlow
 
         protected override Task BufferCompletion => TargetBlock.Completion;
 
-        //protected override void CompleteOrFaultOnPredecessorCompletion(Task t)
-        //{
-        //    if (t.IsFaulted)
-        //    {
-        //        TargetBlock.Fault(t.Exception.Flatten());
-        //        throw t.Exception.Flatten();
-        //    }
-        //    else TargetBlock.Complete();
-        //}
 
         protected override void CompleteBuffer()
         {
@@ -35,42 +26,50 @@ namespace ETLBox.DataFlow
 
         protected override void LinkBuffers(DataFlowTask successor, LinkPredicate linkPredicate)
         {
-            var s = successor as IDataFlowLinkTarget<TOutput>;
+            var s = successor as IDataFlowDestination<TOutput>;
             var lp = new Linker<TOutput>(linkPredicate?.Predicate, linkPredicate?.VoidPredicate);
             lp.LinkBlocksWithPredicates(SourceBlock, s.TargetBlock);
         }
-        //protected override void LinkBuffers(DataFlowTask successor, LinkPredicate linkPredicate)
-        //{
-        //    var s = successor as IDataFlowLinkTarget<TOutput>;
-        //    if (linkPredicate.Predicate != null)
-        //    {
-        //        this.SourceBlock.LinkTo<TOutput>(s.TargetBlock, linkPredicate.GetPredicate<TOutput>());
-        //        if (linkPredicate.VoidPredicate != null)
-        //            this.SourceBlock.LinkTo<TOutput>(DataflowBlock.NullTarget<TOutput>(), linkPredicate.GetVoidPredicate<TOutput>());
-        //    }
-        //    else
-        //        this.SourceBlock.LinkTo<TOutput>(s.TargetBlock);
-        //}
 
 
+        public IDataFlowSource<TOutput> LinkTo(IDataFlowDestination<TOutput> target)
+            => InternalLinkTo<TOutput>(target);
 
+        public IDataFlowSource<TOutput> LinkTo(IDataFlowDestination<TOutput> target, Predicate<TOutput> rowsToKeep)
+            => InternalLinkTo<TOutput>(target, rowsToKeep);
 
-        public IDataFlowLinkSource<TOutput> LinkTo(IDataFlowLinkTarget<TOutput> target)
-        => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo(target);
+        public IDataFlowSource<TOutput> LinkTo(IDataFlowDestination<TOutput> target, Predicate<TOutput> rowsToKeep, Predicate<TOutput> rowsIntoVoid)
+            => InternalLinkTo<TOutput>(target, rowsToKeep, rowsIntoVoid);
 
-        public IDataFlowLinkSource<TOutput> LinkTo(IDataFlowLinkTarget<TOutput> target, Predicate<TOutput> predicate)
-            => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo(target, predicate);
+        public IDataFlowSource<TConvert> LinkTo<TConvert>(IDataFlowDestination<TOutput> target)
+          => InternalLinkTo<TConvert>(target);
 
-        public IDataFlowLinkSource<TOutput> LinkTo(IDataFlowLinkTarget<TOutput> target, Predicate<TOutput> rowsToKeep, Predicate<TOutput> rowsIntoVoid)
-            => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo(target, rowsToKeep, rowsIntoVoid);
+        public IDataFlowSource<TConvert> LinkTo<TConvert>(IDataFlowDestination<TOutput> target, Predicate<TOutput> rowsToKeep)
+            => InternalLinkTo<TConvert>(target, rowsToKeep);
 
-        public IDataFlowLinkSource<TConvert> LinkTo<TConvert>(IDataFlowLinkTarget<TOutput> target)
-            => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo<TConvert>(target);
+        public IDataFlowSource<TConvert> LinkTo<TConvert>(IDataFlowDestination<TOutput> target, Predicate<TOutput> rowsToKeep, Predicate<TOutput> rowsIntoVoid)
+            => InternalLinkTo<TConvert>(target, rowsToKeep, rowsIntoVoid);
 
-        public IDataFlowLinkSource<TConvert> LinkTo<TConvert>(IDataFlowLinkTarget<TOutput> target, Predicate<TOutput> predicate)
-            => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo<TConvert>(target, predicate);
+        //public IDataFlowLinkSource<TOutput> LinkTo(IDataFlowLinkTarget<TOutput> target)
+        //=> (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo(target);
 
-        public IDataFlowLinkSource<TConvert> LinkTo<TConvert>(IDataFlowLinkTarget<TOutput> target, Predicate<TOutput> rowsToKeep, Predicate<TOutput> rowsIntoVoid)
-            => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo<TConvert>(target, rowsToKeep, rowsIntoVoid);
+        //public IDataFlowLinkSource<TOutput> LinkTo(IDataFlowLinkTarget<TOutput> target, Predicate<TOutput> predicate)
+        //    => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo(target, predicate);
+
+        //public IDataFlowLinkSource<TOutput> LinkTo(IDataFlowLinkTarget<TOutput> target, Predicate<TOutput> rowsToKeep, Predicate<TOutput> rowsIntoVoid)
+        //    => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo(target, rowsToKeep, rowsIntoVoid);
+
+        //public IDataFlowLinkSource<TConvert> LinkTo<TConvert>(IDataFlowLinkTarget<TOutput> target)
+        //    => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo<TConvert>(target);
+
+        //public IDataFlowLinkSource<TConvert> LinkTo<TConvert>(IDataFlowLinkTarget<TOutput> target, Predicate<TOutput> predicate)
+        //    => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo<TConvert>(target, predicate);
+
+        //public IDataFlowLinkSource<TConvert> LinkTo<TConvert>(IDataFlowLinkTarget<TOutput> target, Predicate<TOutput> rowsToKeep, Predicate<TOutput> rowsIntoVoid)
+        //    => (new DataFlowLinker<TOutput>(this, SourceBlock)).LinkTo<TConvert>(target, rowsToKeep, rowsIntoVoid);
+
+        public void LinkErrorTo(IDataFlowDestination<ETLBoxError> target)
+        { }
+          
     }
 }

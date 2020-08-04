@@ -64,7 +64,7 @@ namespace ETLBox.DataFlow.Transformations
             CopyTaskProperties(task);
         }
 
-        public void LinkErrorTo(IDataFlowLinkTarget<ETLBoxError> target)
+        public void LinkErrorTo(IDataFlowDestination<ETLBoxError> target)
             => ErrorHandler.LinkErrorTo(target, TransformBlock.Completion);
 
         protected override void InitBufferObjects()
