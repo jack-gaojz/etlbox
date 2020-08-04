@@ -31,12 +31,12 @@ namespace ETLBox.DataFlow
 
         #region Linking
 
-        public List<DataFlowTask> Predecessors { get; set; } = new List<DataFlowTask>();
-        public List<DataFlowTask> Successors { get; set; } = new List<DataFlowTask>();
+        public List<DataFlowTask> Predecessors { get; protected set; } = new List<DataFlowTask>();
+        public List<DataFlowTask> Successors { get; protected set; } = new List<DataFlowTask>();
 
         public Task Completion { get; protected set; }
         protected virtual Task BufferCompletion { get; }
-        protected Task PredecessorCompletion { get; set; }
+        protected Task PredecessorCompletion { get;  set; }
 
         protected bool WereBufferInitialized;
         protected bool ReadyForProcessing;
@@ -141,6 +141,8 @@ namespace ETLBox.DataFlow
 
         #region Completion tasks handling
 
+        public Action OnCompletion { get; set; }
+
         protected void SetCompletionTaskRecursively()
         {
             foreach (DataFlowTask predecessor in Predecessors)
@@ -204,6 +206,7 @@ namespace ETLBox.DataFlow
             }
             else
             {
+                OnCompletion?.Invoke();
                 CleanUpOnSuccess();
             }
         }

@@ -98,8 +98,9 @@ namespace ETLBoxTests.DataFlowTests
             {
                 SourceTableDefinition = _sourcedef
             };
-            DbDestination<MySimpleRow> dest = new DbDestination<MySimpleRow>(connection)
+            DbDestination<MySimpleRow> dest = new DbDestination<MySimpleRow>()
             {
+                ConnectionManager = connection,
                 DestinationTableDefinition = _destdef
             };
             source.LinkTo(dest);

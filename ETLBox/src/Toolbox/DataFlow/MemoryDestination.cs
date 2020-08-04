@@ -1,4 +1,5 @@
 ﻿using ETLBox.ControlFlow;
+using System;
 using System.Collections.Concurrent;
 using System.Dynamic;
 using System.Threading.Tasks.Dataflow;
@@ -6,21 +7,29 @@ using System.Threading.Tasks.Dataflow;
 namespace ETLBox.DataFlow.Connectors
 {
     /// <summary>
-    /// A destination in memory - it will store all you data in a list.
+    /// A destination in memory - it will store all you data in a blocking collection.
     /// </summary>
     /// <see cref="MemoryDestination"/>
     /// <typeparam name="TInput">Type of data input.</typeparam>
-    public class MemoryDestination<TInput> : DataFlowDestination<TInput>, ITask, IDataFlowDestination<TInput>
+    public class MemoryDestination<TInput> : DataFlowDestination<TInput>
     {
-        /* ITask Interface */
-        public override string TaskName => $"Write data into memory";
+        #region Public properties
 
+        public override string TaskName => $"Write data into memory";
         public BlockingCollection<TInput> Data { get; set; } = new BlockingCollection<TInput>();
+
+        #endregion
+
+        #region Constructors
 
         public MemoryDestination()
         {
-            InitBufferObjects();
+
         }
+
+        #endregion
+
+        #region Implement abstract methods
 
         protected override void InitBufferObjects()
         {
@@ -29,32 +38,37 @@ namespace ETLBox.DataFlow.Connectors
                 BoundedCapacity = MaxBufferSize,
                 MaxDegreeOfParallelism = 1
             });
-            //SetCompletionTask();
         }
 
-        internal MemoryDestination(ITask callingTask) : this()
+        protected override void InitComponent() { }
+
+        protected override void CleanUpOnSuccess()
         {
-            CopyTaskProperties(callingTask);
+            Data?.CompleteAdding();
+            NLogFinish();
+        }
+        protected override void CleanUpOnFaulted(Exception e)
+        {
+            Data?.CompleteAdding();
         }
 
-        protected void WriteRecord(TInput data)
+        #endregion
+
+        #region Implementation
+
+        protected void WriteRecord(TInput row)
         {
             if (Data == null) Data = new BlockingCollection<TInput>();
-            if (data == null) return;
-            Data.Add(data);
+            if (row == null) return;
+            Data.Add(row);
             LogProgress();
         }
 
-        protected override void CleanUp()
-        {
-            Data?.CompleteAdding();
-            OnCompletion?.Invoke();
-            NLogFinish();
-        }
+        #endregion
     }
 
     /// <summary>
-    /// A destination in memory - it will store all you data in a list.
+    /// A destination in memory - it will store all you data in a blocking collection.
     /// The MemoryDestination uses a dynamic object as input type. If you need other data types, use the generic CsvDestination instead.
     /// </summary>
     /// <see cref="MemoryDestination{TInput}"/>

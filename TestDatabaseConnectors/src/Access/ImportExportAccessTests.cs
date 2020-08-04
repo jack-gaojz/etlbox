@@ -65,8 +65,9 @@ namespace ETLBoxTests.DataFlowTests
 
             //Act
             CsvSource<string[]> source = new CsvSource<string[]>("res/Access/AccessData.csv");
-            DbDestination<string[]> dest = new DbDestination<string[]>(batchSize: 2)
+            DbDestination<string[]> dest = new DbDestination<string[]>()
             {
+                BatchSize = 2,
                 DestinationTableDefinition = testTable,
                 ConnectionManager = AccessOdbcConnection
             };

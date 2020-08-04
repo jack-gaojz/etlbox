@@ -9,7 +9,12 @@ namespace ETLBox.DataFlow
 {
     public abstract class DataFlowSource<TOutput> : DataFlowTask, IDataFlowExecutableSource<TOutput>, IDataFlowSource<TOutput>
     {
+        #region Public properties
         public ISourceBlock<TOutput> SourceBlock => this.Buffer;
+
+        #endregion
+
+        #region Buffer and completion
         protected BufferBlock<TOutput> Buffer { get; set; } = new BufferBlock<TOutput>();
         protected override Task BufferCompletion => Buffer.Completion;
         protected override void InitBufferObjects()
@@ -20,9 +25,14 @@ namespace ETLBox.DataFlow
             });
             Completion = new Task(OnExecutionDoAsyncWork, TaskCreationOptions.LongRunning);
         }
+        protected override void CompleteBuffer() => SourceBlock.Complete();
+        protected override void FaultBuffer(Exception e) => SourceBlock.Fault(e);
+
+        #endregion
 
         public ErrorHandler ErrorHandler { get; set; } = new ErrorHandler(); //remove
 
+        #region Execution and IDataFlowExecutableSource
         public virtual void Execute() //remove virtual
         {
             InitNetworkRecursively();
@@ -38,13 +48,12 @@ namespace ETLBox.DataFlow
             return Completion;
         }
 
-
         protected virtual void OnExecutionDoSynchronousWork() { } //abstract
         protected virtual void OnExecutionDoAsyncWork() { } //abstract
 
-        protected override void CompleteBuffer() => SourceBlock.Complete();
+        #endregion
 
-        protected override void FaultBuffer(Exception e) => SourceBlock.Fault(e);
+        #region Linking
 
         internal override void LinkBuffers(DataFlowTask successor, LinkPredicates linkPredicates)
         {
@@ -74,5 +83,6 @@ namespace ETLBox.DataFlow
         public IDataFlowSource<ETLBoxError> LinkErrorTo(IDataFlowDestination<ETLBoxError> target)
             => InternalLinkErrorTo(target);
 
+        #endregion
     }
 }

@@ -40,7 +40,8 @@ namespace ETLBox.DataFlow.Transformations
 
         protected override void InitBufferObjects()
         {
-            InMemoryTarget = new MemoryDestination<TInput1>(this);
+            InMemoryTarget = new MemoryDestination<TInput1>();
+            InMemoryTarget.CopyTaskProperties(this);
             PassingTarget = new CustomDestination<TInput2>(this, CrossJoinData);
             if (MaxBufferSize > 0) PassingTarget.MaxBufferSize = this.MaxBufferSize;
             PassingTarget.OnCompletion = () => Buffer.Complete();

@@ -7,6 +7,7 @@ namespace ETLBox.DataFlow
 {
     public abstract class DataFlowStreamDestination<TInput> : DataFlowDestination<TInput>
     {
+        #region Public properties
         /* Public properties */
         /// <summary>
         /// The Url of the webservice (e.g. https://test.com/foo) or the file name (relative or absolute)
@@ -19,13 +20,13 @@ namespace ETLBox.DataFlow
         /// </summary>
         public ResourceType ResourceType { get; set; }
 
-        protected StreamWriter StreamWriter { get; set; }
         public HttpClient HttpClient { get; set; } = new HttpClient();
 
-        protected void InitTargetAction()
-        {
-            InitBufferObjects();
-        }
+        #endregion
+
+        #region Implementation
+
+        protected StreamWriter StreamWriter { get; set; }
 
         protected override void InitBufferObjects()
         {
@@ -34,11 +35,11 @@ namespace ETLBox.DataFlow
                 MaxDegreeOfParallelism = 1,
                 BoundedCapacity = MaxBufferSize,
             });
-            //SetCompletionTask();
         }
 
         protected void WriteData(TInput data)
         {
+            NLogStartOnce();
             if (StreamWriter == null)
             {
                 CreateStreamWriterByResourceType();
@@ -55,16 +56,17 @@ namespace ETLBox.DataFlow
                 StreamWriter = new StreamWriter(HttpClient.GetStreamAsync(new Uri(Uri)).Result);
         }
 
-        protected override void CleanUp()
+        protected override void CleanUpOnSuccess()
         {
             CloseStream();
             StreamWriter?.Close();
-            OnCompletion?.Invoke();
             NLogFinish();
         }
 
         protected abstract void InitStream();
         protected abstract void WriteIntoStream(TInput data);
         protected abstract void CloseStream();
+
+        #endregion
     }
 }

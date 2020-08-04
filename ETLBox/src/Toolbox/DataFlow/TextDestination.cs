@@ -19,8 +19,7 @@ namespace ETLBox.DataFlow.Connectors
 
         public TextDestination()
         {
-            ResourceType = ResourceType.File;
-            InitTargetAction();
+            ResourceType = ResourceType.File;            
         }
 
         public TextDestination(string filename) : this()

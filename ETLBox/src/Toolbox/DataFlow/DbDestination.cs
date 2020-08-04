@@ -15,37 +15,32 @@ namespace ETLBox.DataFlow.Connectors
     /// </summary>
     /// <see cref="DbDestination"/>
     /// <typeparam name="TInput">Data type for input, preferably representing the destination table.</typeparam>
-    public class DbDestination<TInput> : DataFlowBatchDestination<TInput>, ITask, IDataFlowBatchDestination<TInput>, IDataFlowDestination<TInput>
+    public class DbDestination<TInput> : DataFlowBatchDestination<TInput>
     {
-        /* ITask Interface */
+        #region Public properties
+
         public override string TaskName => $"Write data into table {DestinationTableDefinition?.Name ?? TableName}";
 
-        /* Public properties */
         /// <summary>
         /// If you don't want ETLBox to dynamically read the destination table definition from the database,
         /// you can provide your own table definition.
         /// </summary>
         public TableDefinition DestinationTableDefinition { get; set; }
+
         /// <summary>
         /// Name of the target table that receives the data from the data flow.
         /// </summary>
         public string TableName { get; set; }
 
-        /* Private stuff */
-        TypeInfo TypeInfo { get; set; }
-        bool HasDestinationTableDefinition => DestinationTableDefinition != null;
-        bool HasTableName => !String.IsNullOrWhiteSpace(TableName);
-        TableData<TInput> TableData { get; set; }
+        public IConnectionManager BulkInsertConnectionManager { get; protected set; }
 
-        public IConnectionManager BulkInsertConnectionManager { get; set; }
+        #endregion
+
+        #region Constructors
+
         public DbDestination()
         {
-            BatchSize = DEFAULT_BATCH_SIZE;
-        }
-
-        public DbDestination(int batchSize)
-        {
-            BatchSize = batchSize;
+            TypeInfo = new TypeInfo(typeof(TInput)).GatherTypeInfo();
         }
 
         public DbDestination(string tableName) : this()
@@ -53,31 +48,29 @@ namespace ETLBox.DataFlow.Connectors
             TableName = tableName;
         }
 
-        public DbDestination(IConnectionManager connectionManager) : this()
-        {
-            ConnectionManager = connectionManager;
-        }
-
         public DbDestination(IConnectionManager connectionManager, string tableName) : this(tableName)
         {
             ConnectionManager = connectionManager;
         }
 
-        public DbDestination(string tableName, int batchSize) : this(batchSize)
+        public DbDestination(string tableName, int batchSize) : this(tableName)
         {
-            TableName = tableName;
+            BatchSize= batchSize;
         }
 
-        public DbDestination(IConnectionManager connectionManager, string tableName, int batchSize) : this(tableName, batchSize)
+        public DbDestination(IConnectionManager connectionManager, string tableName, int batchSize) : this(connectionManager, tableName)
         {
-            ConnectionManager = connectionManager;
+            BatchSize = batchSize;
         }
 
-        protected override void InitBufferObjects()
-        {
-            base.InitBufferObjects();
-            TypeInfo = new TypeInfo(typeof(TInput)).GatherTypeInfo();
-        }
+        #endregion
+
+        #region Implementation
+
+        TypeInfo TypeInfo { get; set; }
+        bool HasDestinationTableDefinition => DestinationTableDefinition != null;
+        bool HasTableName => !String.IsNullOrWhiteSpace(TableName);
+        TableData<TInput> TableData { get; set; }
 
         private void LoadTableDefinitionFromTableName()
         {
@@ -115,8 +108,9 @@ namespace ETLBox.DataFlow.Connectors
             }
             catch (Exception e)
             {
-                if (!ErrorHandler.HasErrorBuffer) throw e;
-                ErrorHandler.Send(e, ErrorHandler.ConvertErrorData<TInput[]>(data));
+                ThrowOrRedirectError(e, ErrorSource.ConvertErrorData<TInput[]>(data));
+                //if (!ErrorHandler.HasErrorBuffer) throw e;
+                //ErrorHandler.Send(e, ErrorHandler.ConvertErrorData<TInput[]>(data));
             }
         }
 
@@ -181,6 +175,8 @@ namespace ETLBox.DataFlow.Connectors
                 TableData.Rows.Add(rowResult);
             }
         }
+
+        #endregion
     }
 
     /// <summary>
@@ -193,8 +189,6 @@ namespace ETLBox.DataFlow.Connectors
     public class DbDestination : DbDestination<ExpandoObject>
     {
         public DbDestination() : base() { }
-
-        public DbDestination(int batchSize) : base(batchSize) { }
 
         public DbDestination(string tableName) : base(tableName) { }
 
