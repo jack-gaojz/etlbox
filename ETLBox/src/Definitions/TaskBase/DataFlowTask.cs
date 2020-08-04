@@ -124,7 +124,9 @@ namespace ETLBox.DataFlow
 
             if (!ReadyForProcessing)
             {
-                OnComponentInitialization();
+                NLogStart();
+                LetErrorSourceWaitForInput();
+                InitComponent();
                 ReadyForProcessing = true;
             }
 
@@ -133,7 +135,8 @@ namespace ETLBox.DataFlow
                     successor.RunComponentInitializationRecursively();
         }
 
-        protected virtual void OnComponentInitialization() { } //abstract
+
+        protected virtual void InitComponent() { } //abstract
 
         #endregion
 
@@ -194,6 +197,7 @@ namespace ETLBox.DataFlow
 
         protected void CompleteOrFaultCompletion(Task t)
         {
+            LetErrorSourceFinishUp();
             if (t.IsFaulted)
             {
                 CleanUpOnFaulted(t.Exception.Flatten());
@@ -202,6 +206,7 @@ namespace ETLBox.DataFlow
             else
             {
                 CleanUpOnSuccess();
+                NLogFinish();
             }
         }
 
@@ -231,6 +236,22 @@ namespace ETLBox.DataFlow
             ErrorSource.LinkTo(target);
             return target as IDataFlowSource<ETLBoxError>;
         }
+
+        protected void ThrowOrRedirectError(Exception e, string message)
+        {
+            if (ErrorSource == null)
+            {
+                FaultPredecessorsRecursively(e);
+                throw e;
+            }
+            ErrorSource.Send(e, message);
+        }
+
+        private void LetErrorSourceWaitForInput() =>
+            ErrorSource?.ExecuteAsync().Wait();
+
+        private void LetErrorSourceFinishUp() =>
+             ErrorSource?.SourceBlock.Complete();
 
         #endregion
 

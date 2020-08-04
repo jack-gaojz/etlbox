@@ -21,23 +21,24 @@ namespace ETLBox.DataFlow.Transformations
     /// trans.LinkTo(dest);
     /// </code>
     /// </example>
-    public class RowTransformation<TInput, TOutput> : DataFlowTransformation<TInput, TOutput>, ITask, IDataFlowTransformation<TInput, TOutput>
+    public class RowTransformation<TInput, TOutput> : DataFlowTransformation<TInput, TOutput>
     {
+
+        #region Public properties
+
         /* ITask Interface */
         public override string TaskName { get; set; } = "Execute row transformation";
 
-        /* Public Properties */
         public Func<TInput, TOutput> TransformationFunc { get; set; }
         public Action InitAction { get; set; }
-        public bool WasInitialized { get; private set; } = false;
-
-
         public override ITargetBlock<TInput> TargetBlock => TransformBlock;
         public override ISourceBlock<TOutput> SourceBlock => TransformBlock;
 
-        /* Private stuff */
-        internal TransformBlock<TInput, TOutput> TransformBlock { get; set; }
-        internal ErrorHandler ErrorHandler { get; set; } = new ErrorHandler();
+        #endregion
+
+        TransformBlock<TInput, TOutput> TransformBlock;
+
+        #region Constructors
 
         public RowTransformation()
         {
@@ -48,21 +49,12 @@ namespace ETLBox.DataFlow.Transformations
             TransformationFunc = rowTransformationFunc;
         }
 
-
         public RowTransformation(Func<TInput, TOutput> rowTransformationFunc, Action initAction) : this(rowTransformationFunc)
         {
             this.InitAction = initAction;
         }
 
-        internal RowTransformation(ITask task) : this()
-        {
-            CopyTaskProperties(task);
-        }
-
-        internal RowTransformation(ITask task, Func<TInput, TOutput> rowTransformationFunc) : this(rowTransformationFunc)
-        {
-            CopyTaskProperties(task);
-        }
+        #endregion
 
         protected override void InitBufferObjects()
         {
@@ -75,12 +67,7 @@ namespace ETLBox.DataFlow.Transformations
                     }
                     catch (Exception e)
                     {
-                        if (ErrorSource == null)
-                        {
-                            FaultPredecessorsRecursively(e);
-                            throw e;
-                        }
-                        ErrorSource.Send(e, ErrorSource.ConvertErrorData<TInput>(row));
+                        ThrowOrRedirectError(e, ErrorSource.ConvertErrorData<TInput>(row));
                         return default(TOutput);
                     }
                 }, new ExecutionDataflowBlockOptions()
@@ -90,25 +77,23 @@ namespace ETLBox.DataFlow.Transformations
             );
         }
 
-        protected override void CleanUpOnSuccess()
+        protected override void InitComponent()
         {
-            ErrorSource?.SourceBlock.Complete();
+            InitAction?.Invoke();
         }
-
 
         private TOutput WrapTransformation(TInput row)
         {
-            if (!WasInitialized)
-            {
-                ErrorSource?.ExecuteAsync().Wait();
-                InitAction?.Invoke();
-                WasInitialized = true;
-                if (!DisableLogging)
-                    NLogger.Debug(TaskName + " was initialized!", TaskType, "LOG", TaskHash, ControlFlow.ControlFlow.STAGE, ControlFlow.ControlFlow.CurrentLoadProcess?.Id);
-            }
+            TOutput result = TransformationFunc.Invoke(row);
             LogProgress();
-            return TransformationFunc.Invoke(row);
+            return result;
         }
+
+        protected override void CleanUpOnSuccess()
+        { }
+
+        protected override void CleanUpOnFaulted(Exception e)
+        { }
     }
 
     /// <summary>

@@ -58,7 +58,8 @@ namespace ETLBox.DataFlow.Transformations
 
         protected override void InitBufferObjects()
         {
-            Transformation = new RowTransformation<Tuple<TInput1, TInput2>, TOutput>(this);
+            Transformation = new RowTransformation<Tuple<TInput1, TInput2>, TOutput>();
+            Transformation.CopyTaskProperties(this);
             if (MaxBufferSize > 0) Transformation.MaxBufferSize = this.MaxBufferSize;
             JoinBlock = new JoinBlock<TInput1, TInput2>(new GroupingDataflowBlockOptions()
             {

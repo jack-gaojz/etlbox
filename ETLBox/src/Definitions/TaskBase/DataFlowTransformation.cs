@@ -6,7 +6,7 @@ using System.Threading.Tasks.Dataflow;
 
 namespace ETLBox.DataFlow
 {
-    public abstract class DataFlowTransformation<TInput, TOutput> : DataFlowTask, ITask, IDataFlowTransformation<TInput, TOutput>
+    public abstract class DataFlowTransformation<TInput, TOutput> : DataFlowTask, IDataFlowTransformation<TInput, TOutput>
     {
         public virtual ITargetBlock<TInput> TargetBlock { get; }
         public virtual ISourceBlock<TOutput> SourceBlock { get; }

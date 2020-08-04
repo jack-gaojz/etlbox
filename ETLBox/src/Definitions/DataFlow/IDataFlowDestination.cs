@@ -5,10 +5,10 @@ namespace ETLBox.DataFlow
 {
     public interface IDataFlowDestination
     {
-        Task Completion { get; }
+
     }
 
-    public interface IDataFlowDestination<TInput> : IDataFlowDestination //: IDataFlowLinkTarget<TInput>
+    public interface IDataFlowDestination<TInput> : IDataFlowDestination
     {
         //void Wait();
         ITargetBlock<TInput> TargetBlock { get; }

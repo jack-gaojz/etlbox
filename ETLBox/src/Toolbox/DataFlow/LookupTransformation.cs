@@ -88,7 +88,8 @@ namespace ETLBox.DataFlow.Transformations
 
         private void InitRowTransformation(Action initAction)
         {
-            RowTransformation = new RowTransformation<TInput, TInput>(this, _rowTransformationFunc);
+            RowTransformation = new RowTransformation<TInput, TInput>(_rowTransformationFunc);
+            RowTransformation.CopyTaskProperties(this);
             RowTransformation.InitAction = initAction;
         }
 
