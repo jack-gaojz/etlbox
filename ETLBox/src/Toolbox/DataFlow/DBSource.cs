@@ -23,63 +23,40 @@ namespace ETLBox.DataFlow.Connectors
     /// source.Execute(); //Start the data flow
     /// </code>
     /// </example>
-    public class DbSource<TOutput> : DataFlowSource<TOutput>, ITask, IDataFlowSource<TOutput>
+    public class DbSource<TOutput> : DataFlowSource<TOutput>
     {
+        #region Public properties
+
         /* ITask Interface */
         public override string TaskName => $"Read data from {SourceDescription}";
 
-        /* Public Properties */
+        /// <summary>
+        /// Pass a table definition that describe the source table.
+        /// Column names can be read from the table definition (if a table name is given)
+        /// or extracted from the sql query. If a TableDefinition is present, this will always be used to determin the columns names.
+        /// </summary>
+        ///
         public TableDefinition SourceTableDefinition { get; set; }
+        /// <summary>
+        /// By default, column names are read from the table defition, extracted from the database or parsed from the sql query.
+        /// The column name is used to map the data from the database source to the right property in the object used for the data flow.
+        /// If you enter your own column name list, this will override any column names that exist in the source.
+        /// </summary>
         public List<string> ColumnNames { get; set; }
+
+        /// <summary>
+        /// The name of the database table to read data from.
+        /// </summary>
         public string TableName { get; set; }
+
+        /// <summary>
+        /// A custom sql query to extract the data from the source.
+        /// </summary>
         public string Sql { get; set; }
 
-        public string SqlForRead
-        {
-            get
-            {
-                if (HasSql)
-                    return Sql;
-                else
-                {
-                    if (!HasSourceTableDefinition)
-                        LoadTableDefinition();
-                    var TN = new ObjectNameDescriptor(SourceTableDefinition.Name, QB, QE);
-                    return $@"SELECT {SourceTableDefinition.Columns.AsString("", QB, QE)} FROM {TN.QuotatedFullName}";
-                }
+        #endregion
 
-            }
-        }
-
-        public List<string> ColumnNamesEvaluated
-        {
-            get
-            {
-                if (ColumnNames?.Count > 0)
-                    return ColumnNames;
-                else if (HasSourceTableDefinition)
-                    return SourceTableDefinition?.Columns?.Select(col => col.Name).ToList();
-                else
-                    return ParseColumnNamesFromQuery();
-            }
-        }
-
-        bool HasSourceTableDefinition => SourceTableDefinition != null;
-        bool HasTableName => !String.IsNullOrWhiteSpace(TableName);
-        bool HasSql => !String.IsNullOrWhiteSpace(Sql);
-        DBTypeInfo TypeInfo { get; set; }
-        string SourceDescription
-        {
-            get
-            {
-                if (HasSourceTableDefinition)
-                    return $"table {SourceTableDefinition.Name}";
-                if (HasTableName)
-                    return $"table {TableName}";
-                else
-                    return "custom sql";
-            }
-        }
+        #region Constructors
 
         public DbSource()
         {
@@ -101,7 +78,60 @@ namespace ETLBox.DataFlow.Connectors
             ConnectionManager = connectionManager;
         }
 
-        private List<string> ParseColumnNamesFromQuery()
+        #endregion
+
+        #region Implement abstract methods
+
+        protected override void OnExecutionDoSynchronousWork()
+        {
+            NLogStartOnce();
+        }
+
+        protected override void OnExecutionDoAsyncWork()
+        {
+            ReadAllRecords();
+            Buffer.Complete();
+        }
+
+        protected override void InitComponent() { }
+
+        protected override void CleanUpOnSuccess() => NLogFinishOnce();
+
+        protected override void CleanUpOnFaulted(Exception e) { }
+
+        #endregion
+
+        #region Implementation
+        string SqlForRead
+        {
+            get
+            {
+                if (HasSql)
+                    return Sql;
+                else
+                {
+                    if (!HasSourceTableDefinition)
+                        LoadTableDefinition();
+                    var TN = new ObjectNameDescriptor(SourceTableDefinition.Name, QB, QE);
+                    return $@"SELECT {SourceTableDefinition.Columns.AsString("", QB, QE)} FROM {TN.QuotatedFullName}";
+                }
+
+            }
+        }
+
+        List<string> ColumnNamesEvaluated
+        {
+            get
+            {
+                if (ColumnNames?.Count > 0)
+                    return ColumnNames;
+                else if (HasSourceTableDefinition)
+                    return SourceTableDefinition?.Columns?.Select(col => col.Name).ToList();
+                else
+                    return ParseColumnNamesFromQuery();
+            }
+        }
+        List<string> ParseColumnNamesFromQuery()
         {
             var result = SqlParser.ParseColumnNames(QB != string.Empty ? SqlForRead.Replace(QB, "").Replace(QE, "") : SqlForRead);
             if (TypeInfo.IsArray && result?.Count == 0) throw new ETLBoxException("Could not parse column names from Sql Query! Please pass a valid TableDefinition to the " +
@@ -110,24 +140,24 @@ namespace ETLBox.DataFlow.Connectors
             return result;
         }
 
-        public override void Execute()
+        bool HasSourceTableDefinition => SourceTableDefinition != null;
+        bool HasTableName => !String.IsNullOrWhiteSpace(TableName);
+        bool HasSql => !String.IsNullOrWhiteSpace(Sql);
+        DBTypeInfo TypeInfo;
+        string SourceDescription
         {
-            NLogStart();
-            try
+            get
             {
-                ReadAll();
-                Buffer.Complete();
+                if (HasSourceTableDefinition)
+                    return $"table {SourceTableDefinition.Name}";
+                if (HasTableName)
+                    return $"table {TableName}";
+                else
+                    return "custom sql";
             }
-            catch (Exception e)
-            {
-                ((IDataflowBlock)Buffer).Fault(e);
-                throw;
-            }
-            Buffer.Complete();
-            NLogFinish();
         }
 
-        private void ReadAll()
+        private void ReadAllRecords()
         {
             SqlTask sqlT = CreateSqlTask(SqlForRead);
             DefineActions(sqlT, ColumnNamesEvaluated);
@@ -143,7 +173,7 @@ namespace ETLBox.DataFlow.Connectors
                 throw new ETLBoxException("No Table definition or table name found! You must provide a table name or a table definition.");
         }
 
-        SqlTask CreateSqlTask(string sql)
+        private SqlTask CreateSqlTask(string sql)
         {
             var sqlT = new SqlTask(this, sql)
             {
@@ -154,7 +184,7 @@ namespace ETLBox.DataFlow.Connectors
         }
 
         TOutput _row;
-        internal void DefineActions(SqlTask sqlT, List<string> columnNames)
+        private void DefineActions(SqlTask sqlT, List<string> columnNames)
         {
             if (columnNames?.Count == 0 && ( TypeInfo.IsArray || TypeInfo.PropertyNames.Count == 0) )
                 throw new ETLBoxException("The column names can't be automatically retrieved - please provide a TableDefinition with names for the columns in the source.");
@@ -226,8 +256,6 @@ namespace ETLBox.DataFlow.Connectors
                     if (_row != null)
                     {
                         var propInfo = TypeInfo.GetInfoByPropertyNameOrColumnMapping(colName);
-                        //var con = colValue != null ? Convert.ChangeType(colValue, TypeInfo.UnderlyingPropType[propInfo]) : colValue;
-                        //propInfo.TrySetValue(_row, con);
                         Object con = null;
                         if (colValue != null)
                         {
@@ -275,7 +303,7 @@ namespace ETLBox.DataFlow.Connectors
             sqlT.Actions = null;
         }
 
-
+        #endregion
     }
 
     /// <summary>

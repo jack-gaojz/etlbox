@@ -15,6 +15,7 @@ namespace ETLBox.DataFlow.Connectors
     /// </summary>
     public class MemorySource<TOutput> : DataFlowSource<TOutput>
     {
+        #region Public properties
         public override string TaskName => $"Read data from memory";
         public IEnumerable<TOutput> Data { get; set; }
         public IList<TOutput> DataAsList
@@ -28,6 +29,8 @@ namespace ETLBox.DataFlow.Connectors
                 Data = value;
             }
         }
+
+        #endregion
 
         #region Constructors
 
@@ -43,21 +46,31 @@ namespace ETLBox.DataFlow.Connectors
 
         #endregion
 
-        #region Execution
+        #region Implement abstract methods
 
-        protected override void OnExecutionDoSynchronousWork()
-        {
-            NLogStart();
-        }
+        protected override void OnExecutionDoSynchronousWork() { }
 
         protected override void OnExecutionDoAsyncWork()
         {
-            ReadRecordAndSendIntoBuffer();
-            NLogFinish();
+            NLogStartOnce();
+            ReadAllRecords();
+            Buffer.Complete();
         }
 
+        protected override void InitComponent() { }
 
-        private void ReadRecordAndSendIntoBuffer()
+        protected override void CleanUpOnSuccess()
+        {
+            NLogFinishOnce();
+        }
+
+        protected override void CleanUpOnFaulted(Exception e) { }
+
+        #endregion
+
+        #region Implementation
+
+        private void ReadAllRecords()
         {
             foreach (TOutput record in Data)
             {
@@ -65,11 +78,9 @@ namespace ETLBox.DataFlow.Connectors
                     throw Exception;
                 LogProgress();
             }
-            Buffer.Complete();
         }
 
         #endregion
-
     }
 
     /// <summary>

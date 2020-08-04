@@ -124,7 +124,6 @@ namespace ETLBox.DataFlow
 
             if (!ReadyForProcessing)
             {
-                NLogStart();
                 LetErrorSourceWaitForInput();
                 InitComponent();
                 ReadyForProcessing = true;
@@ -206,7 +205,6 @@ namespace ETLBox.DataFlow
             else
             {
                 CleanUpOnSuccess();
-                NLogFinish();
             }
         }
 
@@ -276,14 +274,27 @@ namespace ETLBox.DataFlow
         public int ProgressCount { get; set; }
         protected bool HasLoggingThresholdRows => LoggingThresholdRows != null && LoggingThresholdRows > 0;
         protected int ThresholdCount { get; set; } = 1;
-
-        protected void NLogStart()
+        protected bool WasLoggingStarted;
+        protected bool WasLoggingFinished;
+        protected void NLogStartOnce()
+        {
+            if (!WasLoggingStarted)
+                NLogStart();
+            WasLoggingStarted = true;
+        }
+        protected void NLogFinishOnce()
+        {
+            if (WasLoggingStarted && !WasLoggingFinished)
+                NLogFinish();
+            WasLoggingFinished = true;
+        }
+        protected void NLogStart() //private
         {
             if (!DisableLogging)
                 NLogger.Info(TaskName, TaskType, "START", TaskHash, ControlFlow.ControlFlow.STAGE, ControlFlow.ControlFlow.CurrentLoadProcess?.Id);
         }
 
-        protected void NLogFinish()
+        protected void NLogFinish() //private
         {
             if (!DisableLogging && HasLoggingThresholdRows)
                 NLogger.Info(TaskName + $" processed {ProgressCount} records in total.", TaskType, "LOG", TaskHash, ControlFlow.ControlFlow.STAGE, ControlFlow.ControlFlow.CurrentLoadProcess?.Id);

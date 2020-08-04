@@ -19,15 +19,14 @@ namespace ETLBox.DataFlow.Connectors
     /// </summary>
     public class TextSource<TOutput> : DataFlowStreamSource<TOutput>, ITask, IDataFlowSource<TOutput>
     {
-        /* ITask Interface */
+        #region Public properties
         public override string TaskName => $"Read text data Uri: {CurrentRequestUri ?? ""}";
-
-        /* Public properties */
         public int SkipRows { get; set; } = 0;
         public Action<string, TOutput> WriteLineIntoObject { get; set; }
 
-        /* Private stuff */
-        TypeInfo TypeInfo { get; set; }
+        #endregion
+
+        #region Constructors
 
         public TextSource()
         {
@@ -35,11 +34,17 @@ namespace ETLBox.DataFlow.Connectors
             ResourceType = ResourceType.File;
         }
 
-        public TextSource(string uri, Action<string,TOutput> writeLineIntoObject) : this()
+        public TextSource(string uri, Action<string, TOutput> writeLineIntoObject) : this()
         {
             Uri = uri;
             WriteLineIntoObject = writeLineIntoObject;
         }
+
+        #endregion
+
+        #region Implementation
+
+        TypeInfo TypeInfo { get; set; }
 
         protected override void InitReader()
         {
@@ -60,7 +65,7 @@ namespace ETLBox.DataFlow.Connectors
                 StreamReader.ReadLine();
         }
 
-        protected override void ReadAll()
+        protected override void ReadAllRecords()
         {
             while (StreamReader.Peek() > 0)
             {
@@ -92,6 +97,8 @@ namespace ETLBox.DataFlow.Connectors
 
         protected override void CloseReader()
         { }
+
+        #endregion
     }
 
     /// <summary>

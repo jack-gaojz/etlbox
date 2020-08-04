@@ -7,7 +7,7 @@ using System.Threading.Tasks.Dataflow;
 
 namespace ETLBox.DataFlow
 {
-    public abstract class DataFlowSource<TOutput> : DataFlowTask, ITask, IDataFlowExecutableSource<TOutput>
+    public abstract class DataFlowSource<TOutput> : DataFlowTask, IDataFlowExecutableSource<TOutput>, IDataFlowSource<TOutput>
     {
         public ISourceBlock<TOutput> SourceBlock => this.Buffer;
         protected BufferBlock<TOutput> Buffer { get; set; } = new BufferBlock<TOutput>();
@@ -21,7 +21,7 @@ namespace ETLBox.DataFlow
             Completion = new Task(OnExecutionDoAsyncWork, TaskCreationOptions.LongRunning);
         }
 
-        public ErrorHandler ErrorHandler { get; set; } = new ErrorHandler();
+        public ErrorHandler ErrorHandler { get; set; } = new ErrorHandler(); //remove
 
         public virtual void Execute() //remove virtual
         {
@@ -42,15 +42,9 @@ namespace ETLBox.DataFlow
         protected virtual void OnExecutionDoSynchronousWork() { } //abstract
         protected virtual void OnExecutionDoAsyncWork() { } //abstract
 
-        protected override void CompleteBuffer()
-        {
-            SourceBlock.Complete();
-        }
+        protected override void CompleteBuffer() => SourceBlock.Complete();
 
-        protected override void FaultBuffer(Exception e)
-        {
-            SourceBlock.Fault(e);
-        }
+        protected override void FaultBuffer(Exception e) => SourceBlock.Fault(e);
 
         internal override void LinkBuffers(DataFlowTask successor, LinkPredicates linkPredicates)
         {
@@ -58,23 +52,6 @@ namespace ETLBox.DataFlow
             var linker = new BufferLinker<TOutput>(linkPredicates);
             linker.LinkBlocksWithPredicates(SourceBlock, s.TargetBlock);
         }
-
-        //public IDataFlowLinkSource<TOutput> LinkTo(DataFlowTask target)
-        //    => InternalLinkTo<TOutput>(target);
-
-        //public IDataFlowLinkSource<TOutput> LinkTo(DataFlowTask target, Predicate<TOutput> predicate)
-        //    =>  InternalLinkTo<TOutput>(target, predicate);
-
-        //public IDataFlowLinkSource<TOutput> LinkTo(DataFlowTask target, Predicate<TOutput> predicate, Predicate<TOutput> voidPredicate)
-        //    => InternalLinkTo<TOutput>(target, predicate, voidPredicate);
-
-        //public IDataFlowLinkSource<TConvert> LinkTo<TConvert>(DataFlowTask target)
-        // => InternalLinkTo<TConvert>(target);
-        //public IDataFlowLinkSource<TConvert> LinkTo<TConvert>(DataFlowTask target, Predicate<TOutput> predicate)
-        //    => InternalLinkTo<TConvert>(target, predicate);
-
-        //public IDataFlowLinkSource<TConvert> LinkTo<TConvert>(DataFlowTask target, Predicate<TOutput> predicate, Predicate<TOutput> voidPredicate)
-        //    => InternalLinkTo<TConvert> (target, predicate, voidPredicate);
 
         public IDataFlowSource<TOutput> LinkTo(IDataFlowDestination<TOutput> target)
             => InternalLinkTo<TOutput>(target);

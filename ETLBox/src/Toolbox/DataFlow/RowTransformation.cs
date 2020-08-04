@@ -31,6 +31,7 @@ namespace ETLBox.DataFlow.Transformations
 
         public Func<TInput, TOutput> TransformationFunc { get; set; }
         public Action InitAction { get; set; }
+        public bool WasInitActionInvoked { get; private set; }
         public override ITargetBlock<TInput> TargetBlock => TransformBlock;
         public override ISourceBlock<TOutput> SourceBlock => TransformBlock;
 
@@ -61,6 +62,12 @@ namespace ETLBox.DataFlow.Transformations
             TransformBlock = new TransformBlock<TInput, TOutput>(
                 row =>
                 {
+                    NLogStartOnce();
+                    if (!WasInitActionInvoked)
+                    {
+                        InitAction?.Invoke();
+                        WasInitActionInvoked = true;
+                    }
                     try
                     {
                         return WrapTransformation(row);
@@ -77,11 +84,6 @@ namespace ETLBox.DataFlow.Transformations
             );
         }
 
-        protected override void InitComponent()
-        {
-            InitAction?.Invoke();
-        }
-
         private TOutput WrapTransformation(TInput row)
         {
             TOutput result = TransformationFunc.Invoke(row);
@@ -89,11 +91,14 @@ namespace ETLBox.DataFlow.Transformations
             return result;
         }
 
-        protected override void CleanUpOnSuccess()
-        { }
 
-        protected override void CleanUpOnFaulted(Exception e)
-        { }
+        protected override void InitComponent() {  }
+
+        protected override void CleanUpOnSuccess() {
+            NLogFinishOnce();
+        }
+
+        protected override void CleanUpOnFaulted(Exception e) { }
     }
 
     /// <summary>

@@ -8,7 +8,8 @@ namespace ETLBox.DataFlow
 {
     public abstract class DataFlowStreamSource<TOutput> : DataFlowSource<TOutput>
     {
-        /* Public properties */
+        #region Public properties
+
         /// <summary>
         /// The Url of the webservice (e.g. https://test.com/foo) or the file name (relative or absolute)
         /// </summary>
@@ -25,6 +26,7 @@ namespace ETLBox.DataFlow
                 HasNextUri = c => false;
             }
         }
+        private string _uri;
 
         public Func<StreamMetaData, string> GetNextUri { get; set; }
         public Func<StreamMetaData, bool> HasNextUri { get; set; }
@@ -37,12 +39,63 @@ namespace ETLBox.DataFlow
 
         public HttpClient HttpClient { get; set; } = new HttpClient();
 
-        /* Internal properties */
-        protected string _uri;
+        #endregion
+
+        #region Internal properties
+
         protected string CurrentRequestUri { get; set; }
         protected StreamReader StreamReader { get; set; }
-        private bool WasStreamOpened { get; set; }
         protected StringBuilder UnparsedData { get; set; }
+
+        #endregion
+
+        #region Implement abstract methods
+
+        protected override void OnExecutionDoSynchronousWork()
+        {
+
+        }
+
+        protected override void OnExecutionDoAsyncWork()
+        {
+            NLogStartOnce();
+            do
+            {
+                CurrentRequestUri = GetNextUri(CreateMetaDataObject);
+                OpenStream(CurrentRequestUri);
+                InitReader();
+                WasStreamOpened = true;
+                ReadAllRecords();
+            } while (HasNextUri(CreateMetaDataObject));
+            Buffer.Complete();
+        }
+
+        protected override void InitComponent() { }
+
+        protected override void CleanUpOnSuccess()
+        {
+            NLogFinishOnce();
+            CloseStreamsIfOpen();
+        }
+
+        protected override void CleanUpOnFaulted(Exception e) {
+            CloseStreamsIfOpen();
+        }
+
+        #endregion
+
+        #region Implementation
+
+        private bool WasStreamOpened;
+
+        private void CloseStreamsIfOpen()
+        {
+            if (WasStreamOpened)
+            {
+                CloseReader();
+                CloseStream();
+            }
+        }
 
         private StreamMetaData CreateMetaDataObject =>
                 new StreamMetaData()
@@ -51,31 +104,6 @@ namespace ETLBox.DataFlow
                     UnparsedData = UnparsedData?.ToString()
                 };
 
-        public override void Execute()
-        {
-            NLogStart();
-            try
-            {
-                do
-                {
-                    CurrentRequestUri = GetNextUri(CreateMetaDataObject);
-                    OpenStream(CurrentRequestUri);
-                    InitReader();
-                    WasStreamOpened = true;
-                    ReadAll();
-                } while (HasNextUri(CreateMetaDataObject));
-                Buffer.Complete();
-            }
-            finally
-            {
-                if (WasStreamOpened)
-                {
-                    CloseReader();
-                    CloseStream();
-                }
-            }
-            NLogFinish();
-        }
 
         private void OpenStream(string uri)
         {
@@ -92,13 +120,9 @@ namespace ETLBox.DataFlow
         }
 
         protected abstract void InitReader();
-        protected abstract void ReadAll();
+        protected abstract void ReadAllRecords();
         protected abstract void CloseReader();
-    }
 
-    public class StreamMetaData
-    {
-        public int ProgressCount { get; set; }
-        public string UnparsedData { get; set; }
+        #endregion
     }
 }
