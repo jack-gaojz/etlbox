@@ -38,65 +38,15 @@ namespace ETLBox.DataFlow
         protected virtual Task BufferCompletion { get; }
         protected Task PredecessorCompletion { get; set; }
 
-
-
         protected bool WereBufferInitialized;
         protected bool ReadyForProcessing;
         protected Dictionary<DataFlowTask, bool> WasLinked = new Dictionary<DataFlowTask, bool>();
-        protected Dictionary<DataFlowTask, LinkPredicate> LinkPredicates = new Dictionary<DataFlowTask, LinkPredicate>();
-
-        protected class LinkPredicate
-        {
-            internal object Predicate { get; set; }
-            internal object VoidPredicate { get; set; }
-
-            internal LinkPredicate(object predicate, object voidPredicate = null)
-            {
-                Predicate = predicate;
-                VoidPredicate = voidPredicate;
-            }
-            internal bool HasPredicate => Predicate != null;
-            internal bool HasVoidPredicate => VoidPredicate != null;
-
-        }
-
-        protected class Linker<T> : LinkPredicate
-        {
-            internal Predicate<T> GetPredicate() => Predicate as Predicate<T>;
-            internal Predicate<T> GetVoidPredicate() => VoidPredicate as Predicate<T>;
-            internal Linker(object predicate, object voidPredicate = null) : base(predicate, voidPredicate) { }
-
-            internal void LinkBlocksWithPredicates(ISourceBlock<T> source, ITargetBlock<T> target)
-            {
-                if (Predicate != null)
-                {
-                    source.LinkTo<T>(target, GetPredicate());
-                    if (VoidPredicate != null)
-                        source.LinkTo<T>(DataflowBlock.NullTarget<T>(), GetVoidPredicate());
-                }
-                else
-                    source.LinkTo<T>(target);
-            }
-
-        }
-
-        //public DataFlowTask LinkTo2(DataFlowTask target)
-        //{
-        //    this.Successors.Add(target);
-        //    target.Predecessors.Add(this);
-        //    return target;// as IDataFlowLinkSource<TOutput>;
-        //}
-
-        //public DataFlowTask LinkTo2(DataFlowTask target, object predicate)
-        //{
-        //    LinkPredicates.Add(target, new LinkPredicate(predicate));
-        //    return LinkTo2(target);
-        //}
+        internal Dictionary<DataFlowTask, LinkPredicates> LinkPredicates = new Dictionary<DataFlowTask, LinkPredicates>();
 
         protected IDataFlowSource<T> InternalLinkTo<T>(IDataFlowDestination target, object predicate = null, object voidPredicate = null)
         {
             var t = target as DataFlowTask;
-            LinkPredicates.Add(t, new LinkPredicate(predicate, voidPredicate));
+            LinkPredicates.Add(t, new LinkPredicates(predicate, voidPredicate));
             this.Successors.Add(t);
             t.Predecessors.Add(this);
             var res = target as IDataFlowSource<T>;
@@ -109,7 +59,7 @@ namespace ETLBox.DataFlow
             {
                 if (!predecessor.WasLinked.ContainsKey(this))
                 {
-                    LinkPredicate predicate = null;
+                    LinkPredicates predicate = null;
                     LinkPredicates.TryGetValue(this, out predicate);
                     predecessor.LinkBuffers(this, predicate);
                     predecessor.WasLinked.Add(this, true);
@@ -120,7 +70,7 @@ namespace ETLBox.DataFlow
             {
                 if (!WasLinked.ContainsKey(successor))
                 {
-                    LinkPredicate predicate = null;
+                    LinkPredicates predicate = null;
                     LinkPredicates.TryGetValue(successor, out predicate);
                     LinkBuffers(successor, predicate);
                     WasLinked.Add(successor, true);
@@ -128,7 +78,7 @@ namespace ETLBox.DataFlow
                 }
             }
         }
-        protected virtual void LinkBuffers(DataFlowTask successor, LinkPredicate predicate)
+        internal virtual void LinkBuffers(DataFlowTask successor, LinkPredicates predicate)
         {
             //A destination doesn't implement this
             throw new NotImplementedException("This component can't be used to link to something");
@@ -274,7 +224,7 @@ namespace ETLBox.DataFlow
         public Exception Exception { get; private set; }
         public ErrorSource ErrorSource { get; set; }
 
-        public IDataFlowSource<ETLBoxError> LinkErrorTo2(IDataFlowDestination<ETLBoxError> target)
+        protected IDataFlowSource<ETLBoxError> InternalLinkErrorTo(IDataFlowDestination<ETLBoxError> target)
         {
             if (ErrorSource == null)
                 ErrorSource = new ErrorSource();

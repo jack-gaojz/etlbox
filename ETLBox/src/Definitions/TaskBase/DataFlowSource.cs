@@ -52,11 +52,11 @@ namespace ETLBox.DataFlow
             SourceBlock.Fault(e);
         }
 
-        protected override void LinkBuffers(DataFlowTask successor, LinkPredicate linkPredicate)
+        internal override void LinkBuffers(DataFlowTask successor, LinkPredicates linkPredicates)
         {
             var s = successor as IDataFlowDestination<TOutput>;
-            var lp = new Linker<TOutput>(linkPredicate?.Predicate, linkPredicate?.VoidPredicate);
-            lp.LinkBlocksWithPredicates(SourceBlock, s.TargetBlock);
+            var linker = new BufferLinker<TOutput>(linkPredicates);
+            linker.LinkBlocksWithPredicates(SourceBlock, s.TargetBlock);
         }
 
         //public IDataFlowLinkSource<TOutput> LinkTo(DataFlowTask target)
@@ -94,10 +94,8 @@ namespace ETLBox.DataFlow
         public IDataFlowSource<TConvert> LinkTo<TConvert>(IDataFlowDestination<TOutput> target, Predicate<TOutput> rowsToKeep, Predicate<TOutput> rowsIntoVoid)
             => InternalLinkTo<TConvert>(target, rowsToKeep, rowsIntoVoid);
 
-        //TODO
-        //LinkError
-        public void LinkErrorTo(IDataFlowDestination<ETLBoxError> target)
-            => ErrorHandler.LinkErrorTo(target, SourceBlock.Completion);
+        public IDataFlowSource<ETLBoxError> LinkErrorTo(IDataFlowDestination<ETLBoxError> target)
+            => InternalLinkErrorTo(target);
 
     }
 }

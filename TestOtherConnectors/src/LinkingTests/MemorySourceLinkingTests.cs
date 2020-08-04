@@ -159,7 +159,7 @@ namespace ETLBoxTests.DataFlowTests
             //Act
             source.LinkTo(row);
             row.LinkTo(dest);
-            row.LinkErrorTo2(errorDest);
+            row.LinkErrorTo(errorDest);
             source.Execute();
             dest.Wait();
             errorDest.Wait();
