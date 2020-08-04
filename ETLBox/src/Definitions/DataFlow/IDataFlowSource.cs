@@ -8,7 +8,8 @@ namespace ETLBox.DataFlow
     {
 
     }
-    public interface IDataFlowSource<TOutput> : IDataFlowSource //: IDataFlowLinkSource<TOutput>
+
+    public interface IDataFlowSource<TOutput> : IDataFlowSource
     {
         ISourceBlock<TOutput> SourceBlock { get; }
         IDataFlowSource<TOutput> LinkTo(IDataFlowDestination<TOutput> target);
@@ -28,5 +29,6 @@ namespace ETLBox.DataFlow
     public interface IDataFlowExecutableSource<TOutput> : IDataFlowSource<TOutput>
     {
         void Execute();
+        Task ExecuteAsync();
     }
 }
