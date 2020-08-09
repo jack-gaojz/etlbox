@@ -104,8 +104,8 @@ namespace ETLBoxTests.DataFlowTests
             DbDestination<MyInputDataRow> dest = new DbDestination<MyInputDataRow>(SqlConnection, "LookupErrorLinkingDest");
             source.LinkTo(lookup);
             lookup.LinkTo(dest);
-            lookup.LinkSourceErrorTo(errorDest);
-            //lookup.LinkErrorTo(errorDest);
+            //lookup.LinkSourceErrorTo(errorDest);
+            lookup.LinkErrorTo(errorDest);
             source.Execute();
             dest.Wait();
             errorDest.Wait();
