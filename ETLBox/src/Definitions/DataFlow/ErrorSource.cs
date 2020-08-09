@@ -9,9 +9,10 @@ namespace ETLBox.DataFlow
     {
         public ErrorSource Redirection { get; set; }
 
+
         public ErrorSource()
         {
-
+            IsErrorSource = true;
         }
 
         internal override void LinkBuffers(DataFlowTask successor, LinkPredicates linkPredicate)
@@ -26,13 +27,14 @@ namespace ETLBox.DataFlow
             if (Redirection != null) Redirection.Send(e, jsonRow);
             else
             {
-                Buffer.SendAsync(new ETLBoxError()
+                if (!Buffer.SendAsync(new ETLBoxError()
                 {
                     ExceptionType = e.GetType().ToString(),
                     ErrorText = e.Message,
                     ReportTime = DateTime.Now,
                     RecordAsJson = jsonRow
-                }).Wait();
+                }).Result)
+                    throw this.Exception;
             }
         }
 

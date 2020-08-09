@@ -2,6 +2,7 @@
 using ETLBox.Exceptions;
 using NLog.Targets;
 using System;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
@@ -15,6 +16,7 @@ namespace ETLBox.DataFlow
         #endregion
 
         #region Buffer and completion
+        protected bool IsErrorSource { get; set; }
         protected BufferBlock<TOutput> Buffer { get; set; } = new BufferBlock<TOutput>();
         protected override Task BufferCompletion => Buffer.Completion;
         internal override void InitBufferObjects()
@@ -23,13 +25,35 @@ namespace ETLBox.DataFlow
             {
                 BoundedCapacity = MaxBufferSize
             });
-            Completion = new Task(OnExecutionDoAsyncWork, TaskCreationOptions.LongRunning);
+            Completion = new Task(
+                () =>
+                {
+                    try
+                    {
+                        OnExecutionDoAsyncWork();
+                        if (!IsErrorSource)
+                        {
+                            CompleteBuffer();
+                            ErrorSource?.CompleteBuffer();
+                            CleanUpOnSuccess();
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        FaultBuffer(e);
+                        ErrorSource?.FaultBuffer(e);
+                        CleanUpOnFaulted(e);
+                        throw e;
+                    }
+                }
+                , TaskCreationOptions.LongRunning);
         }
+
         protected override void CompleteBuffer() => SourceBlock.Complete();
         protected override void FaultBuffer(Exception e) => SourceBlock.Fault(e);
 
         #endregion
-        
+
         #region Execution and IDataFlowExecutableSource
         public virtual void Execute() //remove virtual
         {

@@ -38,21 +38,23 @@ namespace ETLBox.DataFlow.Connectors
 
         public override void Execute()
         {
-            NLogStart();
+            NLogStartOnce();
             while (!ReadCompletedFunc.Invoke())
             {
+                TOutput result = default;
                 try
                 {
-                    Buffer.SendAsync(ReadFunc.Invoke()).Wait();
+                    result = ReadFunc.Invoke();
                 }
                 catch (Exception e)
                 {
                     ThrowOrRedirectError(e, e.Message);
                 }
+                if (!Buffer.SendAsync(result).Result)
+                    throw this.Exception;
                 LogProgress();
             }
-            Buffer.Complete();
-            NLogFinish();
+            NLogFinishOnce();
         }
 
     }

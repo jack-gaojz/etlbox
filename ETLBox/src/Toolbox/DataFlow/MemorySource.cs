@@ -54,7 +54,6 @@ namespace ETLBox.DataFlow.Connectors
         {
             NLogStartOnce();
             ReadAllRecords();
-            Buffer.Complete();
         }
 
         protected override void CleanUpOnSuccess()
@@ -73,7 +72,7 @@ namespace ETLBox.DataFlow.Connectors
             foreach (TOutput record in Data)
             {
                 if (!Buffer.SendAsync(record).Result)
-                    throw Exception;
+                    throw this.Exception;
                 LogProgress();
             }
         }
