@@ -17,6 +17,8 @@ namespace ETLBox.DataFlow
 
         internal void LinkBlocksWithPredicates(ISourceBlock<T> source, ITargetBlock<T> target)
         {
+            if (target == null || source == null)
+                throw new ArgumentNullException("Source or target is null - did you call InitBufferObjects() on the linking source and target?");
             if (LinkPredicate?.PredicateKeep != null)
             {
                 source.LinkTo<T>(target, GetPredicateKeep());

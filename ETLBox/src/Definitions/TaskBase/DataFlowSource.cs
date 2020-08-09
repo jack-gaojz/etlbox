@@ -19,7 +19,7 @@ namespace ETLBox.DataFlow
         protected bool IsErrorSource { get; set; }
         protected BufferBlock<TOutput> Buffer { get; set; } = new BufferBlock<TOutput>();
         protected override Task BufferCompletion => Buffer.Completion;
-        internal override void InitBufferObjects()
+        public override void InitBufferObjects()
         {
             Buffer = new BufferBlock<TOutput>(new DataflowBlockOptions()
             {

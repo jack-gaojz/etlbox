@@ -52,7 +52,7 @@ namespace ETLBox.DataFlow.Transformations
             SortFunction = sortFunction;
         }
 
-        internal override void InitBufferObjects()
+        public override void InitBufferObjects()
         {
             BlockTransformation = new BlockTransformation<TInput, TInput>(this, SortByFunc);
             if (MaxBufferSize > 0) BlockTransformation.MaxBufferSize = this.MaxBufferSize;

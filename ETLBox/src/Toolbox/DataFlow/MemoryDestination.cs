@@ -34,7 +34,7 @@ namespace ETLBox.DataFlow.Connectors
 
         #region Implement abstract methods
 
-        internal override void InitBufferObjects()
+        public override void InitBufferObjects()
         {
             TargetAction = new ActionBlock<TInput>(WriteRecord, new ExecutionDataflowBlockOptions()
             {

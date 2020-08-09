@@ -114,7 +114,7 @@ namespace ETLBox.DataFlow
                     successor.InitBufferRecursively();
         }
 
-        internal virtual void InitBufferObjects() { } //abstract
+        public virtual void InitBufferObjects() { } //abstract
 
         protected void RunErrorSourceInitializationRecursively()
         {

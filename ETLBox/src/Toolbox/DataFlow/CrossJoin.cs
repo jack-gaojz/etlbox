@@ -38,7 +38,7 @@ namespace ETLBox.DataFlow.Transformations
             InitBufferObjects();
         }
 
-        internal override void InitBufferObjects()
+        public override void InitBufferObjects()
         {
             InMemoryTarget = new MemoryDestination<TInput1>();
             InMemoryTarget.CopyTaskProperties(this);

@@ -51,7 +51,7 @@ namespace ETLBox.DataFlow.Transformations
 
         #region Implement abstract methods
 
-        internal override void InitBufferObjects()
+        public override void InitBufferObjects()
         {
             TransformBlock = new TransformManyBlock<TInput, TInput>(DuplicateRow, new ExecutionDataflowBlockOptions()
             {
