@@ -77,21 +77,22 @@ namespace ETLBox.DataFlow.Connectors
         private void ReadLineAndSendIntoBuffer()
         {
             string line = StreamReader.ReadLine();
+            TOutput newObject = default;
             try
             {
-                TOutput newObject = default(TOutput);
                 if (TypeInfo.IsArray)
                     newObject= (TOutput)Activator.CreateInstance(typeof(TOutput), new object[] { 1 });
                 else
                     newObject = (TOutput)Activator.CreateInstance(typeof(TOutput));
 
                 WriteLineIntoObject(line, newObject);
-                Buffer.SendAsync(newObject).Wait();
             }
             catch (Exception e)
             {
                 ThrowOrRedirectError(e, line);
             }
+            if (!Buffer.SendAsync(newObject).Result)
+                throw this.Exception;
         }
 
         protected override void CloseReader()

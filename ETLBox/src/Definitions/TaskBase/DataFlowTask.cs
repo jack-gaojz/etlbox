@@ -36,7 +36,7 @@ namespace ETLBox.DataFlow
 
         public Task Completion { get; protected set; }
         protected virtual Task BufferCompletion { get; }
-        protected Task PredecessorCompletion { get;  set; }
+        protected Task PredecessorCompletion { get; set; }
 
         protected bool WereBufferInitialized;
         protected bool ReadyForProcessing;
@@ -203,14 +203,14 @@ namespace ETLBox.DataFlow
             }
             else
             {
-                OnCompletion?.Invoke();
                 CleanUpOnSuccess();
+                OnCompletion?.Invoke();
             }
         }
 
         protected virtual void CleanUpOnSuccess() { }
 
-        protected virtual void CleanUpOnFaulted(Exception e) {  }
+        protected virtual void CleanUpOnFaulted(Exception e) { }
 
         protected void FaultPredecessorsRecursively(Exception e)
         {
@@ -224,7 +224,12 @@ namespace ETLBox.DataFlow
 
         #region Error Handling
 
-        public Exception Exception { get; private set; }
+        public Exception Exception {
+            get => exception ?? new ETLBoxException("Can't post rows into completed or faulted buffers!");
+            private set => exception = value;
+        }
+        private Exception exception;
+
         public ErrorSource ErrorSource { get; set; }
 
         protected IDataFlowSource<ETLBoxError> InternalLinkErrorTo(IDataFlowDestination<ETLBoxError> target)
@@ -276,6 +281,7 @@ namespace ETLBox.DataFlow
         protected int ThresholdCount { get; set; } = 1;
         protected bool WasLoggingStarted;
         protected bool WasLoggingFinished;
+
         protected void NLogStartOnce()
         {
             if (!WasLoggingStarted)

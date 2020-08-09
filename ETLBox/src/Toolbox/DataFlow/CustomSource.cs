@@ -11,15 +11,15 @@ namespace ETLBox.DataFlow.Connectors
     /// <typeparam name="TOutput">Type of data output.</typeparam>
     public class CustomSource<TOutput> : DataFlowSource<TOutput>, ITask, IDataFlowSource<TOutput>
     {
-        /* ITask Interface */
+        #region Public properties
+
         public override string TaskName => $"Read data from custom source";
-
-
-        /* Public properties */
         public Func<TOutput> ReadFunc { get; set; }
         public Func<bool> ReadCompletedFunc { get; set; }
 
-        /* Private stuff */
+        #endregion
+
+        #region Constructors
 
         public CustomSource()
         {
@@ -31,14 +31,31 @@ namespace ETLBox.DataFlow.Connectors
             ReadCompletedFunc = readCompletedFunc;
         }
 
-        public CustomSource(string name, Func<TOutput> readFunc, Func<bool> readCompletedFunc) : this(readFunc, readCompletedFunc)
-        {
-            this.TaskName = name;
-        }
+        #endregion
 
-        public override void Execute()
+        #region Implement abstract methods
+
+        protected override void OnExecutionDoSynchronousWork() { }
+
+        protected override void OnExecutionDoAsyncWork()
         {
             NLogStartOnce();
+            ReadAllRecords();
+        }
+
+        protected override void CleanUpOnSuccess()
+        {
+            NLogFinishOnce();
+        }
+
+        protected override void CleanUpOnFaulted(Exception e) { }
+
+        #endregion
+
+        #region Implementation
+
+        private void ReadAllRecords()
+        {
             while (!ReadCompletedFunc.Invoke())
             {
                 TOutput result = default;
@@ -54,8 +71,9 @@ namespace ETLBox.DataFlow.Connectors
                     throw this.Exception;
                 LogProgress();
             }
-            NLogFinishOnce();
         }
+
+        #endregion
 
     }
 
@@ -68,9 +86,6 @@ namespace ETLBox.DataFlow.Connectors
         { }
 
         public CustomSource(Func<ExpandoObject> readFunc, Func<bool> readCompletedFunc) : base(readFunc, readCompletedFunc)
-        { }
-
-        public CustomSource(string name, Func<ExpandoObject> readFunc, Func<bool> readCompletedFunc) : base(name, readFunc, readCompletedFunc)
         { }
     }
 }
