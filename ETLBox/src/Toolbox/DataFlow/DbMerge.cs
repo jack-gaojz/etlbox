@@ -123,7 +123,7 @@ namespace ETLBox.DataFlow.Connectors
             InitOutputFlow();
         }
 
-        protected override void InitBufferObjects()
+        internal override void InitBufferObjects()
         {
             if (MaxBufferSize > 0)
             {

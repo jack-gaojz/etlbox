@@ -27,7 +27,6 @@ namespace ETLBox.DataFlow.Connectors
     {
         #region Public properties
 
-        /* ITask Interface */
         public override string TaskName => $"Read data from {SourceDescription}";
 
         /// <summary>
@@ -93,15 +92,17 @@ namespace ETLBox.DataFlow.Connectors
             Buffer.Complete();
         }
 
-        protected override void InitComponent() { }
-
-        protected override void CleanUpOnSuccess() => NLogFinishOnce();
+        protected override void CleanUpOnSuccess()
+        {
+            NLogFinishOnce();
+        }
 
         protected override void CleanUpOnFaulted(Exception e) { }
 
         #endregion
 
         #region Implementation
+
         string SqlForRead
         {
             get
@@ -238,9 +239,8 @@ namespace ETLBox.DataFlow.Connectors
                 }
                 catch (Exception e)
                 {
-                    if (!ErrorHandler.HasErrorBuffer) throw e;
-                    _row = default(TOutput);
-                    ErrorHandler.Send(e, ErrorHandler.ConvertErrorData<TOutput>(_row));
+                    ThrowOrRedirectError(e, ErrorHandler.ConvertErrorData<TOutput>(_row));
+                    _row = default;
                 }
             });
             index++;
@@ -270,9 +270,8 @@ namespace ETLBox.DataFlow.Connectors
                 }
                 catch (Exception e)
                 {
-                    if (!ErrorHandler.HasErrorBuffer) throw e;
-                    _row = default(TOutput);
-                    ErrorHandler.Send(e, ErrorHandler.ConvertErrorData<TOutput>(_row));
+                    ThrowOrRedirectError(e, ErrorHandler.ConvertErrorData<TOutput>(_row));
+                    _row = default;
                 }
             });
         }
@@ -291,9 +290,8 @@ namespace ETLBox.DataFlow.Connectors
                 }
                 catch (Exception e)
                 {
-                    if (!ErrorHandler.HasErrorBuffer) throw e;
-                    _row = default(TOutput);
-                    ErrorHandler.Send(e, ErrorHandler.ConvertErrorData<TOutput>(_row));
+                    ThrowOrRedirectError(e, ErrorHandler.ConvertErrorData<TOutput>(_row));
+                    _row = default;
                 }
             });
         }

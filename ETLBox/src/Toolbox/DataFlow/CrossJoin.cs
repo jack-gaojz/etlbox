@@ -38,11 +38,12 @@ namespace ETLBox.DataFlow.Transformations
             InitBufferObjects();
         }
 
-        protected override void InitBufferObjects()
+        internal override void InitBufferObjects()
         {
             InMemoryTarget = new MemoryDestination<TInput1>();
             InMemoryTarget.CopyTaskProperties(this);
-            PassingTarget = new CustomDestination<TInput2>(this, CrossJoinData);
+            PassingTarget = new CustomDestination<TInput2>(CrossJoinData);
+            PassingTarget.CopyTaskProperties(this);
             if (MaxBufferSize > 0) PassingTarget.MaxBufferSize = this.MaxBufferSize;
             PassingTarget.OnCompletion = () => Buffer.Complete();
         }
@@ -75,8 +76,7 @@ namespace ETLBox.DataFlow.Transformations
                 }
                 catch (Exception e)
                 {
-                    if (!ErrorHandler.HasErrorBuffer) throw e;
-                    ErrorHandler.Send(e, string.Concat(ErrorHandler.ConvertErrorData<TInput1>(inMemoryRow), "  |--| ",
+                    ThrowOrRedirectError(e, string.Concat(ErrorHandler.ConvertErrorData<TInput1>(inMemoryRow), "  |--| ",
                         ErrorHandler.ConvertErrorData<TInput2>(passingRow)));
                 }
             }

@@ -13,16 +13,9 @@ namespace ETLBox.DataFlow
 
         protected override Task BufferCompletion => TargetBlock.Completion;
 
+        protected override void CompleteBuffer() => TargetBlock.Complete();
 
-        protected override void CompleteBuffer()
-        {
-            TargetBlock.Complete();
-        }
-
-        protected override void FaultBuffer(Exception e)
-        {
-            TargetBlock.Fault(e);
-        }
+        protected override void FaultBuffer(Exception e) => TargetBlock.Fault(e);
 
         internal override void LinkBuffers(DataFlowTask successor, LinkPredicates linkPredicate)
         {
@@ -30,7 +23,6 @@ namespace ETLBox.DataFlow
             var lp = new BufferLinker<TOutput>(linkPredicate);
             lp.LinkBlocksWithPredicates(SourceBlock, s.TargetBlock);
         }
-
 
         public IDataFlowSource<TOutput> LinkTo(IDataFlowDestination<TOutput> target)
             => InternalLinkTo<TOutput>(target);

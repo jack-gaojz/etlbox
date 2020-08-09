@@ -13,25 +13,22 @@ namespace ETLBox.DataFlow.Transformations
     /// <typeparam name="TInput">Type of data input</typeparam>
     public class RowDuplication<TInput> : DataFlowTransformation<TInput, TInput>, ITask, IDataFlowTransformation<TInput, TInput>
     {
-        /* ITask Interface */
-        public override string TaskName { get; set; } = $"Duplicate rows.";
+        #region Public properties
 
-        /* Public Properties */
+        public override string TaskName { get; set; } = $"Duplicate rows.";
         public int NumberOfDuplicates { get; set; } = 1;
         public Predicate<TInput> CanDuplicate { get; set; }
         public override ISourceBlock<TInput> SourceBlock => TransformBlock;
         public override ITargetBlock<TInput> TargetBlock => TransformBlock;
 
-        /* Private stuff */
-        TransformManyBlock<TInput, TInput> TransformBlock { get; set; }
-        ObjectCopy<TInput> ObjectCopy { get; set; }
-        TypeInfo TypeInfo { get; set; }
+        #endregion
+
+        #region Constructors
 
         public RowDuplication()
         {
             TypeInfo = new TypeInfo(typeof(TInput)).GatherTypeInfo();
             ObjectCopy = new ObjectCopy<TInput>(TypeInfo);
-            InitBufferObjects();
         }
 
         public RowDuplication(int numberOfDuplicates) : this()
@@ -49,7 +46,12 @@ namespace ETLBox.DataFlow.Transformations
             this.CanDuplicate = canDuplicate;
         }
 
-        protected override void InitBufferObjects()
+
+        #endregion
+
+        #region Implement abstract methods
+
+        internal override void InitBufferObjects()
         {
             TransformBlock = new TransformManyBlock<TInput, TInput>(DuplicateRow, new ExecutionDataflowBlockOptions()
             {
@@ -57,8 +59,24 @@ namespace ETLBox.DataFlow.Transformations
             });
         }
 
+        protected override void CleanUpOnSuccess()
+        {
+            NLogFinishOnce();
+        }
+
+        protected override void CleanUpOnFaulted(Exception e) { }
+
+        #endregion
+
+        #region Implementation
+
+        TransformManyBlock<TInput, TInput> TransformBlock;
+        ObjectCopy<TInput> ObjectCopy;
+        TypeInfo TypeInfo;
+
         private IEnumerable<TInput> DuplicateRow(TInput row)
         {
+            NLogStartOnce();
             if (row == null) return null;
             List<TInput> result = new List<TInput>(NumberOfDuplicates);
             result.Add(row);
@@ -74,6 +92,8 @@ namespace ETLBox.DataFlow.Transformations
             }
             return result;
         }
+
+        #endregion
     }
 
     /// <summary>

@@ -11,25 +11,14 @@ namespace ETLBox.DataFlow.Connectors
     /// <typeparam name="TInput">Type of datasource input.</typeparam>
     public class CustomDestination<TInput> : DataFlowDestination<TInput>, ITask, IDataFlowDestination<TInput>
     {
-        /* ITask Interface */
+        #region Public properties
+
         public override string TaskName { get; set; } = $"Write data into custom target";
+        public Action<TInput> WriteAction { get; set; }
 
-        /* Public properties */
-        public Action<TInput> WriteAction
-        {
-            get
-            {
-                return _writeAction;
-            }
-            set
-            {
-                _writeAction = value;
-                InitBufferObjects();
-            }
-        }
+        #endregion
 
-        /* Private stuff */
-        private Action<TInput> _writeAction;
+        #region Constructros
 
         public CustomDestination()
         {
@@ -41,31 +30,34 @@ namespace ETLBox.DataFlow.Connectors
             WriteAction = writeAction;
         }
 
-        internal CustomDestination(ITask callingTask, Action<TInput> writeAction) : this(writeAction)
-        {
-            CopyTaskProperties(callingTask);
-        }
+        #endregion
 
-        public CustomDestination(string taskName, Action<TInput> writeAction) : this(writeAction)
-        {
-            this.TaskName = taskName;
-        }
+        #region Implement abstract methods
 
-        protected override void InitBufferObjects()
+        internal override void InitBufferObjects()
         {
             TargetAction = new ActionBlock<TInput>(AddLoggingAndErrorHandling(WriteAction), new ExecutionDataflowBlockOptions()
             {
                 BoundedCapacity = MaxBufferSize
             });
-            //SetCompletionTask();
         }
+
+        protected override void CleanUpOnSuccess()
+        {
+            NLogFinish();
+        }
+        protected override void CleanUpOnFaulted(Exception e) { }
+
+        #endregion
+
+        #region Implementation
 
         private Action<TInput> AddLoggingAndErrorHandling(Action<TInput> writeAction)
         {
             return new Action<TInput>(
                 input =>
                 {
-                    if (ProgressCount == 0) NLogStart();
+                    NLogStartOnce();
                     try
                     {
                         if (input != null)
@@ -73,12 +65,13 @@ namespace ETLBox.DataFlow.Connectors
                     }
                     catch (Exception e)
                     {
-                        if (!ErrorHandler.HasErrorBuffer) throw e;
-                        ErrorHandler.Send(e, ErrorHandler.ConvertErrorData<TInput>(input));
+                        ThrowOrRedirectError(e, ErrorSource.ConvertErrorData<TInput>(input));
                     }
                     LogProgress();
                 });
         }
+
+        #endregion
     }
 
     /// <summary>

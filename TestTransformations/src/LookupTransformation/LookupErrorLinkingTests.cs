@@ -96,7 +96,7 @@ namespace ETLBoxTests.DataFlowTests
                 row =>
                 {
                     row.Col2 = LookupTableData.Where(ld => ld.Key == row.Col1).Select(ld => ld.LookupValue).FirstOrDefault();
-                    if (row.Col1 == 4) throw new Exception("Error record");
+                    //if (row.Col1 == 4) throw new Exception("Error record");
                     return row;
                 }
                 , LookupTableData
@@ -104,8 +104,8 @@ namespace ETLBoxTests.DataFlowTests
             DbDestination<MyInputDataRow> dest = new DbDestination<MyInputDataRow>(SqlConnection, "LookupErrorLinkingDest");
             source.LinkTo(lookup);
             lookup.LinkTo(dest);
-            lookup.LinkLookupSourceErrorTo(errorDest);
-            lookup.LinkLookupTransformationErrorTo(errorDest);
+            lookup.LinkSourceErrorTo(errorDest);
+            //lookup.LinkErrorTo(errorDest);
             source.Execute();
             dest.Wait();
             errorDest.Wait();
@@ -136,7 +136,7 @@ namespace ETLBoxTests.DataFlowTests
             SqlTask.ExecuteNonQuery(connection, "Insert demo data"
                 , $@"INSERT INTO {TN.QuotatedFullName} VALUES('X','Test3')");
             SqlTask.ExecuteNonQuery(connection, "Insert demo data"
-                , $@"INSERT INTO {TN.QuotatedFullName} VALUES('3','Test3')");
+                , $@"INSERT INTO {TN.QuotatedFullName} VALUES('3','Test4')");
         }
 
 

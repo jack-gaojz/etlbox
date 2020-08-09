@@ -48,7 +48,7 @@ namespace ETLBox.DataFlow
         public IDataFlowSource<ETLBoxError> LinkErrorTo(IDataFlowDestination<ETLBoxError> target)
             => InternalLinkErrorTo(target);
 
-        protected override void InitBufferObjects()
+        internal override void InitBufferObjects()
         {
             Buffer = new BatchBlock<TInput>(BatchSize, new GroupingDataflowBlockOptions()
             {
@@ -64,8 +64,6 @@ namespace ETLBox.DataFlow
             });
             Buffer.LinkTo(TargetAction, new DataflowLinkOptions() { PropagateCompletion = true });
         }
-
-        protected override void InitComponent() { }
 
         protected override void CleanUpOnSuccess()
         {

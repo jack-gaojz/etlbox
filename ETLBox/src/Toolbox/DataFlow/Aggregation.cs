@@ -52,7 +52,7 @@ namespace ETLBox.DataFlow.Transformations
             InitBufferObjects();
         }
 
-        protected override void InitBufferObjects()
+        internal override void InitBufferObjects()
         {
             OutputBuffer = new BufferBlock<TOutput>(new DataflowBlockOptions()
             {

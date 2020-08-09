@@ -14,23 +14,20 @@ namespace ETLBox.DataFlow.Transformations
     /// <typeparam name="TOutput">Type of data output</typeparam>
     public class RowMultiplication<TInput, TOutput> : DataFlowTransformation<TInput, TOutput>, ITask, IDataFlowTransformation<TInput, TOutput>
     {
-        /* ITask Interface */
-        public override string TaskName { get; set; } = $"Duplicate rows.";
+        #region Public properties
 
-        /* Public Properties */
+        public override string TaskName { get; set; } = $"Duplicate rows";
         public override ISourceBlock<TOutput> SourceBlock => TransformBlock;
         public override ITargetBlock<TInput> TargetBlock => TransformBlock;
         public Func<TInput, IEnumerable<TOutput>> MultiplicationFunc { get; set; }
 
+        #endregion
 
-        /* Private stuff */
-        TransformManyBlock<TInput, TOutput> TransformBlock { get; set; }
-
-        internal ErrorHandler ErrorHandler { get; set; } = new ErrorHandler();
+        #region Constructors
 
         public RowMultiplication()
         {
-            InitBufferObjects();
+
         }
 
         public RowMultiplication(Func<TInput, IEnumerable<TOutput>> multiplicationFunc) : this()
@@ -38,7 +35,11 @@ namespace ETLBox.DataFlow.Transformations
             MultiplicationFunc = multiplicationFunc;
         }
 
-        protected override void InitBufferObjects()
+        #endregion
+
+        #region Implement abstract methods
+
+        internal override void InitBufferObjects()
         {
             TransformBlock = new TransformManyBlock<TInput, TOutput>(MultiplicateRow, new ExecutionDataflowBlockOptions()
             {
@@ -46,8 +47,21 @@ namespace ETLBox.DataFlow.Transformations
             });
         }
 
+        protected override void CleanUpOnSuccess() {
+            NLogFinishOnce();
+        }
+
+        protected override void CleanUpOnFaulted(Exception e) { }
+
+        #endregion
+
+        #region Implementation
+
+        TransformManyBlock<TInput, TOutput> TransformBlock { get; set; }
+
         private IEnumerable<TOutput> MultiplicateRow(TInput row)
         {
+            NLogStartOnce();
             if (row == null) return null;
             try
             {
@@ -55,15 +69,12 @@ namespace ETLBox.DataFlow.Transformations
             }
             catch (Exception e)
             {
-                if (!ErrorHandler.HasErrorBuffer) throw e;
-                ErrorHandler.Send(e, ErrorHandler.ConvertErrorData<TInput>(row));
-                return null;
+                ThrowOrRedirectError(e, ErrorSource.ConvertErrorData<TInput>(row));
+                return default;
             }
         }
 
-        public void LinkErrorTo(IDataFlowDestination<ETLBoxError> target)
-            => ErrorHandler.LinkErrorTo(target, TransformBlock.Completion);
-
+        #endregion
     }
 
     /// <summary>

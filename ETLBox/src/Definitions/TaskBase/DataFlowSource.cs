@@ -17,7 +17,7 @@ namespace ETLBox.DataFlow
         #region Buffer and completion
         protected BufferBlock<TOutput> Buffer { get; set; } = new BufferBlock<TOutput>();
         protected override Task BufferCompletion => Buffer.Completion;
-        protected override void InitBufferObjects()
+        internal override void InitBufferObjects()
         {
             Buffer = new BufferBlock<TOutput>(new DataflowBlockOptions()
             {
@@ -29,9 +29,7 @@ namespace ETLBox.DataFlow
         protected override void FaultBuffer(Exception e) => SourceBlock.Fault(e);
 
         #endregion
-
-        public ErrorHandler ErrorHandler { get; set; } = new ErrorHandler(); //remove
-
+        
         #region Execution and IDataFlowExecutableSource
         public virtual void Execute() //remove virtual
         {

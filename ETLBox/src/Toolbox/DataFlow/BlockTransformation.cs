@@ -54,7 +54,7 @@ namespace ETLBox.DataFlow.Transformations
             CopyTaskProperties(task);
         }
 
-        protected override void InitBufferObjects()
+        internal override void InitBufferObjects()
         {
             OutputBuffer = new BufferBlock<TOutput>(new DataflowBlockOptions()
             {

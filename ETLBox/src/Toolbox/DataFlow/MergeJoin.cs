@@ -56,7 +56,7 @@ namespace ETLBox.DataFlow.Transformations
             Target2 = new MergeJoinTarget<TInput2>(this, JoinBlock.Target2);
         }
 
-        protected override void InitBufferObjects()
+        internal override void InitBufferObjects()
         {
             Transformation = new RowTransformation<Tuple<TInput1, TInput2>, TOutput>();
             Transformation.CopyTaskProperties(this);

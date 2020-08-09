@@ -19,7 +19,7 @@ namespace ETLBox.DataFlow.Connectors
 
         public TextDestination()
         {
-            ResourceType = ResourceType.File;            
+            ResourceType = ResourceType.File;
         }
 
         public TextDestination(string filename) : this()
@@ -56,8 +56,7 @@ namespace ETLBox.DataFlow.Connectors
             }
             catch (Exception e)
             {
-                if (!ErrorHandler.HasErrorBuffer) throw e;
-                ErrorHandler.Send(e, ErrorHandler.ConvertErrorData(data));
+                ThrowOrRedirectError(e, ErrorSource.ConvertErrorData(data));
             }
         }
 

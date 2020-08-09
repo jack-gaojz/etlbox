@@ -24,7 +24,8 @@ namespace ETLBox.DataFlow.Connectors
         CustomDestination<TInput> _voidDestination { get; set; }
         public VoidDestination()
         {
-            _voidDestination = new CustomDestination<TInput>(this, row => {; });
+            _voidDestination = new CustomDestination<TInput>(row => {; });
+            _voidDestination.CopyTaskProperties(this);
         }
 
         public void Wait() => _voidDestination.Wait();

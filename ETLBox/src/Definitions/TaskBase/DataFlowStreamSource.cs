@@ -70,8 +70,6 @@ namespace ETLBox.DataFlow
             Buffer.Complete();
         }
 
-        protected override void InitComponent() { }
-
         protected override void CleanUpOnSuccess()
         {
             NLogFinishOnce();

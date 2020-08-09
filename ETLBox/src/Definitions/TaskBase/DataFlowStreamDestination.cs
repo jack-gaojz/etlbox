@@ -24,11 +24,9 @@ namespace ETLBox.DataFlow
 
         #endregion
 
-        #region Implementation
+        #region Implement abstract methods
 
-        protected StreamWriter StreamWriter { get; set; }
-
-        protected override void InitBufferObjects()
+        internal override void InitBufferObjects()
         {
             TargetAction = new ActionBlock<TInput>(WriteData, new ExecutionDataflowBlockOptions()
             {
@@ -36,6 +34,25 @@ namespace ETLBox.DataFlow
                 BoundedCapacity = MaxBufferSize,
             });
         }
+
+        protected override void CleanUpOnSuccess()
+        {
+            CloseStream();
+            StreamWriter?.Close();
+            NLogFinishOnce();
+        }
+
+        protected override void CleanUpOnFaulted(Exception e)
+        {
+            CloseStream();
+            StreamWriter?.Close();
+        }
+
+        #endregion
+
+        #region Implementation template
+
+        protected StreamWriter StreamWriter { get; set; }
 
         protected void WriteData(TInput data)
         {
@@ -54,13 +71,6 @@ namespace ETLBox.DataFlow
                 StreamWriter = new StreamWriter(Uri);
             else
                 StreamWriter = new StreamWriter(HttpClient.GetStreamAsync(new Uri(Uri)).Result);
-        }
-
-        protected override void CleanUpOnSuccess()
-        {
-            CloseStream();
-            StreamWriter?.Close();
-            NLogFinish();
         }
 
         protected abstract void InitStream();

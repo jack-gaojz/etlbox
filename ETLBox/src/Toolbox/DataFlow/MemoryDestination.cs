@@ -31,7 +31,7 @@ namespace ETLBox.DataFlow.Connectors
 
         #region Implement abstract methods
 
-        protected override void InitBufferObjects()
+        internal override void InitBufferObjects()
         {
             TargetAction = new ActionBlock<TInput>(WriteRecord, new ExecutionDataflowBlockOptions()
             {
@@ -39,8 +39,6 @@ namespace ETLBox.DataFlow.Connectors
                 MaxDegreeOfParallelism = 1
             });
         }
-
-        protected override void InitComponent() { }
 
         protected override void CleanUpOnSuccess()
         {
@@ -58,6 +56,7 @@ namespace ETLBox.DataFlow.Connectors
 
         protected void WriteRecord(TInput row)
         {
+            NLogStartOnce();
             if (Data == null) Data = new BlockingCollection<TInput>();
             if (row == null) return;
             Data.Add(row);

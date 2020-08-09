@@ -90,8 +90,7 @@ namespace ETLBox.DataFlow.Connectors
             }
             catch (Exception e)
             {
-                if (!ErrorHandler.HasErrorBuffer) throw e;
-                ErrorHandler.Send(e, line);
+                ThrowOrRedirectError(e, line);
             }
         }
 

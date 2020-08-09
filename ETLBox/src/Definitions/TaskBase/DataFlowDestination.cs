@@ -16,14 +16,16 @@ namespace ETLBox.DataFlow
 
         #endregion
 
+        #region Buffer handling
         protected virtual ActionBlock<TInput> TargetAction { get; set; }
-        public ErrorHandler ErrorHandler { get; set; } = new ErrorHandler(); //remove
 
         protected override Task BufferCompletion => TargetBlock.Completion;
 
         protected override void CompleteBuffer() => TargetBlock.Complete();
 
         protected override void FaultBuffer(Exception e) => TargetBlock.Fault(e);
+
+        #endregion
 
         public IDataFlowSource<ETLBoxError> LinkErrorTo(IDataFlowDestination<ETLBoxError> target)
             => InternalLinkErrorTo(target);

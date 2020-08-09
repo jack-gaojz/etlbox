@@ -23,6 +23,8 @@ namespace ETLBox.DataFlow
         //Task ExecuteAsync();
         //void Execute();
 
+        ErrorSource ErrorSource { get; set; }
+
         IDataFlowSource<ETLBoxError> LinkErrorTo(IDataFlowDestination<ETLBoxError> target);
     }
 

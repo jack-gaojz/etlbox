@@ -93,7 +93,7 @@ namespace ETLBox.DataFlow
             InitBufferRecursively();
             LinkBuffersRecursively();
             SetCompletionTaskRecursively();
-            RunComponentInitializationRecursively();
+            RunErrorSourceInitializationRecursively();
         }
 
 
@@ -114,28 +114,25 @@ namespace ETLBox.DataFlow
                     successor.InitBufferRecursively();
         }
 
-        protected virtual void InitBufferObjects() { } //abstract
+        internal virtual void InitBufferObjects() { } //abstract
 
-        protected void RunComponentInitializationRecursively()
+        protected void RunErrorSourceInitializationRecursively()
         {
             foreach (DataFlowTask predecessor in Predecessors)
                 if (!predecessor.ReadyForProcessing)
-                    predecessor.RunComponentInitializationRecursively();
+                    predecessor.RunErrorSourceInitializationRecursively();
 
             if (!ReadyForProcessing)
             {
                 LetErrorSourceWaitForInput();
-                InitComponent();
                 ReadyForProcessing = true;
             }
 
             foreach (DataFlowTask successor in Successors)
                 if (!successor.ReadyForProcessing)
-                    successor.RunComponentInitializationRecursively();
+                    successor.RunErrorSourceInitializationRecursively();
         }
 
-
-        protected virtual void InitComponent() { } //abstract
 
         #endregion
 

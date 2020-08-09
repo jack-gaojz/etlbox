@@ -26,12 +26,9 @@ namespace ETLBox.DataFlow.Transformations
 
         #region Public properties
 
-        /* ITask Interface */
         public override string TaskName { get; set; } = "Execute row transformation";
-
         public Func<TInput, TOutput> TransformationFunc { get; set; }
         public Action InitAction { get; set; }
-        public bool WasInitActionInvoked { get; private set; }
         public override ITargetBlock<TInput> TargetBlock => TransformBlock;
         public override ISourceBlock<TOutput> SourceBlock => TransformBlock;
 
@@ -57,7 +54,9 @@ namespace ETLBox.DataFlow.Transformations
 
         #endregion
 
-        protected override void InitBufferObjects()
+        #region Implement abstract methods
+
+        internal override void InitBufferObjects()
         {
             TransformBlock = new TransformBlock<TInput, TOutput>(
                 row =>
@@ -75,7 +74,7 @@ namespace ETLBox.DataFlow.Transformations
                     catch (Exception e)
                     {
                         ThrowOrRedirectError(e, ErrorSource.ConvertErrorData<TInput>(row));
-                        return default(TOutput);
+                        return default;
                     }
                 }, new ExecutionDataflowBlockOptions()
                 {
@@ -84,6 +83,19 @@ namespace ETLBox.DataFlow.Transformations
             );
         }
 
+        protected override void CleanUpOnSuccess()
+        {
+            NLogFinishOnce();
+        }
+
+        protected override void CleanUpOnFaulted(Exception e) { }
+
+        #endregion
+
+        #region Implementation
+
+        bool WasInitActionInvoked;
+
         private TOutput WrapTransformation(TInput row)
         {
             TOutput result = TransformationFunc.Invoke(row);
@@ -91,14 +103,7 @@ namespace ETLBox.DataFlow.Transformations
             return result;
         }
 
-
-        protected override void InitComponent() {  }
-
-        protected override void CleanUpOnSuccess() {
-            NLogFinishOnce();
-        }
-
-        protected override void CleanUpOnFaulted(Exception e) { }
+        #endregion
     }
 
     /// <summary>
