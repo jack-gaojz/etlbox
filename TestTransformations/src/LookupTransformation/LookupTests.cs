@@ -4,7 +4,9 @@ using ETLBox.DataFlow.Connectors;
 using ETLBox.DataFlow.Transformations;
 using ETLBoxTests.Fixtures;
 using ETLBoxTests.Helper;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using Xunit;
 
@@ -14,7 +16,7 @@ namespace ETLBoxTests.DataFlowTests
     public class LookupTests
     {
         public static IEnumerable<object[]> Connections => Config.AllSqlConnections("DataFlow");
-        public SqlConnectionManager Connection => Config.SqlConnection.ConnectionManager("DataFlow");
+        public SqlConnectionManager SqlConnection => Config.SqlConnection.ConnectionManager("DataFlow");
         public LookupTests(DataFlowDatabaseFixture dbFixture)
         {
         }
@@ -46,10 +48,10 @@ namespace ETLBoxTests.DataFlowTests
             FourColumnsTableFixture dest4Columns = new FourColumnsTableFixture(connection, "DestinationLookupSameType");
             FourColumnsTableFixture lookup4Columns = new FourColumnsTableFixture(connection, "LookupSameType");
             lookup4Columns.InsertTestData();
-
             DbSource<MyDataRow> source = new DbSource<MyDataRow>(connection, "SourceLookupSameType");
             DbSource<MyLookupRow> lookupSource = new DbSource<MyLookupRow>(connection, "LookupSameType");
 
+            //Act
             var lookup = new LookupTransformation<MyDataRow, MyLookupRow>();
             lookup.TransformationFunc =
                 row =>
@@ -63,6 +65,46 @@ namespace ETLBoxTests.DataFlowTests
                 };
             lookup.Source = lookupSource;
             DbDestination<MyDataRow> dest = new DbDestination<MyDataRow>(connection, "DestinationLookupSameType");
+            source.LinkTo(lookup);
+            lookup.LinkTo(dest);
+            source.Execute();
+            dest.Wait();
+
+            //Assert
+            dest4Columns.AssertTestData();
+        }
+
+        [Fact]
+        public void UsingConstructorWithOwnList()
+        {
+            //Arrange
+            FourColumnsTableFixture source4Columns = new FourColumnsTableFixture(SqlConnection, "SourceLookupSameType");
+            source4Columns.InsertTestData();
+            FourColumnsTableFixture dest4Columns = new FourColumnsTableFixture(SqlConnection, "DestinationLookupSameType");
+            FourColumnsTableFixture lookup4Columns = new FourColumnsTableFixture(SqlConnection, "LookupSameType");
+            lookup4Columns.InsertTestData();
+
+            DbSource<MyDataRow> source = new DbSource<MyDataRow>(SqlConnection, "SourceLookupSameType");
+            DbSource<MyLookupRow> lookupSource = new DbSource<MyLookupRow>(SqlConnection, "LookupSameType");
+
+            List<MyLookupRow> lookupData = new List<MyLookupRow>();
+
+            //Act
+            var lookup = new LookupTransformation<MyDataRow, MyLookupRow>(
+                lookupSource,
+                row =>
+                {
+
+                    row.Col1 = row.Col1;
+                    row.Col2 = row.Col2;
+                    row.Col3 = lookupData.Where(ld => ld.Key == row.Col1).Select(ld => ld.LookupValue1).FirstOrDefault();
+                    row.Col4 = lookupData.Where(ld => ld.Key == row.Col1).Select(ld => ld.LookupValue2).FirstOrDefault();
+                    return row;
+                },
+                lookupData
+                );
+
+            DbDestination<MyDataRow> dest = new DbDestination<MyDataRow>(SqlConnection, "DestinationLookupSameType");
             source.LinkTo(lookup);
             lookup.LinkTo(dest);
             source.Execute();

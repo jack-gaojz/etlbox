@@ -45,6 +45,7 @@ namespace ETLBox.DataFlow.Transformations
         public LookupTransformation()
         {
             LookupBuffer = new MemoryDestination<TSourceOutput>();
+            RowTransformation = new RowTransformation<TInput, TInput>();
         }
 
         public LookupTransformation(IDataFlowExecutableSource<TSourceOutput> lookupSource) : this()
@@ -95,7 +96,6 @@ namespace ETLBox.DataFlow.Transformations
 
         private void InitRowTransformationManually(Action initAction)
         {
-            RowTransformation = new RowTransformation<TInput, TInput>();
             RowTransformation.TransformationFunc = TransformationFunc;
             RowTransformation.CopyTaskProperties(this);
             RowTransformation.InitAction = initAction;
@@ -148,32 +148,16 @@ namespace ETLBox.DataFlow.Transformations
             LookupBuffer.Wait();
         }
 
-        //private void FillBuffer(TSourceOutput sourceRow)
-        //{
-        //    if (LookupData == null) LookupData = new List<TSourceOutput>();
-        //    LookupData.Add(sourceRow);
-        //}
-
-        //public void LinkSourceErrorTo(IDataFlowDestination<ETLBoxError> target)
-        //{
-        //    if (ErrorSource == null)
-        //        ErrorSource = new ErrorSource();
-        //    Source.ErrorSource = this.ErrorSource;
-        //    Source.LinkErrorTo(target);
-        //}
-
-        //public new void LinkErrorTo(IDataFlowDestination<ETLBoxError> target)
-        //{
-        //    if (ErrorSource == null)
-        //        ErrorSource = new ErrorSource();
-        //    RowTransformation.ErrorSource = this.ErrorSource;
-        //    RowTransformation.LinkErrorTo(target);
-        //}
+        public new IDataFlowSource<ETLBoxError> LinkErrorTo(IDataFlowDestination<ETLBoxError> target)
+        {
+            var errorSource = InternalLinkErrorTo(target);
+            RowTransformation.ErrorSource = new ErrorSource() { Redirection = this.ErrorSource };
+            Source.ErrorSource = new ErrorSource() { Redirection = this.ErrorSource };
+            return errorSource;
+        }
 
         #endregion
 
-        //public void LinkLookupTransformationErrorTo(IDataFlowDestination<ETLBoxError> target) =>
-        //    RowTransformation.LinkErrorTo(target);
     }
 
     /// <summary>

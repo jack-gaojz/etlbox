@@ -7,6 +7,8 @@ namespace ETLBox.DataFlow
 {
     public class ErrorSource : DataFlowSource<ETLBoxError>
     {
+        public ErrorSource Redirection { get; set; }
+
         public ErrorSource()
         {
 
@@ -21,13 +23,17 @@ namespace ETLBox.DataFlow
 
         public void Send(Exception e, string jsonRow)
         {
-            Buffer.SendAsync(new ETLBoxError()
+            if (Redirection != null) Redirection.Send(e, jsonRow);
+            else
             {
-                ExceptionType = e.GetType().ToString(),
-                ErrorText = e.Message,
-                ReportTime = DateTime.Now,
-                RecordAsJson = jsonRow
-            }).Wait();
+                Buffer.SendAsync(new ETLBoxError()
+                {
+                    ExceptionType = e.GetType().ToString(),
+                    ErrorText = e.Message,
+                    ReportTime = DateTime.Now,
+                    RecordAsJson = jsonRow
+                }).Wait();
+            }
         }
 
         public static string ConvertErrorData<T>(T row)
