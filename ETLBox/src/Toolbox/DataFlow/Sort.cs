@@ -54,7 +54,8 @@ namespace ETLBox.DataFlow.Transformations
 
         public override void InitBufferObjects()
         {
-            BlockTransformation = new BlockTransformation<TInput, TInput>(this, SortByFunc);
+            BlockTransformation = new BlockTransformation<TInput, TInput>(SortByFunc);
+            BlockTransformation.CopyTaskProperties(this);
             if (MaxBufferSize > 0) BlockTransformation.MaxBufferSize = this.MaxBufferSize;
         }
 

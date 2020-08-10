@@ -87,18 +87,6 @@ namespace ETLBox.DataFlow.Transformations
             });
         }
 
-        private void SetAggregationFunctionsIfNecessary()
-        {
-            if (AggregationAction == null && AggTypeInfo.AggregateColumns.Count > 0)
-                AggregationAction = DefineAggregationAction;
-
-            if (GroupingFunc == null && AggTypeInfo.GroupColumns.Count > 0)
-                GroupingFunc = DefineGroupingPropertyFromAttributes;
-
-            if (StoreKeyAction == null && AggTypeInfo.GroupColumns.Count > 0)
-                StoreKeyAction = DefineStoreKeyActionFromAttributes;
-        }
-
         protected override void CleanUpOnSuccess()
         {
             NLogFinishOnce();
@@ -119,6 +107,18 @@ namespace ETLBox.DataFlow.Transformations
         {
             if (AggTypeInfo.IsArrayOutput)
                 throw new Exception("Aggregation target must be of an object or dynamic type! Array types are not allowed.");
+        }
+
+        private void SetAggregationFunctionsIfNecessary()
+        {
+            if (AggregationAction == null && AggTypeInfo.AggregateColumns.Count > 0)
+                AggregationAction = DefineAggregationAction;
+
+            if (GroupingFunc == null && AggTypeInfo.GroupColumns.Count > 0)
+                GroupingFunc = DefineGroupingPropertyFromAttributes;
+
+            if (StoreKeyAction == null && AggTypeInfo.GroupColumns.Count > 0)
+                StoreKeyAction = DefineStoreKeyActionFromAttributes;
         }
 
         private void DefineAggregationAction(TInput inputrow, TOutput aggOutput)

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
 
@@ -22,22 +23,19 @@ namespace ETLBox.DataFlow.Transformations
     /// block.LinkTo(dest);
     /// </code>
     /// </example>
-    public class BlockTransformation<TInput, TOutput> : DataFlowTransformation<TInput, TOutput>, ITask, IDataFlowTransformation<TInput, TOutput>
+    public class BlockTransformation<TInput, TOutput> : DataFlowTransformation<TInput, TOutput>
     {
-        /* ITask Interface */
+        #region Public properties
+
         public override string TaskName { get; set; } = "Excecute block transformation";
-
-        /* Public Properties */
         public Func<List<TInput>, List<TOutput>> BlockTransformationFunc { get; set; }
-
         public override ISourceBlock<TOutput> SourceBlock => OutputBuffer;
         public override ITargetBlock<TInput> TargetBlock => InputBuffer;
 
-        /* Private stuff */
-        BufferBlock<TOutput> OutputBuffer { get; set; }
-        ActionBlock<TInput> InputBuffer { get; set; }
-        List<TInput> InputData { get; set; }
-        List<TOutput> OutputData { get; set; }
+        #endregion
+
+        #region Constructors
+
         public BlockTransformation()
         {
             InputData = new List<TInput>();
@@ -49,10 +47,11 @@ namespace ETLBox.DataFlow.Transformations
             BlockTransformationFunc = blockTransformationFunc;
         }
 
-        internal BlockTransformation(ITask task, Func<List<TInput>, List<TOutput>> blockTransformationFunc) : this(blockTransformationFunc)
-        {
-            CopyTaskProperties(task);
-        }
+        #endregion
+
+        #region Implement abstract methods
+
+        protected override Task BufferCompletion => SourceBlock.Completion;
 
         public override void InitBufferObjects()
         {
@@ -70,6 +69,7 @@ namespace ETLBox.DataFlow.Transformations
                 if (t.IsFaulted) ((IDataflowBlock)OutputBuffer).Fault(t.Exception.InnerException);
                 try
                 {
+                    NLogStartOnce();
                     WriteIntoOutput();
                     OutputBuffer.Complete();
                 }
@@ -81,17 +81,35 @@ namespace ETLBox.DataFlow.Transformations
             });
         }
 
+        protected override void CleanUpOnSuccess()
+        {
+            NLogFinishOnce();
+        }
+
+
+        protected override void CleanUpOnFaulted(Exception e) { }
+
+        #endregion
+
+        #region Implementation
+
+        BufferBlock<TOutput> OutputBuffer;
+        ActionBlock<TInput> InputBuffer;
+        List<TInput> InputData;
+        List<TOutput> OutputData;
+
         private void WriteIntoOutput()
         {
-            NLogStart();
             OutputData = BlockTransformationFunc(InputData);
             foreach (TOutput row in OutputData)
             {
-                OutputBuffer.SendAsync(row).Wait();
+                if (!OutputBuffer.SendAsync(row).Result)
+                    throw Exception;
                 LogProgress();
             }
-            NLogFinish();
         }
+
+        #endregion
     }
 
     /// <summary>
