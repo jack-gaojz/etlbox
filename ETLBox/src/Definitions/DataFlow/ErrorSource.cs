@@ -9,10 +9,16 @@ namespace ETLBox.DataFlow
     {
         public ErrorSource Redirection { get; set; }
 
-
         public ErrorSource()
         {
-            IsErrorSource = true;
+        }
+
+        public override void InitBufferObjects()
+        {
+            Buffer = new BufferBlock<ETLBoxError>();
+            Completion = new Task(
+                () => { }
+                );
         }
 
         internal override void LinkBuffers(DataFlowTask successor, LinkPredicates linkPredicate)

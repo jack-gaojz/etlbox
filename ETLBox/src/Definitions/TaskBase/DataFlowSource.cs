@@ -16,7 +16,6 @@ namespace ETLBox.DataFlow
         #endregion
 
         #region Buffer and completion
-        protected bool IsErrorSource { get; set; }
         protected BufferBlock<TOutput> Buffer { get; set; } = new BufferBlock<TOutput>();
         protected override Task BufferCompletion => Buffer.Completion;
         public override void InitBufferObjects()
@@ -31,12 +30,9 @@ namespace ETLBox.DataFlow
                    try
                    {
                        OnExecutionDoAsyncWork();
-                       if (!IsErrorSource)
-                       {
-                           CompleteBuffer();
-                           ErrorSource?.CompleteBuffer();
-                           CleanUpOnSuccess();
-                       }
+                       CompleteBuffer();
+                       ErrorSource?.CompleteBuffer();
+                       CleanUpOnSuccess();
                    }
                    catch (Exception e)
                    {
