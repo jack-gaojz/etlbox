@@ -93,7 +93,6 @@ namespace ETLBox.DataFlow.Transformations
         RowTransformation<TInput, TInput> RowTransformation;
         LookupTypeInfo TypeInfo;
 
-
         private void InitRowTransformationManually(Action initAction)
         {
             RowTransformation.TransformationFunc = TransformationFunc;
