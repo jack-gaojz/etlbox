@@ -1,4 +1,5 @@
 ﻿using ETLBox.ControlFlow;
+using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
@@ -18,38 +19,60 @@ namespace ETLBox.DataFlow.Transformations
     /// multicast.LinkTo(dest2);
     /// </code>
     /// </example>
-    public class Multicast<TInput> : DataFlowTransformation<TInput, TInput>, ITask, IDataFlowTransformation<TInput, TInput>
+    public class Multicast<TInput> : DataFlowTransformation<TInput, TInput>
     {
-        /* ITask Interface */
-        public override string TaskName { get; set; } = "Multicast - duplicate data";
+        #region Public properties
 
-        /* Public Properties */
+        public override string TaskName { get; set; } = "Multicast - duplicate data";
         public override ISourceBlock<TInput> SourceBlock => BroadcastBlock;
         public override ITargetBlock<TInput> TargetBlock => BroadcastBlock;
 
-        /* Private stuff */
-        internal BroadcastBlock<TInput> BroadcastBlock { get; set; }
-        TypeInfo TypeInfo { get; set; }
-        ObjectCopy<TInput> ObjectCopy { get; set; }
+        #endregion
+
+        #region Constructors
+
         public Multicast()
         {
             TypeInfo = new TypeInfo(typeof(TInput)).GatherTypeInfo();
             ObjectCopy = new ObjectCopy<TInput>(TypeInfo);
-            BroadcastBlock = new BroadcastBlock<TInput>(Clone);
         }
 
-        public Multicast(string name) : this()
+        #endregion
+
+        #region Implement abstract methods
+
+        public override void InitBufferObjects()
         {
-            this.TaskName = name;
+            BroadcastBlock = new BroadcastBlock<TInput>(Clone, new DataflowBlockOptions()
+            {
+                BoundedCapacity = MaxBufferSize
+            });
         }
+
+        protected override void CleanUpOnSuccess()
+        {
+            NLogFinishOnce();
+        }
+
+        protected override void CleanUpOnFaulted(Exception e) { }
+
+        #endregion
+
+        #region Implementation
+
+        BroadcastBlock<TInput> BroadcastBlock;
+        TypeInfo TypeInfo;
+        ObjectCopy<TInput> ObjectCopy;
 
         private TInput Clone(TInput row)
         {
+            NLogStartOnce();
             TInput clone = ObjectCopy.Clone(row);
             LogProgress();
             return clone;
         }
 
+        #endregion
     }
 
     /// <summary>
@@ -68,7 +91,5 @@ namespace ETLBox.DataFlow.Transformations
     public class Multicast : Multicast<ExpandoObject>
     {
         public Multicast() : base() { }
-
-        public Multicast(string name) : base(name) { }
     }
 }
