@@ -5,7 +5,7 @@ using System.Threading.Tasks.Dataflow;
 
 namespace ETLBox.DataFlow
 {
-    public class ErrorSource : DataFlowSource<ETLBoxError>
+    public class ErrorSource : DataFlowExecutableSource<ETLBoxError>
     {
         public ErrorSource Redirection { get; set; }
 

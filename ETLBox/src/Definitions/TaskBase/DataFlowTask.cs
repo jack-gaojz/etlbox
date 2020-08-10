@@ -255,7 +255,7 @@ namespace ETLBox.DataFlow
             ErrorSource?.ExecuteAsync().Wait();
 
         private void LetErrorSourceFinishUp() =>
-             ErrorSource?.SourceBlock.Complete();
+             ErrorSource?.CompleteBuffer();
 
         #endregion
 

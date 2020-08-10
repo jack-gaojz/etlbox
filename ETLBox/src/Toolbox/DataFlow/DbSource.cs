@@ -23,7 +23,7 @@ namespace ETLBox.DataFlow.Connectors
     /// source.Execute(); //Start the data flow
     /// </code>
     /// </example>
-    public class DbSource<TOutput> : DataFlowSource<TOutput>
+    public class DbSource<TOutput> : DataFlowExecutableSource<TOutput>
     {
         #region Public properties
 

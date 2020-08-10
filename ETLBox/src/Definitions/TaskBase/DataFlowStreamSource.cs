@@ -6,7 +6,7 @@ using System.Text;
 
 namespace ETLBox.DataFlow
 {
-    public abstract class DataFlowStreamSource<TOutput> : DataFlowSource<TOutput>
+    public abstract class DataFlowStreamSource<TOutput> : DataFlowExecutableSource<TOutput>
     {
         #region Public properties
 

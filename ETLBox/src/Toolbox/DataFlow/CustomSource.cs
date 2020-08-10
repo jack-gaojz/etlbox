@@ -9,7 +9,7 @@ namespace ETLBox.DataFlow.Connectors
     /// Define your own source block.
     /// </summary>
     /// <typeparam name="TOutput">Type of data output.</typeparam>
-    public class CustomSource<TOutput> : DataFlowSource<TOutput>, ITask, IDataFlowSource<TOutput>
+    public class CustomSource<TOutput> : DataFlowExecutableSource<TOutput>, ITask, IDataFlowSource<TOutput>
     {
         #region Public properties
 

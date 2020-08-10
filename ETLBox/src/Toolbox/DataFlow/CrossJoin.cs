@@ -18,7 +18,7 @@ namespace ETLBox.DataFlow.Transformations
     /// <typeparam name="TInput1">Type of data for in memory input block.</typeparam>
     /// <typeparam name="TInput2">Type of data for processing input block.</typeparam>
     /// <typeparam name="TOutput">Type of output data.</typeparam>
-    public class CrossJoin<TInput1, TInput2, TOutput> : DataFlowSource<TOutput>, ITask, IDataFlowSource<TOutput>
+    public class CrossJoin<TInput1, TInput2, TOutput> : DataFlowExecutableSource<TOutput>, ITask, IDataFlowSource<TOutput>
     {
         #region Public properties
         public override string TaskName { get; set; } = "Cross join data";
