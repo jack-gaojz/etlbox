@@ -3,6 +3,8 @@ using ETLBox.DataFlow.Connectors;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Runtime.InteropServices.ComTypes;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
 
@@ -18,34 +20,23 @@ namespace ETLBox.DataFlow.Transformations
     /// <typeparam name="TOutput">Type of output data.</typeparam>
     public class CrossJoin<TInput1, TInput2, TOutput> : DataFlowSource<TOutput>, ITask, IDataFlowSource<TOutput>
     {
-        /* ITask Interface */
+        #region Public properties
         public override string TaskName { get; set; } = "Cross join data";
-        public IEnumerable<TInput1> InMemoryData => InMemoryTarget.Data;
         public MemoryDestination<TInput1> InMemoryTarget { get; set; }
         public CustomDestination<TInput2> PassingTarget { get; set; }
         public Func<TInput1, TInput2, TOutput> CrossJoinFunc { get; set; }
 
-        private bool WasInMemoryTableLoaded { get; set; }
+        #endregion
 
-        public override void Execute()
-        {
-            throw new InvalidOperationException("Execute is not supported on CrossJoins! A crossjoin will continue execution" +
-            "when the predecessing dataflow components are completed");
-        }
+        #region Constructors
 
         public CrossJoin()
         {
-            InitBufferObjects();
-        }
-
-        public override void InitBufferObjects()
-        {
             InMemoryTarget = new MemoryDestination<TInput1>();
-            InMemoryTarget.CopyTaskProperties(this);
             PassingTarget = new CustomDestination<TInput2>(CrossJoinData);
-            PassingTarget.CopyTaskProperties(this);
-            if (MaxBufferSize > 0) PassingTarget.MaxBufferSize = this.MaxBufferSize;
-            PassingTarget.OnCompletion = () => Buffer.Complete();
+            PassingTarget.OnBeforeInit = Init;
+            PassingTarget.OnCompletion =
+                () => Completion.RunSynchronously();
         }
 
         public CrossJoin(Func<TInput1, TInput2, TOutput> crossJoinFunc) : this()
@@ -53,8 +44,43 @@ namespace ETLBox.DataFlow.Transformations
             CrossJoinFunc = crossJoinFunc;
         }
 
+        #endregion
+
+        #region Implement abstract methods
+
+        void Init()
+        {
+            InitNetworkRecursively();
+            InMemoryTarget.CopyTaskProperties(this);
+            PassingTarget.CopyTaskProperties(this);
+            if (MaxBufferSize > 0) PassingTarget.MaxBufferSize = this.MaxBufferSize;
+        }
+
+        protected override void CleanUpOnSuccess()
+        {
+            NLogFinishOnce();
+        }
+
+
+        protected override void CleanUpOnFaulted(Exception e) { }
+
+        protected override void OnExecutionDoSynchronousWork() { }
+
+        protected override void OnExecutionDoAsyncWork()
+        {
+            ;
+        }
+
+        #endregion
+
+        #region Implementation
+
+        bool WasInMemoryTableLoaded;
+        IEnumerable<TInput1> InMemoryData => InMemoryTarget.Data;
+
         private void CrossJoinData(TInput2 passingRow)
         {
+            NLogStartOnce();
             if (!WasInMemoryTableLoaded)
             {
                 InMemoryTarget.Wait();
@@ -69,7 +95,8 @@ namespace ETLBox.DataFlow.Transformations
                         TOutput result = CrossJoinFunc.Invoke(inMemoryRow, passingRow);
                         if (result != null)
                         {
-                            Buffer.SendAsync(result).Wait();
+                            if (!Buffer.SendAsync(result).Result)
+                                throw Exception;
                             LogProgress();
                         }
                     }
@@ -80,8 +107,9 @@ namespace ETLBox.DataFlow.Transformations
                         ErrorHandler.ConvertErrorData<TInput2>(passingRow)));
                 }
             }
-
         }
+
+        #endregion
     }
 
     /// <summary>

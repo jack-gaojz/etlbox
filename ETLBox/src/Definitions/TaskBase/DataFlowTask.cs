@@ -105,6 +105,7 @@ namespace ETLBox.DataFlow
 
             if (!WereBufferInitialized)
             {
+                OnBeforeInit?.Invoke();
                 InitBufferObjects();
                 WereBufferInitialized = true;
             }
@@ -114,6 +115,7 @@ namespace ETLBox.DataFlow
                     successor.InitBufferRecursively();
         }
 
+        internal Action OnBeforeInit { get; set; }
         public virtual void InitBufferObjects() { } //abstract
 
         protected void RunErrorSourceInitializationRecursively()
@@ -132,7 +134,6 @@ namespace ETLBox.DataFlow
                 if (!successor.ReadyForProcessing)
                     successor.RunErrorSourceInitializationRecursively();
         }
-
 
         #endregion
 
