@@ -20,9 +20,8 @@ namespace ETLBoxTests.DataFlowTests
             source1.DataAsList = new List<string>() { "A", "B" };
             MemorySource<int> source2 = new MemorySource<int>();
             source2.DataAsList = new List<int>() { 1, 2, 3 };
-            CrossJoin<string, int, string> crossJoin = new CrossJoin<string, int, string>(
-                (data1, data2) => data1 + data2.ToString()
-            );
+            CrossJoin<string, int, string> crossJoin = new CrossJoin<string, int, string>();
+            crossJoin.CrossJoinFunc = (data1, data2) => data1 + data2.ToString();
             MemoryDestination<string> dest = new MemoryDestination<string>();
 
 

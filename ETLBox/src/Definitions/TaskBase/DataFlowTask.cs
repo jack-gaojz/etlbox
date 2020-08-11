@@ -37,6 +37,7 @@ namespace ETLBox.DataFlow
         public Task Completion { get; protected set; }
         protected virtual Task BufferCompletion { get; }
         protected Task PredecessorCompletion { get; set; }
+        protected DataFlowTask Parent { get; set; }
 
         protected bool WereBufferInitialized;
         protected bool ReadyForProcessing;
@@ -45,10 +46,10 @@ namespace ETLBox.DataFlow
 
         protected IDataFlowSource<T> InternalLinkTo<T>(IDataFlowDestination target, object predicate = null, object voidPredicate = null)
         {
-            var t = target as DataFlowTask;
-            LinkPredicates.Add(t, new LinkPredicates(predicate, voidPredicate));
-            this.Successors.Add(t);
-            t.Predecessors.Add(this);
+            DataFlowTask tgt = target as DataFlowTask;
+            LinkPredicates.Add(tgt, new LinkPredicates(predicate, voidPredicate));
+            this.Successors.Add(tgt);
+            tgt.Predecessors.Add(this);
             var res = target as IDataFlowSource<T>;
             return res;
         }
@@ -80,8 +81,7 @@ namespace ETLBox.DataFlow
         }
         internal virtual void LinkBuffers(DataFlowTask successor, LinkPredicates predicate)
         {
-            //A destination doesn't implement this
-            throw new NotImplementedException("This component can't be used to link to something");
+            //No linking by default
         }
 
         #endregion

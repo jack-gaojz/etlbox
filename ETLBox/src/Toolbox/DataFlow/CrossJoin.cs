@@ -3,7 +3,6 @@ using ETLBox.DataFlow.Connectors;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
-using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
@@ -18,13 +17,65 @@ namespace ETLBox.DataFlow.Transformations
     /// <typeparam name="TInput1">Type of data for in memory input block.</typeparam>
     /// <typeparam name="TInput2">Type of data for processing input block.</typeparam>
     /// <typeparam name="TOutput">Type of output data.</typeparam>
-    public class CrossJoin<TInput1, TInput2, TOutput> : DataFlowExecutableSource<TOutput>, ITask, IDataFlowSource<TOutput>
+    public class CrossJoin<TInput1, TInput2, TOutput> : DataFlowSource<TOutput>, IDataFlowTransformation<TOutput>
     {
         #region Public properties
+
         public override string TaskName { get; set; } = "Cross join data";
-        public MemoryDestination<TInput1> InMemoryTarget { get; set; }
-        public CustomDestination<TInput2> PassingTarget { get; set; }
+        public InMemoryDestination<TInput1> InMemoryTarget { get; set; }
+        public JoinDestination<TInput2> PassingTarget { get; set; }
         public Func<TInput1, TInput2, TOutput> CrossJoinFunc { get; set; }
+        public override ISourceBlock<TOutput> SourceBlock => this.Buffer;
+
+        #endregion
+
+        #region Join Targets
+
+        public class InMemoryDestination<TInput> : DataFlowJoinTarget<TInput>
+        {
+            public override ITargetBlock<TInput> TargetBlock => InMemoryTarget.TargetBlock;
+            public MemoryDestination<TInput> InMemoryTarget { get; set; }
+
+            public InMemoryDestination(DataFlowTask parent)
+            {
+                InMemoryTarget = new MemoryDestination<TInput>();
+                CreateLinkInInternalFlow(parent);
+            }
+
+            public override void InitBufferObjects()
+            {
+                InMemoryTarget.CopyTaskProperties(Parent);
+                InMemoryTarget.MaxBufferSize = -1;
+                InMemoryTarget.InitBufferObjects();
+            }
+
+            protected override void CleanUpOnSuccess() { }
+
+            protected override void CleanUpOnFaulted(Exception e) { }
+        }
+
+        public class JoinDestination<TInput> : DataFlowJoinTarget<TInput>
+        {
+            public override ITargetBlock<TInput> TargetBlock => PassingTarget.TargetBlock;
+            public CustomDestination<TInput> PassingTarget { get; set; }
+
+            public JoinDestination(DataFlowTask parent, Action<TInput> action)
+            {
+                PassingTarget = new CustomDestination<TInput>(action);
+                CreateLinkInInternalFlow(parent);
+            }
+
+            public override void InitBufferObjects()
+            {
+                PassingTarget.CopyTaskProperties(Parent);
+                PassingTarget.MaxBufferSize = Parent.MaxBufferSize;
+                PassingTarget.InitBufferObjects();
+            }
+
+            protected override void CleanUpOnSuccess() { }
+
+            protected override void CleanUpOnFaulted(Exception e) { }
+        }
 
         #endregion
 
@@ -32,11 +83,8 @@ namespace ETLBox.DataFlow.Transformations
 
         public CrossJoin()
         {
-            InMemoryTarget = new MemoryDestination<TInput1>();
-            PassingTarget = new CustomDestination<TInput2>(CrossJoinData);
-            PassingTarget.OnBeforeInit = Init;
-            PassingTarget.OnCompletion =
-                () => Completion.RunSynchronously();
+            InMemoryTarget = new InMemoryDestination<TInput1>(this);
+            PassingTarget = new JoinDestination<TInput2>(this, CrossJoinData);
         }
 
         public CrossJoin(Func<TInput1, TInput2, TOutput> crossJoinFunc) : this()
@@ -46,14 +94,14 @@ namespace ETLBox.DataFlow.Transformations
 
         #endregion
 
-        #region Implement abstract methods
+        #region Implement abstract methods and override default behaviour
 
-        void Init()
+        public override void InitBufferObjects()
         {
-            InitNetworkRecursively();
-            InMemoryTarget.CopyTaskProperties(this);
-            PassingTarget.CopyTaskProperties(this);
-            if (MaxBufferSize > 0) PassingTarget.MaxBufferSize = this.MaxBufferSize;
+            Buffer = new BufferBlock<TOutput>(new DataflowBlockOptions()
+            {
+                BoundedCapacity = MaxBufferSize
+            });
         }
 
         protected override void CleanUpOnSuccess()
@@ -64,11 +112,22 @@ namespace ETLBox.DataFlow.Transformations
 
         protected override void CleanUpOnFaulted(Exception e) { }
 
-        protected override void OnExecutionDoSynchronousWork() { }
 
-        protected override void OnExecutionDoAsyncWork()
+        protected BufferBlock<TOutput> Buffer { get; set; }
+        protected override Task BufferCompletion => SourceBlock.Completion;
+
+        protected override void CompleteBuffer()
         {
-            ;
+            InMemoryTarget.TargetBlock.Complete();
+            PassingTarget.TargetBlock.Complete();
+            Buffer.Complete();
+        }
+
+        protected override void FaultBuffer(Exception e)
+        {
+            InMemoryTarget.TargetBlock.Fault(e);
+            PassingTarget.TargetBlock.Fault(e);
+            ((IDataflowBlock)Buffer).Fault(e);
         }
 
         #endregion
@@ -76,14 +135,14 @@ namespace ETLBox.DataFlow.Transformations
         #region Implementation
 
         bool WasInMemoryTableLoaded;
-        IEnumerable<TInput1> InMemoryData => InMemoryTarget.Data;
+        IEnumerable<TInput1> InMemoryData => InMemoryTarget.InMemoryTarget.Data;
 
-        private void CrossJoinData(TInput2 passingRow)
+        public void CrossJoinData(TInput2 passingRow)
         {
             NLogStartOnce();
             if (!WasInMemoryTableLoaded)
             {
-                InMemoryTarget.Wait();
+                InMemoryTarget.Completion.Wait();
                 WasInMemoryTableLoaded = true;
             }
             foreach (TInput1 inMemoryRow in InMemoryData)

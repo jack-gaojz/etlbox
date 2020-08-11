@@ -10,49 +10,7 @@ namespace ETLBox.DataFlow
 {
     public abstract class DataFlowSource<TOutput> : DataFlowTask, IDataFlowSource<TOutput>
     {
-        #region Public properties
-        public ISourceBlock<TOutput> SourceBlock => this.Buffer;
-
-        #endregion
-
-        #region Buffer and completion
-        protected BufferBlock<TOutput> Buffer { get; set; } = new BufferBlock<TOutput>();
-        protected override Task BufferCompletion => Buffer.Completion;
-        public override void InitBufferObjects()
-        {
-            Buffer = new BufferBlock<TOutput>(new DataflowBlockOptions()
-            {
-                BoundedCapacity = MaxBufferSize
-            });
-            Completion = new Task(
-               () =>
-               {
-                   try
-                   {
-                       OnExecutionDoAsyncWork();
-                       CompleteBuffer();
-                       ErrorSource?.CompleteBuffer();
-                       CleanUpOnSuccess();
-                   }
-                   catch (Exception e)
-                   {
-                       FaultBuffer(e);
-                       ErrorSource?.FaultBuffer(e);
-                       CleanUpOnFaulted(e);
-                       throw e;
-                   }
-               }
-               , TaskCreationOptions.LongRunning);
-        }
-
-        protected override void CompleteBuffer() => SourceBlock.Complete();
-        protected override void FaultBuffer(Exception e) => SourceBlock.Fault(e);
-
-        protected virtual void OnExecutionDoAsyncWork() { } //abstract
-
-        #endregion
-
-        #region Linking
+        public virtual ISourceBlock<TOutput> SourceBlock { get; } //abstract
 
         internal override void LinkBuffers(DataFlowTask successor, LinkPredicates linkPredicates)
         {
@@ -81,7 +39,5 @@ namespace ETLBox.DataFlow
 
         public IDataFlowSource<ETLBoxError> LinkErrorTo(IDataFlowDestination<ETLBoxError> target)
             => InternalLinkErrorTo(target);
-
-        #endregion
     }
 }

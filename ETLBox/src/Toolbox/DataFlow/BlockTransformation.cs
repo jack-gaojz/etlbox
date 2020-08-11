@@ -51,8 +51,6 @@ namespace ETLBox.DataFlow.Transformations
 
         #region Implement abstract methods
 
-        protected override Task BufferCompletion => SourceBlock.Completion;
-
         public override void InitBufferObjects()
         {
             OutputBuffer = new BufferBlock<TOutput>(new DataflowBlockOptions()

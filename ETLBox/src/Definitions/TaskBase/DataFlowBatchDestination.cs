@@ -83,7 +83,6 @@ namespace ETLBox.DataFlow
 
         protected BatchBlock<TInput> Buffer { get; set; }
 
-
         protected void WriteBatch(TInput[] data)
         {
             if (ProgressCount == 0) NLogStart();
