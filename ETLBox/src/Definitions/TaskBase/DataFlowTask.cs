@@ -191,8 +191,8 @@ namespace ETLBox.DataFlow
             }
         }
 
-        protected virtual void CompleteBuffer() { } //abstract
-        protected virtual void FaultBuffer(Exception e) { } //abstract
+        internal virtual void CompleteBuffer() { } //abstract
+        internal virtual void FaultBuffer(Exception e) { } //abstract
 
         protected void CompleteOrFaultCompletion(Task t)
         {

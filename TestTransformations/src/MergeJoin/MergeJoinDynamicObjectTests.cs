@@ -41,8 +41,8 @@ namespace ETLBoxTests.DataFlowTests
                     ir1.Col2 = ir1.Col2 + ir2.Col2;
                     return inputRow1;
                 });
-            source1.LinkTo(join.Target1);
-            source2.LinkTo(join.Target2);
+            source1.LinkTo(join.LeftJoinTarget);
+            source2.LinkTo(join.RightJoinTarget);
             join.LinkTo(dest);
             source1.Execute();
             source2.Execute();

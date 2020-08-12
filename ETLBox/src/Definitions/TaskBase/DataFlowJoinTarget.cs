@@ -11,9 +11,9 @@ namespace ETLBox.DataFlow
     {
         protected override Task BufferCompletion => TargetBlock.Completion;
 
-        protected override void CompleteBuffer() => TargetBlock.Complete();
+        internal override void CompleteBuffer() => TargetBlock.Complete();
 
-        protected override void FaultBuffer(Exception e) => TargetBlock.Fault(e);
+        internal override void FaultBuffer(Exception e) => TargetBlock.Fault(e);
 
         public virtual ITargetBlock<TInput> TargetBlock { get; }
 

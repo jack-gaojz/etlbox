@@ -41,8 +41,8 @@ namespace ETLBox.DataFlow
                , TaskCreationOptions.LongRunning);
         }
 
-        protected override void CompleteBuffer() => SourceBlock.Complete();
-        protected override void FaultBuffer(Exception e) => SourceBlock.Fault(e);
+        internal override void CompleteBuffer() => SourceBlock.Complete();
+        internal override void FaultBuffer(Exception e) => SourceBlock.Fault(e);
 
         #endregion
 

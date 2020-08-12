@@ -23,7 +23,7 @@ namespace ETLBox.DataFlow.Transformations
 
         public override string TaskName { get; set; } = "Cross join data";
         public InMemoryDestination<TInput1> InMemoryTarget { get; set; }
-        public JoinDestination<TInput2> PassingTarget { get; set; }
+        public ActionJoinTarget<TInput2> PassingTarget { get; set; }
         public Func<TInput1, TInput2, TOutput> CrossJoinFunc { get; set; }
         public override ISourceBlock<TOutput> SourceBlock => this.Buffer;
 
@@ -54,29 +54,6 @@ namespace ETLBox.DataFlow.Transformations
             protected override void CleanUpOnFaulted(Exception e) { }
         }
 
-        public class JoinDestination<TInput> : DataFlowJoinTarget<TInput>
-        {
-            public override ITargetBlock<TInput> TargetBlock => PassingTarget.TargetBlock;
-            public CustomDestination<TInput> PassingTarget { get; set; }
-
-            public JoinDestination(DataFlowTask parent, Action<TInput> action)
-            {
-                PassingTarget = new CustomDestination<TInput>(action);
-                CreateLinkInInternalFlow(parent);
-            }
-
-            public override void InitBufferObjects()
-            {
-                PassingTarget.CopyTaskProperties(Parent);
-                PassingTarget.MaxBufferSize = Parent.MaxBufferSize;
-                PassingTarget.InitBufferObjects();
-            }
-
-            protected override void CleanUpOnSuccess() { }
-
-            protected override void CleanUpOnFaulted(Exception e) { }
-        }
-
         #endregion
 
         #region Constructors
@@ -84,7 +61,7 @@ namespace ETLBox.DataFlow.Transformations
         public CrossJoin()
         {
             InMemoryTarget = new InMemoryDestination<TInput1>(this);
-            PassingTarget = new JoinDestination<TInput2>(this, CrossJoinData);
+            PassingTarget = new ActionJoinTarget<TInput2>(this, CrossJoinData);
         }
 
         public CrossJoin(Func<TInput1, TInput2, TOutput> crossJoinFunc) : this()
@@ -116,17 +93,17 @@ namespace ETLBox.DataFlow.Transformations
         protected BufferBlock<TOutput> Buffer { get; set; }
         protected override Task BufferCompletion => SourceBlock.Completion;
 
-        protected override void CompleteBuffer()
+        internal override void CompleteBuffer()
         {
-            InMemoryTarget.TargetBlock.Complete();
-            PassingTarget.TargetBlock.Complete();
+            InMemoryTarget.CompleteBuffer();
+            PassingTarget.CompleteBuffer();
             Buffer.Complete();
         }
 
-        protected override void FaultBuffer(Exception e)
+        internal override void FaultBuffer(Exception e)
         {
-            InMemoryTarget.TargetBlock.Fault(e);
-            PassingTarget.TargetBlock.Fault(e);
+            InMemoryTarget.FaultBuffer(e);
+            PassingTarget.FaultBuffer(e);
             ((IDataflowBlock)Buffer).Fault(e);
         }
 
