@@ -21,32 +21,18 @@ namespace ETLBox.DataFlow.Connectors
     /// <code>
     /// </code>
     /// </example>
-    public class DbMerge<TInput> : DataFlowTransformation<TInput, TInput>, ITask, IDataFlowTransformation<TInput, TInput>, IDataFlowBatchDestination<TInput>
+    public class DbMerge<TInput> : DataFlowTransformation<TInput, TInput>, IDataFlowBatchDestination<TInput>
     {
-        /* ITask Interface */
+        #region Public properties
+
         public override string TaskName { get; set; } = "Insert, update or delete in destination";
-
-        public async Task ExecuteAsync() => await OutputSource.ExecuteAsync();
-        public void Execute() => OutputSource.Execute();
-
-        /* Public Properties */
         public override ISourceBlock<TInput> SourceBlock => OutputSource.SourceBlock;
         public override ITargetBlock<TInput> TargetBlock => Lookup.TargetBlock;
         public MergeMode MergeMode { get; set; }
         public TableDefinition DestinationTableDefinition { get; set; }
         public string TableName { get; set; }
-
-        public override IConnectionManager ConnectionManager
-        {
-            get => base.ConnectionManager;
-            set
-            {
-                base.ConnectionManager = value;
-                DestinationTableAsSource.ConnectionManager = value;
-                DestinationTable.ConnectionManager = value;
-            }
-        }
         public List<TInput> DeltaTable { get; set; } = new List<TInput>();
+        public MergeProperties MergeProperties { get; set; } = new MergeProperties();
         public bool UseTruncateMethod
         {
             get
@@ -64,15 +50,130 @@ namespace ETLBox.DataFlow.Connectors
         }
         bool _useTruncateMethod;
 
-        public int BatchSize
+
+
+        public int BatchSize { get; set; } = DataFlowBatchDestination<TInput>.DEFAULT_BATCH_SIZE;
+        //{
+        //    get => DestinationTable.BatchSize;
+        //    set => DestinationTable.BatchSize = value;
+        //}
+        public override IConnectionManager ConnectionManager { get; set; }
+        //{
+        //    get => base.ConnectionManager;
+        //    set
+        //    {
+        //        base.ConnectionManager = value;
+        //        DestinationTableAsSource.ConnectionManager = value;
+        //        DestinationTable.ConnectionManager = value;
+        //    }
+        //}
+        #endregion
+
+        //public async Task ExecuteAsync() => await OutputSource.ExecuteAsync();
+        //public void Execute() => OutputSource.Execute();
+        public void Wait() => Completion.Wait();
+        //public Task Completion => DestinationTable.Completion;
+
+        #region Constructors
+
+        public DbMerge(string tableName)
         {
-            get => DestinationTable.BatchSize;
-            set => DestinationTable.BatchSize = value;
+            TableName = tableName;
+            DestinationTableAsSource = new DbSource<TInput>();
+            DestinationTable = new DbDestination<TInput>();
+            Lookup = new LookupTransformation<TInput, TInput>();
+            Lookup.LinkTo(DestinationTable);
+            OutputSource = new CustomSource<TInput>();
         }
 
-        public MergeProperties MergeProperties { get; set; } = new MergeProperties();
+        public DbMerge(IConnectionManager connectionManager, string tableName) : this(tableName)
+        {
+            ConnectionManager = connectionManager;
+        }
 
-        /* Private stuff */
+        public DbMerge(string tableName, int batchSize) : this(tableName)
+        {
+            BatchSize = batchSize;
+        }
+
+        public DbMerge(IConnectionManager connectionManager, string tableName, int batchSize) : this(tableName, batchSize)
+        {
+            ConnectionManager = connectionManager;
+        }
+
+        //private void Init(int batchSize = DbDestination.DEFAULT_BATCH_SIZE)
+        //{
+        //    DestinationTableAsSource = new DbSource<TInput>(ConnectionManager, TableName);
+        //    DestinationTable = new DbDestination<TInput>(ConnectionManager, TableName, batchSize);
+        //    InitInternalFlow();
+        //    InitOutputFlow();
+        //}
+
+        #endregion
+
+        #region Implement abstract methods
+        protected override Task BufferCompletion => DestinationTable.TargetBlock.Completion;
+
+        internal override void CompleteBuffer()
+        {
+            Lookup.CompleteBuffer();
+            DestinationTableAsSource.CompleteBuffer();
+            DestinationTable.CompleteBuffer();
+        }
+
+        internal override void FaultBuffer(Exception e)
+        {
+
+        }
+
+        public override void InitBufferObjects()
+        {
+            InitTypeInfoWithMergeProperties();
+
+            DestinationTableAsSource.ConnectionManager = ConnectionManager;
+            DestinationTableAsSource.TableName = TableName;
+            DestinationTableAsSource.MaxBufferSize = this.MaxBufferSize;
+
+            DestinationTable.ConnectionManager = ConnectionManager;
+            DestinationTable.TableName = TableName;
+            DestinationTable.BatchSize = BatchSize;
+            DestinationTable.OnCompletion = () =>
+            {
+                IdentifyAndDeleteMissingEntries();
+                if (UseTruncateMethod && (MergeMode == MergeMode.OnlyUpdates || MergeMode == MergeMode.NoDeletions))
+                    ReinsertTruncatedRecords();
+                OutputSource.Execute();
+            };
+            DestinationTable.MaxBufferSize = this.MaxBufferSize;
+            SetDestinationTableBeforeBatchWrite();
+
+            Lookup.Source = DestinationTableAsSource;
+            Lookup.TransformationFunc = UpdateRowWithDeltaInfo;
+            Lookup.MaxBufferSize = this.MaxBufferSize;
+
+
+            OutputSource.MaxBufferSize = this.MaxBufferSize;
+            InitOutputFlow();
+
+            DestinationTableAsSource.InitBufferObjects();
+            DestinationTable.InitBufferObjects();
+            Lookup.InitBufferObjects();
+            OutputSource.InitBufferObjects();
+        }
+
+
+
+        protected override void CleanUpOnSuccess()
+        {
+            NLogFinishOnce();
+        }
+
+        protected override void CleanUpOnFaulted(Exception e) { }
+
+        #endregion
+
+        #region Implementation
+
         List<string> IdColumnNames
         {
             get
@@ -84,54 +185,89 @@ namespace ETLBox.DataFlow.Connectors
             }
         }
         ObjectNameDescriptor TN => new ObjectNameDescriptor(TableName, QB, QE);
-        LookupTransformation<TInput, TInput> Lookup { get; set; }
-        DbSource<TInput> DestinationTableAsSource { get; set; }
-        DbDestination<TInput> DestinationTable { get; set; }
+        LookupTransformation<TInput, TInput> Lookup;
+        DbSource<TInput> DestinationTableAsSource;
+        DbDestination<TInput> DestinationTable;
         List<TInput> InputData => Lookup.LookupData;
-        Dictionary<string, TInput> InputDataDict { get; set; }
-        CustomSource<TInput> OutputSource { get; set; }
-        bool WasTruncationExecuted { get; set; }
-        DBMergeTypeInfo TypeInfo { get; set; }
+        Dictionary<string, TInput> InputDataDict;
+        CustomSource<TInput> OutputSource;
+        bool WasTruncationExecuted;
+        DBMergeTypeInfo TypeInfo;
 
-        public DbMerge(string tableName)
+        //bool WasTypeInfoInitialized = false;
+
+        //private void InitTypeInfo()
+        //{
+
+        //    //WasTypeInfoInitialized = true;
+        //}
+        private void InitTypeInfoWithMergeProperties()
         {
-            TableName = tableName;
-            Init();
+            TypeInfo = new DBMergeTypeInfo(typeof(TInput), MergeProperties);
         }
 
-        public DbMerge(IConnectionManager connectionManager, string tableName) : this(tableName)
+        private void SetDestinationTableBeforeBatchWrite()
         {
-            ConnectionManager = connectionManager;
-        }
+            //Lookup = new LookupTransformation<TInput, TInput>(
+            //    DestinationTableAsSource,
+            //    row => UpdateRowWithDeltaInfo(row)
+            //);
 
-        public DbMerge(string tableName, int batchSize) : this(tableName)
-        {
-            TableName = tableName;
-            Init(batchSize);
-        }
-
-        public DbMerge(IConnectionManager connectionManager, string tableName, int batchSize) : this(tableName, batchSize)
-        {
-            ConnectionManager = connectionManager;
-        }
-
-        private void Init(int batchSize = DbDestination.DEFAULT_BATCH_SIZE)
-        {
-            DestinationTableAsSource = new DbSource<TInput>(ConnectionManager, TableName);
-            DestinationTable = new DbDestination<TInput>(ConnectionManager, TableName, batchSize);
-            InitInternalFlow();
-            InitOutputFlow();
-        }
-
-        public override void InitBufferObjects()
-        {
-            if (MaxBufferSize > 0)
+            DestinationTable.BeforeBatchWrite = batch =>
             {
-                Lookup.MaxBufferSize = this.MaxBufferSize;
-                DestinationTable.MaxBufferSize = this.MaxBufferSize;
-                OutputSource.MaxBufferSize = this.MaxBufferSize;
-                DestinationTableAsSource.MaxBufferSize = this.MaxBufferSize;
-            }
+                if (MergeMode == MergeMode.Delta)
+                    DeltaTable.AddRange(batch.Where(row => GetChangeAction(row) != ChangeAction.Delete));
+                else if (MergeMode == MergeMode.OnlyUpdates)
+                    DeltaTable.AddRange(batch.Where(row => GetChangeAction(row) == ChangeAction.Exists
+                        || GetChangeAction(row) == ChangeAction.Update));
+                else
+                    DeltaTable.AddRange(batch);
+
+                if (!UseTruncateMethod)
+                {
+                    if (MergeMode == MergeMode.OnlyUpdates)
+                    {
+                        SqlDeleteIds(batch.Where(row => GetChangeAction(row) == ChangeAction.Update));
+                        return batch.Where(row => GetChangeAction(row) == ChangeAction.Update).ToArray();
+                    }
+                    else
+                    {
+                        SqlDeleteIds(batch.Where(row => GetChangeAction(row) != ChangeAction.Insert && GetChangeAction(row) != ChangeAction.Exists));
+                        return batch.Where(row => GetChangeAction(row) == ChangeAction.Insert ||
+                            GetChangeAction(row) == ChangeAction.Update)
+                        .ToArray();
+                    }
+                }
+                else
+                {
+                    if (MergeMode == MergeMode.Delta)
+                        throw new ETLBoxNotSupportedException("If you provide a delta load, you must define at least one compare column." +
+                            "Using the truncate method is not allowed. ");
+                    TruncateDestinationOnce();
+                    if (MergeMode == MergeMode.OnlyUpdates)
+                        return batch.Where(row => GetChangeAction(row) != ChangeAction.Delete &&
+                            GetChangeAction(row) != ChangeAction.Insert).ToArray();
+                    else
+                        return batch.Where(row => GetChangeAction(row) == ChangeAction.Insert ||
+                            GetChangeAction(row) == ChangeAction.Update ||
+                            GetChangeAction(row) == ChangeAction.Exists)
+                        .ToArray();
+                }
+            };
+
+
+        }
+
+        private void InitOutputFlow()
+        {
+            int x = 0;
+            OutputSource.ReadFunc = () =>
+            {
+                return DeltaTable.ElementAt(x++);
+            };
+            OutputSource.ReadCompletedFunc  = () => x >= DeltaTable.Count;
+
+
         }
 
         public ChangeAction? GetChangeAction(TInput row)
@@ -257,78 +393,9 @@ namespace ETLBox.DataFlow.Connectors
                 return false;
         }
 
-        private void InitInternalFlow()
-        {
-            Lookup = new LookupTransformation<TInput, TInput>(
-                DestinationTableAsSource,
-                row => UpdateRowWithDeltaInfo(row)
-            );
-
-            DestinationTable.BeforeBatchWrite = batch =>
-            {
-                if (MergeMode == MergeMode.Delta)
-                    DeltaTable.AddRange(batch.Where(row => GetChangeAction(row) != ChangeAction.Delete));
-                else if (MergeMode == MergeMode.OnlyUpdates)
-                    DeltaTable.AddRange(batch.Where(row => GetChangeAction(row) == ChangeAction.Exists
-                        || GetChangeAction(row) == ChangeAction.Update));
-                else
-                    DeltaTable.AddRange(batch);
-
-                if (!UseTruncateMethod)
-                {
-                    if (MergeMode == MergeMode.OnlyUpdates)
-                    {
-                        SqlDeleteIds(batch.Where(row => GetChangeAction(row) == ChangeAction.Update));
-                        return batch.Where(row => GetChangeAction(row) == ChangeAction.Update).ToArray();
-                    }
-                    else
-                    {
-                        SqlDeleteIds(batch.Where(row => GetChangeAction(row) != ChangeAction.Insert && GetChangeAction(row) != ChangeAction.Exists));
-                        return batch.Where(row => GetChangeAction(row) == ChangeAction.Insert ||
-                            GetChangeAction(row) == ChangeAction.Update)
-                        .ToArray();
-                    }
-                }
-                else
-                {
-                    if (MergeMode == MergeMode.Delta)
-                        throw new ETLBoxNotSupportedException("If you provide a delta load, you must define at least one compare column." +
-                            "Using the truncate method is not allowed. ");
-                    TruncateDestinationOnce();
-                    if (MergeMode == MergeMode.OnlyUpdates)
-                        return batch.Where(row => GetChangeAction(row) != ChangeAction.Delete &&
-                            GetChangeAction(row) != ChangeAction.Insert).ToArray();
-                    else
-                        return batch.Where(row => GetChangeAction(row) == ChangeAction.Insert ||
-                            GetChangeAction(row) == ChangeAction.Update ||
-                            GetChangeAction(row) == ChangeAction.Exists)
-                        .ToArray();
-                }
-            };
-
-            Lookup.LinkTo(DestinationTable);
-        }
-
-        private void InitOutputFlow()
-        {
-            int x = 0;
-            OutputSource = new CustomSource<TInput>(() =>
-            {
-                return DeltaTable.ElementAt(x++);
-            }, () => x >= DeltaTable.Count);
-
-            DestinationTable.OnCompletion = () =>
-            {
-                IdentifyAndDeleteMissingEntries();
-                if (UseTruncateMethod && (MergeMode == MergeMode.OnlyUpdates || MergeMode == MergeMode.NoDeletions))
-                    ReinsertTruncatedRecords();
-                OutputSource.Execute();
-            };
-        }
-
         private TInput UpdateRowWithDeltaInfo(TInput row)
         {
-            if (!WasTypeInfoInitialized) InitTypeInfo();
+            //if (!WasTypeInfoInitialized) InitTypeInfo();
             if (InputDataDict == null) InitInputDataDictionary();
             SetChangeDate(row, DateTime.Now);
             TInput find = default(TInput);
@@ -366,14 +433,6 @@ namespace ETLBox.DataFlow.Connectors
             InputDataDict = new Dictionary<string, TInput>();
             foreach (var d in InputData)
                 InputDataDict.Add(GetUniqueId(d), d);
-        }
-
-        bool WasTypeInfoInitialized = false;
-
-        private void InitTypeInfo()
-        {
-            TypeInfo = new DBMergeTypeInfo(typeof(TInput), MergeProperties);
-            WasTypeInfoInitialized = true;
         }
 
         void TruncateDestinationOnce()
@@ -434,8 +493,7 @@ namespace ETLBox.DataFlow.Connectors
             return result;
         }
 
-        public void Wait() => DestinationTable.Wait();
-        public Task Completion => DestinationTable.Completion;
+        #endregion
     }
 
 

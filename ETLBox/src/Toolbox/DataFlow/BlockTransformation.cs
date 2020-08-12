@@ -39,7 +39,6 @@ namespace ETLBox.DataFlow.Transformations
         public BlockTransformation()
         {
             InputData = new List<TInput>();
-            InitBufferObjects();
         }
 
         public BlockTransformation(Func<List<TInput>, List<TOutput>> blockTransformationFunc) : this()
