@@ -49,30 +49,6 @@ namespace ETLBox.DataFlow.Transformations
         #endregion
 
 
-        //public class JoinTarget<TInput> : DataFlowJoinTarget<TInput>
-        //{
-        //    public override ITargetBlock<TInput> TargetBlock => JoinAction;
-        //    ActionBlock<TInput> JoinAction;
-        //    Action<TInput> Action;
-        //    public JoinTarget(DataFlowTask parent, Action<TInput> action)
-        //    {
-        //        Action = action;
-        //        CreateLinkInInternalFlow(parent);
-        //    }
-
-        //    public override void InitBufferObjects()
-        //    {
-        //        JoinAction = new ActionBlock<TInput>(Action, new ExecutionDataflowBlockOptions()
-        //        {
-        //            BoundedCapacity = MaxBufferSize
-        //        });
-        //    }
-
-        //    protected override void CleanUpOnSuccess() { }
-
-        //    protected override void CleanUpOnFaulted(Exception e) { }
-        //}
-
 
 
 
