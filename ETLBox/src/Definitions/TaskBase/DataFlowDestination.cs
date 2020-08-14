@@ -19,11 +19,11 @@ namespace ETLBox.DataFlow
         #region Buffer handling
         protected virtual ActionBlock<TInput> TargetAction { get; set; }
 
-        protected override Task BufferCompletion => TargetBlock.Completion;
+        internal override Task BufferCompletion => TargetBlock.Completion;
 
-        internal override void CompleteBuffer() => TargetBlock.Complete();
+        internal override void CompleteBufferOnPredecessorCompletion() => TargetBlock.Complete();
 
-        internal override void FaultBuffer(Exception e) => TargetBlock.Fault(e);
+        internal override void FaultBufferOnPredecessorCompletion(Exception e) => TargetBlock.Fault(e);
 
         #endregion
 

@@ -39,11 +39,15 @@ namespace ETLBox.DataFlow
 
         protected ActionBlock<TInput[]> TargetAction { get; set; }
 
-        protected override Task BufferCompletion => TargetAction.Completion;
+        internal override Task BufferCompletion => TargetAction.Completion;
 
-        internal override void CompleteBuffer() => TargetBlock.Complete();
+        internal override void CompleteBufferOnPredecessorCompletion()
+        {
+            TargetBlock.Completion.ContinueWith(t => TargetAction.Complete());
+            TargetBlock.Complete();
+        }
 
-        internal override void FaultBuffer(Exception e) => TargetBlock.Fault(e);
+        internal override void FaultBufferOnPredecessorCompletion(Exception e) => TargetBlock.Fault(e);
 
         public IDataFlowSource<ETLBoxError> LinkErrorTo(IDataFlowDestination<ETLBoxError> target)
             => InternalLinkErrorTo(target);

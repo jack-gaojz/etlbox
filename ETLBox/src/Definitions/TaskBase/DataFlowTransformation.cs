@@ -11,11 +11,24 @@ namespace ETLBox.DataFlow
     {
         public virtual ITargetBlock<TInput> TargetBlock { get; } //abstract
 
-        protected override Task BufferCompletion => SourceBlock.Completion;
+        internal override Task BufferCompletion => SourceBlock.Completion;
 
-        internal override void CompleteBuffer()=> TargetBlock.Complete();
+        internal override void CompleteBufferOnPredecessorCompletion()
+        {
+            if (TargetBlock != SourceBlock)
+                throw new NotImplementedException("Component must override this method!");
+            else
+                TargetBlock.Complete();
+        }
 
-        internal override void FaultBuffer(Exception e) => TargetBlock.Fault(e);
+
+
+        internal override void FaultBufferOnPredecessorCompletion(Exception e) {
+            if (TargetBlock != SourceBlock)
+                throw new NotImplementedException("Component must override this method!");
+            else
+                TargetBlock.Fault(e);
+        }
 
     }
 }

@@ -60,6 +60,7 @@ namespace ETLBox.DataFlow.Transformations
         {
             BlockTransformation.CopyTaskProperties(this);
             if (MaxBufferSize > 0) BlockTransformation.MaxBufferSize = this.MaxBufferSize;
+            BlockTransformation.InitBufferObjects();
         }
 
         protected override void CleanUpOnSuccess()
@@ -69,6 +70,11 @@ namespace ETLBox.DataFlow.Transformations
 
 
         protected override void CleanUpOnFaulted(Exception e) { }
+        internal override void CompleteBufferOnPredecessorCompletion() => BlockTransformation.CompleteBufferOnPredecessorCompletion();
+
+        internal override void FaultBufferOnPredecessorCompletion(Exception e) => BlockTransformation.FaultBufferOnPredecessorCompletion(e);
+
+
 
         #endregion
 

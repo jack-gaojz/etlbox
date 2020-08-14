@@ -34,8 +34,8 @@ namespace ETLBox.DataFlow
         public List<DataFlowTask> Predecessors { get; protected set; } = new List<DataFlowTask>();
         public List<DataFlowTask> Successors { get; protected set; } = new List<DataFlowTask>();
 
-        public Task Completion { get; protected set; }
-        protected virtual Task BufferCompletion { get; }
+        public Task Completion { get; internal set; }
+        internal virtual Task BufferCompletion { get; }
         protected Task PredecessorCompletion { get; set; }
         protected DataFlowTask Parent { get; set; }
 
@@ -88,7 +88,7 @@ namespace ETLBox.DataFlow
 
         #region Network initialization
 
-        protected void InitNetworkRecursively()
+        internal void InitNetworkRecursively()
         {
             InitBufferRecursively();
             LinkBuffersRecursively();
@@ -182,17 +182,17 @@ namespace ETLBox.DataFlow
         {
             if (t.IsFaulted)
             {
-                FaultBuffer(t.Exception.Flatten());
+                FaultBufferOnPredecessorCompletion(t.Exception.Flatten());
                 throw t.Exception.Flatten();
             }
             else
             {
-                CompleteBuffer();
+                CompleteBufferOnPredecessorCompletion();
             }
         }
 
-        internal virtual void CompleteBuffer() { } //abstract
-        internal virtual void FaultBuffer(Exception e) { } //abstract
+        internal virtual void CompleteBufferOnPredecessorCompletion() { } //abstract
+        internal virtual void FaultBufferOnPredecessorCompletion(Exception e) { } //abstract
 
         protected void CompleteOrFaultCompletion(Task t)
         {
@@ -216,7 +216,7 @@ namespace ETLBox.DataFlow
         protected void FaultPredecessorsRecursively(Exception e)
         {
             Exception = e;
-            FaultBuffer(e);
+            FaultBufferOnPredecessorCompletion(e);
             foreach (DataFlowTask pre in Predecessors)
                 pre.FaultPredecessorsRecursively(e);
         }
@@ -255,7 +255,7 @@ namespace ETLBox.DataFlow
             ErrorSource?.ExecuteAsync().Wait();
 
         private void LetErrorSourceFinishUp() =>
-             ErrorSource?.CompleteBuffer();
+             ErrorSource?.CompleteBufferOnPredecessorCompletion();
 
         #endregion
 

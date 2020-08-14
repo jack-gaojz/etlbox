@@ -71,7 +71,7 @@ namespace ETLBox.DataFlow.Connectors
 
         //public async Task ExecuteAsync() => await OutputSource.ExecuteAsync();
         //public void Execute() => OutputSource.Execute();
-        public void Wait() => Completion.Wait();
+        public void Wait() => DestinationTable.BufferCompletion.Wait();
         //public Task Completion => DestinationTable.Completion;
 
         #region Constructors
@@ -82,7 +82,7 @@ namespace ETLBox.DataFlow.Connectors
             DestinationTableAsSource = new DbSource<TInput>();
             DestinationTable = new DbDestination<TInput>();
             Lookup = new LookupTransformation<TInput, TInput>();
-            Lookup.LinkTo(DestinationTable);
+            //Lookup.LinkTo(DestinationTable);
             OutputSource = new CustomSource<TInput>();
         }
 
@@ -112,16 +112,22 @@ namespace ETLBox.DataFlow.Connectors
         #endregion
 
         #region Implement abstract methods
-        protected override Task BufferCompletion => DestinationTable.TargetBlock.Completion;
+        internal override Task BufferCompletion => DestinationTable.BufferCompletion;
 
-        internal override void CompleteBuffer()
+        internal override void CompleteBufferOnPredecessorCompletion()
         {
-            Lookup.CompleteBuffer();
-            DestinationTableAsSource.CompleteBuffer();
-            DestinationTable.CompleteBuffer();
+            Lookup.CompleteBufferOnPredecessorCompletion();
+            Lookup.SourceBlock.Completion.ContinueWith(t =>
+                DestinationTable.TargetBlock.Complete()
+            );
+
+            //DestinationTableAsSource.CompleteBufferOnPredecessorCompletion();
+            //DestinationTableAsSource.Completion.Wait();
+            //DestinationTable.CompleteBufferOnPredecessorCompletion();
+            //DestinationTable.Completion.Wait();
         }
 
-        internal override void FaultBuffer(Exception e)
+        internal override void FaultBufferOnPredecessorCompletion(Exception e)
         {
 
         }
@@ -152,6 +158,7 @@ namespace ETLBox.DataFlow.Connectors
             Lookup.MaxBufferSize = this.MaxBufferSize;
 
 
+
             OutputSource.MaxBufferSize = this.MaxBufferSize;
             InitOutputFlow();
 
@@ -159,6 +166,34 @@ namespace ETLBox.DataFlow.Connectors
             DestinationTable.InitBufferObjects();
             Lookup.InitBufferObjects();
             OutputSource.InitBufferObjects();
+
+
+            //Lookup.Completion = new Task(
+            //  () =>
+            //  {
+            //      try
+            //      {
+            //          int i = 8;
+            //      }
+            //      catch (Exception e)
+            //      {
+
+            //      }
+            //  }
+            //  , TaskCreationOptions.LongRunning);
+
+            //Lookup.Completion.RunSynchronously();
+
+
+            Lookup.Completion = Lookup.BufferCompletion;
+            Lookup.LinkTo(DestinationTable);
+            Lookup.InitNetworkRecursively();
+            //Lookup.LinkBuffers(DestinationTable, null);
+
+
+            //Lookup.SourceBlock.LinkTo(DestinationTable.TargetBlock);
+
+
         }
 
 

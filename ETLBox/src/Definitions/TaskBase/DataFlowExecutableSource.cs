@@ -13,7 +13,7 @@ namespace ETLBox.DataFlow
         #region Buffer and completion
         public override ISourceBlock<TOutput> SourceBlock => this.Buffer;
         protected BufferBlock<TOutput> Buffer { get; set; } = new BufferBlock<TOutput>();
-        protected override Task BufferCompletion => Buffer.Completion;
+        internal override Task BufferCompletion => Buffer.Completion;
         public override void InitBufferObjects()
         {
             Buffer = new BufferBlock<TOutput>(new DataflowBlockOptions()
@@ -26,14 +26,14 @@ namespace ETLBox.DataFlow
                    try
                    {
                        OnExecutionDoAsyncWork();
-                       CompleteBuffer();
-                       ErrorSource?.CompleteBuffer();
+                       CompleteBufferOnPredecessorCompletion();
+                       ErrorSource?.CompleteBufferOnPredecessorCompletion();
                        CleanUpOnSuccess();
                    }
                    catch (Exception e)
                    {
-                       FaultBuffer(e);
-                       ErrorSource?.FaultBuffer(e);
+                       FaultBufferOnPredecessorCompletion(e);
+                       ErrorSource?.FaultBufferOnPredecessorCompletion(e);
                        CleanUpOnFaulted(e);
                        throw e;
                    }
@@ -41,8 +41,8 @@ namespace ETLBox.DataFlow
                , TaskCreationOptions.LongRunning);
         }
 
-        internal override void CompleteBuffer() => SourceBlock.Complete();
-        internal override void FaultBuffer(Exception e) => SourceBlock.Fault(e);
+        internal override void CompleteBufferOnPredecessorCompletion() => SourceBlock.Complete();
+        internal override void FaultBufferOnPredecessorCompletion(Exception e) => SourceBlock.Fault(e);
 
         #endregion
 

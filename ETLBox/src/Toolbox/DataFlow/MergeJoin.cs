@@ -92,16 +92,16 @@ namespace ETLBox.DataFlow.Transformations
         protected override void CleanUpOnFaulted(Exception e) { }
 
         protected BufferBlock<TOutput> Buffer { get; set; }
-        protected override Task BufferCompletion => SourceBlock.Completion;
+        internal override Task BufferCompletion => SourceBlock.Completion;
 
-        internal override void CompleteBuffer()
+        internal override void CompleteBufferOnPredecessorCompletion()
         {
             LeftJoinTarget.TargetBlock.Complete();
             RightJoinTarget.TargetBlock.Complete();
             Buffer.Complete();
         }
 
-        internal override void FaultBuffer(Exception e)
+        internal override void FaultBufferOnPredecessorCompletion(Exception e)
         {
             LeftJoinTarget.TargetBlock.Fault(e);
             RightJoinTarget.TargetBlock.Fault(e);

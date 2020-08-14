@@ -56,7 +56,7 @@ namespace ETLBox.DataFlow.Transformations
 
         #region Implement abstract methods
 
-        protected override Task BufferCompletion => SourceBlock.Completion;
+        internal override Task BufferCompletion => SourceBlock.Completion;
 
         public override void InitBufferObjects()
         {
@@ -93,6 +93,10 @@ namespace ETLBox.DataFlow.Transformations
         }
 
         protected override void CleanUpOnFaulted(Exception e) { }
+
+        internal override void CompleteBufferOnPredecessorCompletion() => TargetBlock.Complete();
+
+        internal override void FaultBufferOnPredecessorCompletion(Exception e) => TargetBlock.Fault(e);
 
         #endregion
 
