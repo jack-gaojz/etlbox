@@ -19,6 +19,7 @@ namespace ETLBox.DataFlow
             Completion = new Task(
                 () => { }
                 );
+            WereBufferInitialized = true;
         }
 
         internal override void LinkBuffers(DataFlowTask successor, LinkPredicates linkPredicate)

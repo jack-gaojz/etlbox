@@ -50,29 +50,13 @@ namespace ETLBox.DataFlow.Connectors
         }
         bool _useTruncateMethod;
 
-
-
         public int BatchSize { get; set; } = DataFlowBatchDestination<TInput>.DEFAULT_BATCH_SIZE;
-        //{
-        //    get => DestinationTable.BatchSize;
-        //    set => DestinationTable.BatchSize = value;
-        //}
+
         public override IConnectionManager ConnectionManager { get; set; }
-        //{
-        //    get => base.ConnectionManager;
-        //    set
-        //    {
-        //        base.ConnectionManager = value;
-        //        DestinationTableAsSource.ConnectionManager = value;
-        //        DestinationTable.ConnectionManager = value;
-        //    }
-        //}
+
         #endregion
 
-        //public async Task ExecuteAsync() => await OutputSource.ExecuteAsync();
-        //public void Execute() => OutputSource.Execute();
-        public void Wait() => DestinationTable.BufferCompletion.Wait();
-        //public Task Completion => DestinationTable.Completion;
+        public void Wait() => Completion.Wait();
 
         #region Constructors
 
@@ -82,7 +66,6 @@ namespace ETLBox.DataFlow.Connectors
             DestinationTableAsSource = new DbSource<TInput>();
             DestinationTable = new DbDestination<TInput>();
             Lookup = new LookupTransformation<TInput, TInput>();
-            //Lookup.LinkTo(DestinationTable);
             OutputSource = new CustomSource<TInput>();
         }
 
@@ -101,30 +84,28 @@ namespace ETLBox.DataFlow.Connectors
             ConnectionManager = connectionManager;
         }
 
-        //private void Init(int batchSize = DbDestination.DEFAULT_BATCH_SIZE)
-        //{
-        //    DestinationTableAsSource = new DbSource<TInput>(ConnectionManager, TableName);
-        //    DestinationTable = new DbDestination<TInput>(ConnectionManager, TableName, batchSize);
-        //    InitInternalFlow();
-        //    InitOutputFlow();
-        //}
-
         #endregion
 
         #region Implement abstract methods
-        internal override Task BufferCompletion => DestinationTable.BufferCompletion;
+        internal override Task BufferCompletion =>
+            Task.WhenAll(DestinationTable.BufferCompletion, Lookup.BufferCompletion, DestinationTable.Completion);
 
         internal override void CompleteBufferOnPredecessorCompletion()
         {
+            Lookup.BufferCompletion.ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    DestinationTable.TargetBlock.Fault(t.Exception.Flatten());
+                    throw t.Exception.Flatten();
+                }
+                else
+                {
+                    DestinationTable.TargetBlock.Complete();
+                }
+            });
             Lookup.CompleteBufferOnPredecessorCompletion();
-            Lookup.SourceBlock.Completion.ContinueWith(t =>
-                DestinationTable.TargetBlock.Complete()
-            );
-
-            //DestinationTableAsSource.CompleteBufferOnPredecessorCompletion();
-            //DestinationTableAsSource.Completion.Wait();
-            //DestinationTable.CompleteBufferOnPredecessorCompletion();
-            //DestinationTable.Completion.Wait();
+            NLogFinishOnce();
         }
 
         internal override void FaultBufferOnPredecessorCompletion(Exception e)
@@ -143,23 +124,15 @@ namespace ETLBox.DataFlow.Connectors
             DestinationTable.ConnectionManager = ConnectionManager;
             DestinationTable.TableName = TableName;
             DestinationTable.BatchSize = BatchSize;
-            DestinationTable.OnCompletion = () =>
-            {
-                IdentifyAndDeleteMissingEntries();
-                if (UseTruncateMethod && (MergeMode == MergeMode.OnlyUpdates || MergeMode == MergeMode.NoDeletions))
-                    ReinsertTruncatedRecords();
-                OutputSource.Execute();
-            };
+
             DestinationTable.MaxBufferSize = this.MaxBufferSize;
             SetDestinationTableBeforeBatchWrite();
 
             Lookup.Source = DestinationTableAsSource;
             Lookup.TransformationFunc = UpdateRowWithDeltaInfo;
             Lookup.MaxBufferSize = this.MaxBufferSize;
-
-
-
             OutputSource.MaxBufferSize = this.MaxBufferSize;
+
             InitOutputFlow();
 
             DestinationTableAsSource.InitBufferObjects();
@@ -167,32 +140,27 @@ namespace ETLBox.DataFlow.Connectors
             Lookup.InitBufferObjects();
             OutputSource.InitBufferObjects();
 
+            Lookup.LinkBuffers(DestinationTable, null);
+            DestinationTable.Completion = DestinationTable.BufferCompletion.ContinueWith(
+                t =>
+                {
+                    if (t.IsFaulted)
+                    {
+                        CleanUpOnFaulted(t.Exception.Flatten());
+                        throw t.Exception.Flatten(); //Will fault Completion task
+                    }
+                    else
+                    {
+                        IdentifyAndDeleteMissingEntries();
+                        if (UseTruncateMethod && (MergeMode == MergeMode.OnlyUpdates || MergeMode == MergeMode.NoDeletions))
+                            ReinsertTruncatedRecords();
+                        CleanUpOnSuccess();
+                        OnCompletion?.Invoke();
+                        OutputSource.Execute();
+                    }
+                });
 
-            //Lookup.Completion = new Task(
-            //  () =>
-            //  {
-            //      try
-            //      {
-            //          int i = 8;
-            //      }
-            //      catch (Exception e)
-            //      {
-
-            //      }
-            //  }
-            //  , TaskCreationOptions.LongRunning);
-
-            //Lookup.Completion.RunSynchronously();
-
-
-            Lookup.Completion = Lookup.BufferCompletion;
-            Lookup.LinkTo(DestinationTable);
-            Lookup.InitNetworkRecursively();
-            //Lookup.LinkBuffers(DestinationTable, null);
-
-
-            //Lookup.SourceBlock.LinkTo(DestinationTable.TargetBlock);
-
+            WereBufferInitialized = true;
 
         }
 
@@ -229,13 +197,7 @@ namespace ETLBox.DataFlow.Connectors
         bool WasTruncationExecuted;
         DBMergeTypeInfo TypeInfo;
 
-        //bool WasTypeInfoInitialized = false;
 
-        //private void InitTypeInfo()
-        //{
-
-        //    //WasTypeInfoInitialized = true;
-        //}
         private void InitTypeInfoWithMergeProperties()
         {
             TypeInfo = new DBMergeTypeInfo(typeof(TInput), MergeProperties);
@@ -243,11 +205,6 @@ namespace ETLBox.DataFlow.Connectors
 
         private void SetDestinationTableBeforeBatchWrite()
         {
-            //Lookup = new LookupTransformation<TInput, TInput>(
-            //    DestinationTableAsSource,
-            //    row => UpdateRowWithDeltaInfo(row)
-            //);
-
             DestinationTable.BeforeBatchWrite = batch =>
             {
                 if (MergeMode == MergeMode.Delta)
@@ -300,7 +257,7 @@ namespace ETLBox.DataFlow.Connectors
             {
                 return DeltaTable.ElementAt(x++);
             };
-            OutputSource.ReadCompletedFunc  = () => x >= DeltaTable.Count;
+            OutputSource.ReadCompletedFunc = () => x >= DeltaTable.Count;
 
 
         }
@@ -430,7 +387,6 @@ namespace ETLBox.DataFlow.Connectors
 
         private TInput UpdateRowWithDeltaInfo(TInput row)
         {
-            //if (!WasTypeInfoInitialized) InitTypeInfo();
             if (InputDataDict == null) InitInputDataDictionary();
             SetChangeDate(row, DateTime.Now);
             TInput find = default(TInput);

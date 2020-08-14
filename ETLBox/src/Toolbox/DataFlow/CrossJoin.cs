@@ -47,6 +47,7 @@ namespace ETLBox.DataFlow.Transformations
                 InMemoryTarget.CopyTaskProperties(Parent);
                 InMemoryTarget.MaxBufferSize = -1;
                 InMemoryTarget.InitBufferObjects();
+                WereBufferInitialized = true;
             }
 
             protected override void CleanUpOnSuccess() { }
@@ -79,6 +80,7 @@ namespace ETLBox.DataFlow.Transformations
             {
                 BoundedCapacity = MaxBufferSize
             });
+            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

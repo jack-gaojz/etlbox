@@ -39,6 +39,7 @@ namespace ETLBox.DataFlow
                    }
                }
                , TaskCreationOptions.LongRunning);
+            WereBufferInitialized = true;
         }
 
         internal override void CompleteBufferOnPredecessorCompletion() => SourceBlock.Complete();

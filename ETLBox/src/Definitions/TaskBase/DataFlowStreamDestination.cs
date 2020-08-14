@@ -33,6 +33,7 @@ namespace ETLBox.DataFlow
                 MaxDegreeOfParallelism = 1,
                 BoundedCapacity = MaxBufferSize,
             });
+            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

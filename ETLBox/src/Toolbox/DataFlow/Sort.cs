@@ -61,6 +61,7 @@ namespace ETLBox.DataFlow.Transformations
             BlockTransformation.CopyTaskProperties(this);
             if (MaxBufferSize > 0) BlockTransformation.MaxBufferSize = this.MaxBufferSize;
             BlockTransformation.InitBufferObjects();
+            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

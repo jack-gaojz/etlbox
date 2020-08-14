@@ -43,7 +43,7 @@ namespace ETLBox.DataFlow
 
         internal override void CompleteBufferOnPredecessorCompletion()
         {
-            TargetBlock.Completion.ContinueWith(t => TargetAction.Complete());
+            //TargetBlock.Completion.ContinueWith(t => TargetAction.Complete());
             TargetBlock.Complete();
         }
 
@@ -67,6 +67,7 @@ namespace ETLBox.DataFlow
                 BoundedCapacity = boundedCapacity
             });
             Buffer.LinkTo(TargetAction, new DataflowLinkOptions() { PropagateCompletion = true });
+            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

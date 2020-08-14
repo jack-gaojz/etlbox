@@ -85,6 +85,7 @@ namespace ETLBox.DataFlow.Transformations
                     throw e;
                 }
             });
+            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

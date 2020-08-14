@@ -38,6 +38,7 @@ namespace ETLBox.DataFlow.Connectors
                 BoundedCapacity = MaxBufferSize,
                 MaxDegreeOfParallelism = 1
             });
+            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

@@ -47,6 +47,7 @@ namespace ETLBox.DataFlow.Transformations
             {
                 BoundedCapacity = MaxBufferSize
             });
+            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

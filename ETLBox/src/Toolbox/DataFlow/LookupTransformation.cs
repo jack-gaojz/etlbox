@@ -76,6 +76,7 @@ namespace ETLBox.DataFlow.Transformations
             InitRowTransformationManually(LoadLookupData);
 
             LinkInternalLoadBufferFlow();
+            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

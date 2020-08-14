@@ -82,7 +82,7 @@ namespace ETLBoxTests.DataFlowTests
             source.LinkTo(merge);
             merge.LinkTo(delta);
             source.Execute();
-            merge.Wait();
+            //merge.Wait();
             delta.Wait();
 
             //Assert
