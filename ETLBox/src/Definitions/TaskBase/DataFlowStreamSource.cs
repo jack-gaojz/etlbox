@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Text;
+using ETLBox.Helper;
 
 namespace ETLBox.DataFlow
 {
@@ -38,6 +39,7 @@ namespace ETLBox.DataFlow
         public ResourceType ResourceType { get; set; }
 
         public HttpClient HttpClient { get; set; } = new HttpClient();
+        public HttpRequestMessage HttpRequestMessage { get; set; } = new HttpRequestMessage();
 
         #endregion
 
@@ -108,8 +110,15 @@ namespace ETLBox.DataFlow
             if (ResourceType == ResourceType.File)
                 StreamReader = new StreamReader(uri);
             else
-                StreamReader = new StreamReader(HttpClient.GetStreamAsync(new Uri(uri)).Result);
+            {
+                var message = HttpRequestMessage.Clone();
+                message.RequestUri =  new Uri(uri);
+                var response = HttpClient.SendAsync(message, HttpCompletionOption.ResponseHeadersRead).Result;
+                response.EnsureSuccessStatusCode();
+                StreamReader = new StreamReader(response.Content.ReadAsStreamAsync().Result);
+            }
         }
+
 
         private void CloseStream()
         {
