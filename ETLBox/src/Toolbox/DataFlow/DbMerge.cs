@@ -87,6 +87,7 @@ namespace ETLBox.DataFlow.Connectors
         #endregion
 
         #region Implement abstract methods
+
         internal override Task BufferCompletion =>
             Task.WhenAll(DestinationTable.BufferCompletion, Lookup.BufferCompletion, DestinationTable.Completion);
 
@@ -161,10 +162,7 @@ namespace ETLBox.DataFlow.Connectors
                 });
 
             WereBufferInitialized = true;
-
         }
-
-
 
         protected override void CleanUpOnSuccess()
         {
@@ -246,8 +244,6 @@ namespace ETLBox.DataFlow.Connectors
                         .ToArray();
                 }
             };
-
-
         }
 
         private void InitOutputFlow()
@@ -258,8 +254,6 @@ namespace ETLBox.DataFlow.Connectors
                 return DeltaTable.ElementAt(x++);
             };
             OutputSource.ReadCompletedFunc = () => x >= DeltaTable.Count;
-
-
         }
 
         public ChangeAction? GetChangeAction(TInput row)
