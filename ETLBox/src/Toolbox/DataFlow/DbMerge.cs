@@ -114,6 +114,15 @@ namespace ETLBox.DataFlow.Connectors
 
         protected override void CleanUpOnFaulted(Exception e) { }
 
+        public new IDataFlowSource<ETLBoxError> LinkErrorTo(IDataFlowDestination<ETLBoxError> target)
+        {
+            var errorSource = InternalLinkErrorTo(target);
+            Lookup.ErrorSource = new ErrorSource() { Redirection = this.ErrorSource };
+            DestinationTable.ErrorSource = new ErrorSource() { Redirection = this.ErrorSource };
+            OutputSource.ErrorSource = new ErrorSource() { Redirection = this.ErrorSource };
+            return errorSource;
+        }
+
         #endregion
 
         #region Internal flow initialization
