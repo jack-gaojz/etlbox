@@ -118,25 +118,21 @@ namespace ETLBox.DataFlow.Connectors
         {
             InitTypeInfoWithMergeProperties();
 
-            DestinationTableAsSource.ConnectionManager = ConnectionManager;
-            DestinationTableAsSource.TableName = TableName;
-            DestinationTableAsSource.MaxBufferSize = this.MaxBufferSize;
-
             DestinationTable.ConnectionManager = ConnectionManager;
             DestinationTable.TableName = TableName;
             DestinationTable.BatchSize = BatchSize;
-
             DestinationTable.MaxBufferSize = this.MaxBufferSize;
             SetDestinationTableBeforeBatchWrite();
 
             Lookup.Source = DestinationTableAsSource;
             Lookup.TransformationFunc = UpdateRowWithDeltaInfo;
             Lookup.MaxBufferSize = this.MaxBufferSize;
-            OutputSource.MaxBufferSize = this.MaxBufferSize;
+            DestinationTableAsSource.ConnectionManager = ConnectionManager;
+            DestinationTableAsSource.TableName = TableName;
 
+            OutputSource.MaxBufferSize = this.MaxBufferSize;
             InitOutputFlow();
 
-            DestinationTableAsSource.InitBufferObjects();
             DestinationTable.InitBufferObjects();
             Lookup.InitBufferObjects();
             OutputSource.InitBufferObjects();
