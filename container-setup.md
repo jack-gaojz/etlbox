@@ -81,6 +81,16 @@ create user etlbox identified by etlboxpassword;
 grant dba to etlbox;
 ```
 
+## Neo4J
+
+```
+docker run --name localneo4j -p 7474:7474 -p 7687:7687 -d -e NEO4J_AUTH=none neo4j
+```
+
+Then run `docker start localneo4j` and wait for the container to start.
+Go to http://localhost:7474/ in the browser - choose "No authentication" and connect to the neo4j database. 
+Connection via bolt driver: `bolt://localhost:7687`
+
 ## Odbc setup
 
 For excel: download latest driver
