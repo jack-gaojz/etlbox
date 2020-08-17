@@ -72,7 +72,7 @@ namespace ETLBox.DataFlow.Transformations
             });
             InputBuffer.Completion.ContinueWith(t =>
             {
-                if (t.IsFaulted) ((IDataflowBlock)OutputBuffer).Fault(t.Exception.Flatten());
+                if (t.IsFaulted) ((IDataflowBlock)OutputBuffer).Fault(t.Exception.InnerException);
                 try
                 {
                     NLogStartOnce();

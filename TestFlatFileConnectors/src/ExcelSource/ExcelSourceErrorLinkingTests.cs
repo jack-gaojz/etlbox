@@ -3,6 +3,7 @@ using ETLBox.DataFlow;
 using ETLBox.DataFlow.Connectors;
 using ETLBoxTests.Fixtures;
 using ETLBoxTests.Helper;
+using System;
 using Xunit;
 
 namespace ETLBoxTests.DataFlowTests
@@ -58,9 +59,16 @@ namespace ETLBoxTests.DataFlowTests
             //Act & Assert
             Assert.Throws<System.FormatException>(() =>
             {
-                source.LinkTo(dest);
-                source.Execute();
-                dest.Wait();
+                try
+                {
+                    source.LinkTo(dest);
+                    source.Execute();
+                    dest.Wait();
+                }
+                catch (AggregateException e)
+                {
+                    throw e.InnerException;
+                }
             });
         }
     }

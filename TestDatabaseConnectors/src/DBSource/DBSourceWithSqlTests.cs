@@ -94,8 +94,15 @@ FROM {s2c.QB}SourceSql{s2c.QE}",
 
             Assert.Throws<ETLBoxException>(() =>
             {
-                source.Execute();
-                dest.Wait();
+                try
+                {
+                    source.Execute();
+                    dest.Wait();
+                }
+                catch (Exception e)
+                {
+                    throw e.InnerException;
+                }
             });
         }
     }

@@ -133,7 +133,7 @@ namespace ETLBoxTests.Logging
             dest.Wait();
 
             //Assert
-            Assert.Equal(3, new RowCountTask("etlbox_log", "task_type = 'RowTransformation' AND task_action = 'LOG'")
+            Assert.Equal(4, new RowCountTask("etlbox_log", "task_type = 'RowTransformation' AND task_action = 'LOG'")
             {
                 DisableLogging = true,
                 ConnectionManager = SqlConnection

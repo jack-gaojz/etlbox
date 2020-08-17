@@ -3,6 +3,7 @@ using ETLBox.DataFlow;
 using ETLBox.DataFlow.Connectors;
 using ETLBoxTests.Fixtures;
 using ETLBoxTests.Helper;
+using System;
 using Xunit;
 
 namespace ETLBoxTests.DataFlowTests
@@ -62,9 +63,16 @@ namespace ETLBoxTests.DataFlowTests
             //Assert
             Assert.Throws<CsvHelper.TypeConversion.TypeConverterException>(() =>
             {
-                source.LinkTo(dest);
-                source.Execute();
-                dest.Wait();
+                try
+                {
+                    source.LinkTo(dest);
+                    source.Execute();
+                    dest.Wait();
+                }
+                catch (AggregateException e)
+                {
+                    throw e.InnerException;
+                }
             });
         }
     }

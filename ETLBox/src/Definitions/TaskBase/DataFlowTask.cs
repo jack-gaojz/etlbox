@@ -182,8 +182,8 @@ namespace ETLBox.DataFlow
         {
             if (t.IsFaulted)
             {
-                FaultBufferOnPredecessorCompletion(t.Exception.Flatten());
-                throw t.Exception.Flatten();
+                FaultBufferOnPredecessorCompletion(t.Exception.InnerException);
+                throw t.Exception.InnerException;
             }
             else
             {
@@ -199,8 +199,8 @@ namespace ETLBox.DataFlow
             LetErrorSourceFinishUp();
             if (t.IsFaulted)
             {
-                CleanUpOnFaulted(t.Exception.Flatten());
-                throw t.Exception.Flatten(); //Will fault Completion task
+                CleanUpOnFaulted(t.Exception.InnerException);
+                throw t.Exception.InnerException; //Will fault Completion task
             }
             else
             {

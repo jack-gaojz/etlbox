@@ -23,8 +23,15 @@ namespace ETLBoxTests.DataFlowTests
             //Act & Assert
             Assert.Throws<ETLBoxException>(() =>
             {
-                source.Execute();
-                dest.Wait();
+                try
+                {
+                    source.Execute();
+                    dest.Wait();
+                }
+                catch (AggregateException e)
+                {
+                    throw e.InnerException;
+                }
             });
         }
 

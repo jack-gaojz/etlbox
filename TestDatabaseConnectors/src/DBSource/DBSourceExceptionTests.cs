@@ -31,9 +31,16 @@ namespace ETLBoxTests.DataFlowTests
             //Act & Assert
             Assert.Throws<ETLBoxException>(() =>
             {
-                source.LinkTo(dest);
-                source.Execute();
-                dest.Wait();
+                try
+                {
+                    source.LinkTo(dest);
+                    source.Execute();
+                    dest.Wait();
+                }
+                catch (Exception e)
+                {
+                    throw e.InnerException;
+                }
             });
         }
 
@@ -56,9 +63,16 @@ namespace ETLBoxTests.DataFlowTests
             //Act & Assert
             Assert.Throws<Microsoft.Data.SqlClient.SqlException>(() =>
             {
-                source.LinkTo(dest);
-                source.Execute();
-                dest.Wait();
+                try
+                {
+                    source.LinkTo(dest);
+                    source.Execute();
+                    dest.Wait();
+                }
+                catch (Exception e)
+                {
+                    throw e.InnerException;
+                }
             });
         }
 
