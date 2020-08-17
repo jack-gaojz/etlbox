@@ -1,3 +1,4 @@
+using ETLBox.DataFlow;
 using ETLBox.Helper;
 using System;
 using System.Collections.Generic;
@@ -19,7 +20,7 @@ namespace ETLBoxTests
 
             //BroadcastBlock does not send if bounded capacity is set and buffer in target is full
             //Message will be "lost"
-            BroadcastBlock<int> bb = new BroadcastBlock<int>( c=> c);
+            BroadcastBlock<int> bb = new BroadcastBlock<int>(c => c);
             ActionBlock<int> ab = new ActionBlock<int>(
                (messageUnit) =>
                {
@@ -83,6 +84,22 @@ namespace ETLBoxTests
                 );
 
 
+        }
+
+        [Fact]
+        public void WaitingForNullBlockNeverCompletes()
+        {
+            var producer1 = new BufferBlock<int>();
+            var trash = DataflowBlock.NullTarget<int>();
+            producer1.LinkTo(trash);
+
+            producer1.Post(1);
+            producer1.Complete();
+            producer1.Completion.Wait();
+            trash.Complete();
+
+            Task.Delay(100).Wait();
+            Assert.True(trash.Completion.Status != TaskStatus.RanToCompletion);
         }
 
     }

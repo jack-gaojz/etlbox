@@ -1,4 +1,6 @@
 ﻿using ETLBox.ControlFlow;
+using NLog.Targets.Wrappers;
+using System;
 using System.Dynamic;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -11,28 +13,41 @@ namespace ETLBox.DataFlow.Connectors
     /// Every records needs to be transferred to a destination to have a dataflow completed.
     /// </summary>
     /// <typeparam name="TInput">Type of datasoure input.</typeparam>
-    public class VoidDestination<TInput> : DataFlowTask, ITask, IDataFlowDestination<TInput>
+    public class VoidDestination<TInput> : DataFlowDestination<TInput>
     {
+        #region Public properties
 
-        /* ITask Interface */
         public override string TaskName => $"Void destination - Ignore data";
+ 
+        #endregion
 
-        /* Public properties */
-        public ITargetBlock<TInput> TargetBlock => _voidDestination?.TargetBlock;
+        #region Constructors
 
-        /* Private stuff */
-        CustomDestination<TInput> _voidDestination { get; set; }
         public VoidDestination()
         {
-            _voidDestination = new CustomDestination<TInput>(row => {; });
-            _voidDestination.CopyTaskProperties(this);
+
+
         }
 
-        public void Wait() => _voidDestination.Wait();
+        #endregion
 
-        //public void AddPredecessorCompletion(Task completion) => _voidDestination.AddPredecessorCompletion(completion);
+        #region Implement abstract interfaces
 
-        public Task Completion => _voidDestination.Completion;
+        public override void InitBufferObjects()
+        {
+            TargetAction = new ActionBlock<TInput>(r => { });
+            WereBufferInitialized = true;
+        }
+
+        protected override void CleanUpOnSuccess()
+        {
+        }
+
+        protected override void CleanUpOnFaulted(Exception e)
+        {
+        }
+        #endregion
+
     }
 
     /// <summary>
