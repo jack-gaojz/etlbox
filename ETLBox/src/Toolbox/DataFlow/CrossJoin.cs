@@ -42,12 +42,11 @@ namespace ETLBox.DataFlow.Transformations
                 CreateLinkInInternalFlow(parent);
             }
 
-            public override void InitBufferObjects()
+            protected override void InternalInitBufferObjects()
             {
                 InMemoryTarget.CopyTaskProperties(Parent);
                 InMemoryTarget.MaxBufferSize = -1;
                 InMemoryTarget.InitBufferObjects();
-                WereBufferInitialized = true;
             }
 
             protected override void CleanUpOnSuccess() { }
@@ -74,13 +73,12 @@ namespace ETLBox.DataFlow.Transformations
 
         #region Implement abstract methods and override default behaviour
 
-        public override void InitBufferObjects()
+        protected override void InternalInitBufferObjects()
         {
             Buffer = new BufferBlock<TOutput>(new DataflowBlockOptions()
             {
                 BoundedCapacity = MaxBufferSize
             });
-            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

@@ -97,14 +97,13 @@ namespace ETLBox.DataFlow.Connectors
             OutputSource.FaultBufferOnPredecessorCompletion(e);
         }
 
-        public override void InitBufferObjects()
+        protected override void InternalInitBufferObjects()
         {
             InitTypeInfoWithMergeProperties();
             SetDestinationTableProperties();
             SetLookupProperties();
             SetOutputFlow();
             CreateAndRunLookupToDestinationTableFlow();
-            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

@@ -33,10 +33,9 @@ namespace ETLBox.DataFlow.Connectors
 
         #region Implement abstract interfaces
 
-        public override void InitBufferObjects()
+        protected override void InternalInitBufferObjects()
         {
             TargetAction = new ActionBlock<TInput>(r => { });
-            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

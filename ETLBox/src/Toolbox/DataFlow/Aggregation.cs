@@ -58,7 +58,7 @@ namespace ETLBox.DataFlow.Transformations
 
         internal override Task BufferCompletion => SourceBlock.Completion;
 
-        public override void InitBufferObjects()
+        protected override void InternalInitBufferObjects()
         {
             SetAggregationFunctionsIfNecessary();
 
@@ -85,7 +85,6 @@ namespace ETLBox.DataFlow.Transformations
                     throw e;
                 }
             });
-            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

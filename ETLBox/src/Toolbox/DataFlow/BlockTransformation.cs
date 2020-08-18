@@ -50,7 +50,7 @@ namespace ETLBox.DataFlow.Transformations
 
         #region Implement abstract methods
 
-        public override void InitBufferObjects()
+        protected override void InternalInitBufferObjects()
         {
             OutputBuffer = new BufferBlock<TOutput>(new DataflowBlockOptions()
             {
@@ -76,7 +76,6 @@ namespace ETLBox.DataFlow.Transformations
                     throw e;
                 }
             });
-            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

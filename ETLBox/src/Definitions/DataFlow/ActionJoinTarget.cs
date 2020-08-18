@@ -18,13 +18,12 @@ namespace ETLBox.DataFlow
             CreateLinkInInternalFlow(parent);
         }
 
-        public override void InitBufferObjects()
+        protected override void InternalInitBufferObjects()
         {
             JoinAction = new ActionBlock<TInput>(Action, new ExecutionDataflowBlockOptions()
             {
                 BoundedCapacity = MaxBufferSize
             });
-            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess() { }

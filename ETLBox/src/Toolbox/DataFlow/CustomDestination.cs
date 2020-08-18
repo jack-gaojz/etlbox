@@ -34,13 +34,12 @@ namespace ETLBox.DataFlow.Connectors
 
         #region Implement abstract methods
 
-        public override void InitBufferObjects()
+        protected override void InternalInitBufferObjects()
         {
             TargetAction = new ActionBlock<TInput>(AddLoggingAndErrorHandling(WriteAction), new ExecutionDataflowBlockOptions()
             {
                 BoundedCapacity = MaxBufferSize
             });
-            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

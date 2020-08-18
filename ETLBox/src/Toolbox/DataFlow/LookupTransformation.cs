@@ -69,14 +69,13 @@ namespace ETLBox.DataFlow.Transformations
 
         #region Implement abstract methods
 
-        public override void InitBufferObjects()
+        protected override void InternalInitBufferObjects()
         {
             if (TransformationFunc == null)
                 DefaultFuncWithMatchRetrieveAttributes();
             InitRowTransformationManually(LoadLookupData);
 
             LinkInternalLoadBufferFlow();
-            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

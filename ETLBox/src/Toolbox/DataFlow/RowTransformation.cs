@@ -56,7 +56,7 @@ namespace ETLBox.DataFlow.Transformations
 
         #region Implement abstract methods
 
-        public override void InitBufferObjects()
+        protected override void InternalInitBufferObjects()
         {
             TransformBlock = new TransformBlock<TInput, TOutput>(
                 row =>
@@ -81,7 +81,6 @@ namespace ETLBox.DataFlow.Transformations
                     BoundedCapacity = MaxBufferSize,
                 }
             );
-            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

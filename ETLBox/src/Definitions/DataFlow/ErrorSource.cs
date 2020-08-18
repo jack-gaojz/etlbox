@@ -13,13 +13,12 @@ namespace ETLBox.DataFlow
         {
         }
 
-        public override void InitBufferObjects()
+        protected override void InternalInitBufferObjects()
         {
             Buffer = new BufferBlock<ETLBoxError>();
             Completion = new Task(
                 () => { }
                 );
-            WereBufferInitialized = true;
         }
 
         internal override void LinkBuffers(DataFlowTask successor, LinkPredicates linkPredicate)

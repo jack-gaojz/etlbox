@@ -26,14 +26,13 @@ namespace ETLBox.DataFlow
 
         #region Implement abstract methods
 
-        public override void InitBufferObjects()
+        protected override void InternalInitBufferObjects()
         {
             TargetAction = new ActionBlock<TInput>(WriteData, new ExecutionDataflowBlockOptions()
             {
                 MaxDegreeOfParallelism = 1,
                 BoundedCapacity = MaxBufferSize,
             });
-            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

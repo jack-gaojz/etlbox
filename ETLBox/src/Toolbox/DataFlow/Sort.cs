@@ -56,12 +56,11 @@ namespace ETLBox.DataFlow.Transformations
 
         #region Implement abstract methods
 
-        public override void InitBufferObjects()
+        protected override void InternalInitBufferObjects()
         {
             BlockTransformation.CopyTaskProperties(this);
             if (MaxBufferSize > 0) BlockTransformation.MaxBufferSize = this.MaxBufferSize;
             BlockTransformation.InitBufferObjects();
-            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

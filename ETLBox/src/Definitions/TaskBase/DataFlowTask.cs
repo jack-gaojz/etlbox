@@ -106,7 +106,7 @@ namespace ETLBox.DataFlow
             if (!WereBufferInitialized)
             {
                 OnBeforeInit?.Invoke();
-                InitBufferObjects();
+                InternalInitBufferObjects();
                 WereBufferInitialized = true;
             }
 
@@ -116,7 +116,13 @@ namespace ETLBox.DataFlow
         }
 
         internal Action OnBeforeInit { get; set; }
-        public virtual void InitBufferObjects() { } //abstract
+
+        public void InitBufferObjects() {
+            InternalInitBufferObjects();
+            WereBufferInitialized = true;
+        }
+
+        protected abstract void InternalInitBufferObjects();
 
         protected void RunErrorSourceInitializationRecursively()
         {

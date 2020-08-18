@@ -39,13 +39,12 @@ namespace ETLBox.DataFlow.Transformations
 
         #region Implement abstract methods
 
-        public override void InitBufferObjects()
+        protected override void InternalInitBufferObjects()
         {
             TransformBlock = new TransformManyBlock<TInput, TOutput>(MultiplicateRow, new ExecutionDataflowBlockOptions()
             {
                 BoundedCapacity = MaxBufferSize,
             });
-            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess() {

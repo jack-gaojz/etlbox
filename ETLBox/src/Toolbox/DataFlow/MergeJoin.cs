@@ -75,13 +75,12 @@ namespace ETLBox.DataFlow.Transformations
 
         #region Implement abstract methods and override default behaviour
 
-        public override void InitBufferObjects()
+        protected override void InternalInitBufferObjects()
         {
             Buffer = new BufferBlock<TOutput>(new DataflowBlockOptions()
             {
                 BoundedCapacity = MaxBufferSize
             });
-            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

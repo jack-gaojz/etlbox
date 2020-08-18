@@ -41,13 +41,12 @@ namespace ETLBox.DataFlow.Transformations
 
         #region Implement abstract methods
 
-        public override void InitBufferObjects()
+        protected override void InternalInitBufferObjects()
         {
             BroadcastBlock = new BroadcastBlock<TInput>(Clone, new DataflowBlockOptions()
             {
                 BoundedCapacity = MaxBufferSize
             });
-            WereBufferInitialized = true;
         }
 
         protected override void CleanUpOnSuccess()

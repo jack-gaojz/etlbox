@@ -14,7 +14,7 @@ namespace ETLBox.DataFlow
         public override ISourceBlock<TOutput> SourceBlock => this.Buffer;
         protected BufferBlock<TOutput> Buffer { get; set; } = new BufferBlock<TOutput>();
         internal override Task BufferCompletion => Buffer.Completion;
-        public override void InitBufferObjects()
+        protected override void InternalInitBufferObjects()
         {
             Buffer = new BufferBlock<TOutput>(new DataflowBlockOptions()
             {
@@ -39,7 +39,6 @@ namespace ETLBox.DataFlow
                    }
                }
                , TaskCreationOptions.LongRunning);
-            WereBufferInitialized = true;
         }
 
         internal override void CompleteBufferOnPredecessorCompletion() => SourceBlock.Complete();
