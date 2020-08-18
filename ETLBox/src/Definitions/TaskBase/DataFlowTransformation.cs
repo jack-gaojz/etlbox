@@ -9,7 +9,7 @@ namespace ETLBox.DataFlow
 {
     public abstract class DataFlowTransformation<TInput, TOutput> : DataFlowSource<TOutput>, IDataFlowTransformation<TInput, TOutput>
     {
-        public virtual ITargetBlock<TInput> TargetBlock { get; } //abstract
+        public abstract ITargetBlock<TInput> TargetBlock { get; }
 
         internal override Task BufferCompletion => SourceBlock.Completion;
 

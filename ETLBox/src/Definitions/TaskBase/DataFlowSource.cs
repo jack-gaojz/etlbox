@@ -10,7 +10,7 @@ namespace ETLBox.DataFlow
 {
     public abstract class DataFlowSource<TOutput> : DataFlowTask, IDataFlowSource<TOutput>
     {
-        public virtual ISourceBlock<TOutput> SourceBlock { get; } //abstract
+        public abstract ISourceBlock<TOutput> SourceBlock { get; } 
 
         internal override void LinkBuffers(DataFlowTask successor, LinkPredicates linkPredicates)
         {

@@ -197,8 +197,8 @@ namespace ETLBox.DataFlow
             }
         }
 
-        internal virtual void CompleteBufferOnPredecessorCompletion() { } //abstract
-        internal virtual void FaultBufferOnPredecessorCompletion(Exception e) { } //abstract
+        internal abstract void CompleteBufferOnPredecessorCompletion();
+        internal abstract void FaultBufferOnPredecessorCompletion(Exception e);
 
         protected void CompleteOrFaultCompletion(Task t)
         {
@@ -301,13 +301,13 @@ namespace ETLBox.DataFlow
                 NLogFinish();
             WasLoggingFinished = true;
         }
-        protected void NLogStart() //private
+        private void NLogStart()
         {
             if (!DisableLogging)
                 NLogger.Info(TaskName, TaskType, "START", TaskHash, ControlFlow.ControlFlow.STAGE, ControlFlow.ControlFlow.CurrentLoadProcess?.Id);
         }
 
-        protected void NLogFinish() //private
+        private void NLogFinish()
         {
             if (!DisableLogging && HasLoggingThresholdRows)
                 NLogger.Info(TaskName + $" processed {ProgressCount} records in total.", TaskType, "LOG", TaskHash, ControlFlow.ControlFlow.STAGE, ControlFlow.ControlFlow.CurrentLoadProcess?.Id);

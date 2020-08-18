@@ -69,7 +69,6 @@ namespace ETLBox.DataFlow
                 WasStreamOpened = true;
                 ReadAllRecords();
             } while (HasNextUri(CreateMetaDataObject));
-            //Buffer.Complete();
         }
 
         protected override void CleanUpOnSuccess()

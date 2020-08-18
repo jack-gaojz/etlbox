@@ -43,7 +43,7 @@ namespace ETLBox.DataFlow
 
         internal override void CompleteBufferOnPredecessorCompletion()
         {
-            //TargetBlock.Completion.ContinueWith(t => TargetAction.Complete());
+
             TargetBlock.Complete();
         }
 
@@ -72,7 +72,7 @@ namespace ETLBox.DataFlow
         protected override void CleanUpOnSuccess()
         {
             FinishWrite();
-            NLogFinish();
+            NLogFinishOnce();
         }
         protected override void CleanUpOnFaulted(Exception e)
         {
@@ -89,7 +89,7 @@ namespace ETLBox.DataFlow
 
         protected void WriteBatch(TInput[] data)
         {
-            if (ProgressCount == 0) NLogStart();
+            if (ProgressCount == 0) NLogStartOnce();
             if (BeforeBatchWrite != null)
                 data = BeforeBatchWrite.Invoke(data);
             if (!WasWritingPrepared)

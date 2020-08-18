@@ -44,7 +44,7 @@ namespace ETLBox.DataFlow.Connectors
 
         protected override void CleanUpOnSuccess()
         {
-            NLogFinish();
+            NLogFinishOnce();
         }
         protected override void CleanUpOnFaulted(Exception e) { }
 

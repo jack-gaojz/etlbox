@@ -47,7 +47,7 @@ namespace ETLBox.DataFlow
         #endregion
 
         #region Execution and IDataFlowExecutableSource
-        public virtual void Execute() //remove virtual
+        public void Execute()
         {
             InitNetworkRecursively();
             OnExecutionDoSynchronousWork();
@@ -62,9 +62,9 @@ namespace ETLBox.DataFlow
             return Completion;
         }
 
-        protected virtual void OnExecutionDoSynchronousWork() { } //abstract
+        protected virtual void OnExecutionDoSynchronousWork() { } //abstract? Corner-case for ErrorSource
 
-        protected virtual void OnExecutionDoAsyncWork() { } //abstract
+        protected virtual void OnExecutionDoAsyncWork() { } //abstract? Corner-Case for ErrorSource
 
         #endregion
     }

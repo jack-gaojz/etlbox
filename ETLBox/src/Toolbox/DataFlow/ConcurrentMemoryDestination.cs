@@ -43,7 +43,7 @@ namespace ETLBox.DataFlow.Connectors
         protected override void CleanUpOnSuccess()
         {
             Data?.CompleteAdding();
-            NLogFinish();
+            NLogFinishOnce();
         }
         protected override void CleanUpOnFaulted(Exception e)
         {
