@@ -97,9 +97,9 @@ namespace ETLBox.DataFlow.Transformations
         {
             InMemoryTarget.CompleteBufferOnPredecessorCompletion();
             PassingTarget.CompleteBufferOnPredecessorCompletion();
-            Task.WhenAll(InMemoryTarget.Completion, PassingTarget.Completion).ContinueWith(
-                t => Buffer.Complete()
-            );
+            Task.WaitAll(InMemoryTarget.Completion, PassingTarget.Completion);
+            Buffer.Complete();
+
         }
 
         internal override void FaultBufferOnPredecessorCompletion(Exception e)

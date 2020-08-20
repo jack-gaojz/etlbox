@@ -34,7 +34,7 @@ namespace ETLBox.DataFlow.Transformations
         //public ISourceBlock<TOutput> SourceBlock => Transformation.SourceBlock;
         public override ISourceBlock<TOutput> SourceBlock => this.Buffer;
         public Func<TInput1, TInput2, TOutput> MergeJoinFunc { get; set; }
-        public Func<TInput1,TInput2, bool> BothMatchFunc { get; set; }
+        public Func<TInput1, TInput2, bool> BothMatchFunc { get; set; }
 
         #endregion
 
@@ -80,9 +80,11 @@ namespace ETLBox.DataFlow.Transformations
         {
             LeftJoinTarget.CompleteBufferOnPredecessorCompletion();
             RightJoinTarget.CompleteBufferOnPredecessorCompletion();
-            Task.WhenAll(LeftJoinTarget.Completion, RightJoinTarget.Completion).ContinueWith(
-                t => Buffer.Complete()
-            );
+            Task.WaitAll(LeftJoinTarget.Completion, RightJoinTarget.Completion);
+            EmptyQueues();
+            Buffer.Complete();
+
+
         }
 
         internal override void FaultBufferOnPredecessorCompletion(Exception e)
@@ -101,51 +103,65 @@ namespace ETLBox.DataFlow.Transformations
         private int left;
         private int right;
 
-        private TInput1 dataLeft = default;
-        private TInput2 dataRight = default;
+        private Queue<TInput1> dataLeft = new Queue<TInput1>();
+        private Queue<TInput2> dataRight = new Queue<TInput2>();
         private TInput1 IncomingLeft = default;
         private TInput2 IncomingRight = default;
         private TOutput joinOutput = default;
 
+        private void EmptyQueues()
+        {
+            lock (joinLock)
+            {
+                while (dataLeft.Count > 0 || dataRight.Count > 0)
+                {
+                    TInput1 left = default;
+                    TInput2 right = default;
+                    if (dataLeft.Count > 0)
+                        left = dataLeft.Dequeue();
+                    if (dataRight.Count > 0)
+                        right = dataRight.Dequeue();
+                    CreateOutput(left, right);
+                }
+            }
+        }
         public void LeftJoinData(TInput1 data)
         {
             lock (joinLock)
             {
-                IncomingLeft = data;
-                if (left <= right)
+                if (dataRight.Count >= 1)
                 {
-                    dataLeft = data;
-                    left++;
-                    ControlFlow.ControlFlow.STAGE = $"Left {left}";
-                    LogProgress();
-                    if (left == right)
-                        CreateOutput();
+                    var right = dataRight.Dequeue();
+                    CreateOutput(data, right);
+                }
+                else
+                {
+                    dataLeft.Enqueue(data);
                 }
             }
         }
 
-        private void CreateOutput()
+        private void CreateOutput(TInput1 dataLeft, TInput2 dataRight)
         {
 
-                if (BothMatchFunc == null)
-                    joinOutput = MergeJoinFunc.Invoke(dataLeft, dataRight);
-                if (!Buffer.SendAsync(joinOutput).Result)
-                    throw Exception;
+            //if (BothMatchFunc == null)
+            joinOutput = MergeJoinFunc.Invoke(dataLeft, dataRight);
+            if (!Buffer.SendAsync(joinOutput).Result)
+                throw Exception;
         }
 
         public void RightJoinData(TInput2 data)
         {
             lock (joinLock)
             {
-                IncomingRight = data;
-                if (right <= left)
+                if (dataLeft.Count >= 1)
                 {
-                    dataRight = data;
-                    right++;
-                    ControlFlow.ControlFlow.STAGE = $"Right {right}";
-                    LogProgress();
-                    if (right == left)
-                        CreateOutput();
+                    var left = dataLeft.Dequeue();
+                    CreateOutput(left, data);
+                }
+                else
+                {
+                    dataRight.Enqueue(data);
                 }
             }
         }
