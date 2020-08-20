@@ -1,4 +1,5 @@
 ﻿using ETLBox.ControlFlow;
+using ETLBox.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -86,7 +87,7 @@ namespace ETLBox.DataFlow.Transformations
                 EmptyQueues();
                 Buffer.Complete();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 ((IDataflowBlock)Buffer).Fault(e);
             }
@@ -143,9 +144,21 @@ namespace ETLBox.DataFlow.Transformations
 
         private void CreateOutput(TInput1 dataLeft, TInput2 dataRight)
         {
-            joinOutput = MergeJoinFunc.Invoke(dataLeft, dataRight);
-            if (!Buffer.SendAsync(joinOutput).Result)
-                throw Exception;
+            try
+            {
+                joinOutput = MergeJoinFunc.Invoke(dataLeft, dataRight);
+                if (!Buffer.SendAsync(joinOutput).Result)
+                    throw Exception;
+            }
+            catch (ETLBoxException e)
+            {
+            }
+            catch (Exception e)
+            {
+                ThrowOrRedirectError(e, "Left:" + ErrorSource.ConvertErrorData<TInput1>(dataLeft)
+                                        + "|Right:" + ErrorSource.ConvertErrorData<TInput2>(dataRight));
+            }
+
         }
 
         public void RightJoinData(TInput2 data)
