@@ -135,18 +135,17 @@ namespace ETLBox.DataFlow.Transformations
                         if (result != null)
                         {
                             if (!Buffer.SendAsync(result).Result)
-                                throw Exception;
+                                throw new ETLBoxException("Buffer already completed or faulted!", this.Exception);
                             LogProgress();
                         }
                     }
                 }
-                catch (ETLBoxException e)
-                {
-                }
+                catch (ETLBoxException) { throw; }
                 catch (Exception e)
                 {
                     ThrowOrRedirectError(e, string.Concat(ErrorHandler.ConvertErrorData<TInput1>(inMemoryRow), "  |--| ",
                         ErrorHandler.ConvertErrorData<TInput2>(passingRow)));
+                    LogProgress();
                 }
             }
         }

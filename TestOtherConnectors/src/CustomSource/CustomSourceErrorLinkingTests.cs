@@ -1,6 +1,7 @@
 using ETLBox.Connection;
 using ETLBox.DataFlow;
 using ETLBox.DataFlow.Connectors;
+using ETLBox.Exceptions;
 using ETLBoxTests.Fixtures;
 using ETLBoxTests.Helper;
 using System;
@@ -24,7 +25,7 @@ namespace ETLBoxTests.DataFlowTests
         }
 
         [Fact]
-        public void SimpleFlow()
+        public void RedirectOneErrorRow()
         {
             //Arrange
             TwoColumnsTableFixture dest2Columns = new TwoColumnsTableFixture("ErrorLinkingCustomSource");
@@ -60,6 +61,48 @@ namespace ETLBoxTests.DataFlowTests
             Assert.Collection<ETLBoxError>(errorDest.Data,
                 d => Assert.True(!string.IsNullOrEmpty(d.RecordAsJson) && !string.IsNullOrEmpty(d.ErrorText))
             );
+        }
+
+        [Fact]
+        public void CompleteBufferBeforeEnd()
+        {
+            //Arrange
+            TwoColumnsTableFixture dest2Columns = new TwoColumnsTableFixture("ErrorLinkingCustomSource2");
+            var testData = new List<MySimpleRow>();
+            for (int i = 0; i <= 10000; i++)
+                testData.Add(new MySimpleRow() { Col1 = i, Col2 = $"Test{i}" });
+
+            int _readIndex = 0;
+            Func<MySimpleRow> ReadData = () =>
+            {
+                var result = testData[_readIndex];
+                _readIndex++;
+                return result;
+            };
+
+            Func<bool> EndOfData = () => _readIndex >= testData.Count;
+
+            CustomSource<MySimpleRow> source = new CustomSource<MySimpleRow>(ReadData, EndOfData);
+            DbDestination<MySimpleRow> dest = new DbDestination<MySimpleRow>(SqlConnection, "ErrorLinkingCustomSource2");
+
+            //Act & Assert
+            Assert.Throws<ETLBoxException>(() =>
+            {
+                try
+                {
+
+                    source.LinkTo(dest);
+                    source.ExecuteAsync();
+                    source.SourceBlock.Complete();
+                    dest.Wait();
+                }
+                catch (AggregateException ae)
+                {
+                    throw ae.InnerException;
+
+                }
+            });
+
         }
     }
 }

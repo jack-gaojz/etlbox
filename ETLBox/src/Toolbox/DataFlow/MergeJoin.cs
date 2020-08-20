@@ -148,11 +148,9 @@ namespace ETLBox.DataFlow.Transformations
             {
                 joinOutput = MergeJoinFunc.Invoke(dataLeft, dataRight);
                 if (!Buffer.SendAsync(joinOutput).Result)
-                    throw Exception;
+                    throw new ETLBoxException("Buffer already completed or faulted!", this.Exception);
             }
-            catch (ETLBoxException e)
-            {
-            }
+            catch (ETLBoxException) { throw; }
             catch (Exception e)
             {
                 ThrowOrRedirectError(e, "Left:" + ErrorSource.ConvertErrorData<TInput1>(dataLeft)

@@ -1,4 +1,5 @@
 ﻿using ETLBox.ControlFlow;
+using ETLBox.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -106,7 +107,7 @@ namespace ETLBox.DataFlow.Transformations
             foreach (TOutput row in OutputData)
             {
                 if (!OutputBuffer.SendAsync(row).Result)
-                    throw Exception;
+                    throw new ETLBoxException("Buffer already completed or faulted!", this.Exception);
                 LogProgress();
             }
         }

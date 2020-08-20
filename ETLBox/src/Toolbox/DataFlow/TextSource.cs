@@ -86,13 +86,15 @@ namespace ETLBox.DataFlow.Connectors
                     newObject = (TOutput)Activator.CreateInstance(typeof(TOutput));
 
                 WriteLineIntoObject(line, newObject);
+                if (!Buffer.SendAsync(newObject).Result)
+                    throw new ETLBoxException("Buffer already completed or faulted!", this.Exception);
             }
+            catch (ETLBoxException) { throw; }
             catch (Exception e)
             {
                 ThrowOrRedirectError(e, line);
             }
-            if (!Buffer.SendAsync(newObject).Result)
-                throw this.Exception;
+
         }
 
         protected override void CloseReader()

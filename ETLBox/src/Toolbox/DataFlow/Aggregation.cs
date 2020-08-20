@@ -1,4 +1,5 @@
 ﻿using ETLBox.ControlFlow;
+using ETLBox.Exceptions;
 using ETLBox.Helper;
 using System;
 using System.Collections.Generic;
@@ -198,7 +199,7 @@ namespace ETLBox.DataFlow.Transformations
             {
                 StoreKeyAction?.Invoke(row.Key, row.Value);
                 if (!OutputBuffer.SendAsync(row.Value).Result)
-                    throw Exception;
+                    throw new ETLBoxException("Buffer already completed or faulted!", this.Exception);
                 LogProgress();
             }
         }

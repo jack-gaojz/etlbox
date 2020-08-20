@@ -1,4 +1,5 @@
 ﻿using ETLBox.ControlFlow;
+using ETLBox.Exceptions;
 using System;
 using System.Dynamic;
 using System.Threading.Tasks.Dataflow;
@@ -62,13 +63,15 @@ namespace ETLBox.DataFlow.Connectors
                 try
                 {
                     result = ReadFunc.Invoke();
+                    if (!Buffer.SendAsync(result).Result)
+                        throw new ETLBoxException("Buffer already completed or faulted!", this.Exception);
                 }
+                catch (ETLBoxException) { throw; }
                 catch (Exception e)
                 {
                     ThrowOrRedirectError(e, e.Message);
                 }
-                if (!Buffer.SendAsync(result).Result)
-                    throw this.Exception;
+
                 LogProgress();
             }
         }

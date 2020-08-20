@@ -219,7 +219,7 @@ namespace ETLBox.DataFlow.Connectors
                     LogProgress();
                     DbConnectionManager.CheckLicenseOrThrow(ProgressCount);
                     if (!Buffer.SendAsync(_row).Result)
-                        throw this.Exception;
+                        throw new ETLBoxException("Buffer already completed or faulted!", this.Exception);
                 }
             };
         }
