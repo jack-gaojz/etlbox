@@ -386,5 +386,36 @@ namespace ETLBoxTests.DataFlowTests
             dest.Data.Should().BeEquivalentTo(CreateDemoData(1, 3));
         }
 
+        [Fact]
+        public void ErrorInOnCompletion()
+        {
+            //Arrange
+            MemorySource<MySimpleRow> source = new MemorySource<MySimpleRow>();
+            source.DataAsList = CreateDemoData(1, 3);
+
+            RowTransformation<MySimpleRow> row = new RowTransformation<MySimpleRow>();
+            row.TransformationFunc = row => row;
+            MemoryDestination<MySimpleRow> dest = new MemoryDestination<MySimpleRow>();
+
+            dest.OnCompletion = () =>
+            {
+                throw new Exception("Test1");
+            };
+
+            //Act
+
+            source.LinkTo(row).LinkTo(dest);
+
+            Assert.Throws<AggregateException>(() =>
+           {
+               source.Execute();
+               dest.Wait();
+           });
+
+
+            //Assert
+            dest.Data.Should().BeEquivalentTo(CreateDemoData(1, 3));
+        }
+
     }
 }

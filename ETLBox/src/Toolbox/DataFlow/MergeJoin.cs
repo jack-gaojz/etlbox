@@ -81,10 +81,15 @@ namespace ETLBox.DataFlow.Transformations
             LeftJoinTarget.CompleteBufferOnPredecessorCompletion();
             RightJoinTarget.CompleteBufferOnPredecessorCompletion();
             Task.WaitAll(LeftJoinTarget.Completion, RightJoinTarget.Completion);
-            EmptyQueues();
-            Buffer.Complete();
-
-
+            try
+            {
+                EmptyQueues();
+                Buffer.Complete();
+            }
+            catch(Exception e)
+            {
+                ((IDataflowBlock)Buffer).Fault(e);
+            }
         }
 
         internal override void FaultBufferOnPredecessorCompletion(Exception e)
@@ -100,13 +105,8 @@ namespace ETLBox.DataFlow.Transformations
 
         private readonly object joinLock = new object();
 
-        private int left;
-        private int right;
-
         private Queue<TInput1> dataLeft = new Queue<TInput1>();
         private Queue<TInput2> dataRight = new Queue<TInput2>();
-        private TInput1 IncomingLeft = default;
-        private TInput2 IncomingRight = default;
         private TOutput joinOutput = default;
 
         private void EmptyQueues()
@@ -143,8 +143,6 @@ namespace ETLBox.DataFlow.Transformations
 
         private void CreateOutput(TInput1 dataLeft, TInput2 dataRight)
         {
-
-            //if (BothMatchFunc == null)
             joinOutput = MergeJoinFunc.Invoke(dataLeft, dataRight);
             if (!Buffer.SendAsync(joinOutput).Result)
                 throw Exception;

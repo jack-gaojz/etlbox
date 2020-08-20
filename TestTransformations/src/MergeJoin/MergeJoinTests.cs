@@ -81,7 +81,7 @@ namespace ETLBoxTests.DataFlowTests
                     return new MySimpleRow()
                     {
                         Col1 = inputRow1.Col1,
-                        Col2 = inputRow1.Col2 + " " + (inputRow2.Col2 ?? "X")
+                        Col2 = inputRow1.Col2 + " " + (inputRow2?.Col2 ?? "X")
                     };
                 });
             source1.LinkTo(join.LeftJoinTarget);
@@ -95,9 +95,9 @@ namespace ETLBoxTests.DataFlowTests
             Assert.Collection(dest.Data,
                 r => Assert.True(r.Col1 == 1 && r.Col2 == "Marilyn Monroe"),
                 r => Assert.True(r.Col1 == 2 && r.Col2 == "Psy Presley"),
-                r => Assert.True(r.Col1 == 1 && r.Col2 == "Adele X"),
-                r => Assert.True(r.Col1 == 1 && r.Col2 == "Elvis X"),
-                r => Assert.True(r.Col1 == 1 && r.Col2 == "James X")
+                r => Assert.True(r.Col1 == 3 && r.Col2 == "Adele X"),
+                r => Assert.True(r.Col1 == 4 && r.Col2 == "Elvis X"),
+                r => Assert.True(r.Col1 == 5 && r.Col2 == "James X")
                 );
         }
 
