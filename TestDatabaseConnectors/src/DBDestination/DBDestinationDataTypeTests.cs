@@ -98,7 +98,7 @@ namespace ETLBoxTests.DataFlowTests
             //            IntCol LongCol DecimalCol DoubleCol   DateTimeCol DateCol StringCol CharCol DecimalStringCol NullCol
             //1 - 1  2.3 5.4 2010 - 01 - 01 10:10:10.100 2020 - 01 - 01  Test T   13.4566000000   NULL
             var TN = new ObjectNameDescriptor(tableName, conn.QB, conn.QE);
-            SqlTask.ExecuteReaderSingleLine(conn, "Check data",
+            SqlTask.ExecuteReaderSingleLine(conn, 
                 $"SELECT * FROM {TN.QuotatedFullName} WHERE {conn.QB}intcol{conn.QE} = 1",
                 col => Assert.True(Convert.ToInt32(col) == 1),
                 col => Assert.True(Convert.ToInt64(col) == -1),

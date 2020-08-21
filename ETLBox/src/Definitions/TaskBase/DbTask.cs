@@ -44,29 +44,28 @@ namespace ETLBox.ControlFlow
 
         }
 
-        public DbTask(string name) : this()
+        public DbTask(string sql) : this()
+        {
+            this.Sql = sql;
+        }
+
+        public DbTask(string name, string sql) : this(sql)
         {
             this.TaskName = name;
         }
 
-        public DbTask(string name, string sql) : this(name)
+        public DbTask(ITask callingTask, string sql) : this(sql)
         {
-            this.Sql = sql;
-        }
-
-        public DbTask(ITask callingTask, string sql)
-        {
-            this.Sql = sql;
             CopyTaskProperties(callingTask);
         }
 
-        public DbTask(string name, string sql, params Action<object>[] actions) : this(name, sql)
+        public DbTask(string sql, params Action<object>[] actions) : this(sql)
         {
             Actions = actions.ToList();
         }
 
 
-        public DbTask(string name, string sql, Action beforeRowReadAction, Action afterRowReadAction, params Action<object>[] actions) : this(name, sql)
+        public DbTask(string sql, Action beforeRowReadAction, Action afterRowReadAction, params Action<object>[] actions) : this(sql, actions)
         {
             BeforeRowReadAction = beforeRowReadAction;
             AfterRowReadAction = afterRowReadAction;

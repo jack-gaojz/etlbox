@@ -20,7 +20,7 @@ namespace ETLBox.ControlFlow.Tasks
             Init();
         }
 
-        public XmlaTask(string name) : base(name)
+        public XmlaTask(string xmla) : base(xmla)
         {
             Init();
         }
@@ -35,12 +35,12 @@ namespace ETLBox.ControlFlow.Tasks
             Init();
         }
 
-        public XmlaTask(string name, string xmla, params Action<object>[] actions) : base(name, xmla, actions)
+        public XmlaTask(string xmla, params Action<object>[] actions) : base(xmla, actions)
         {
             Init();
         }
 
-        public XmlaTask(string name, string xmla, Action beforeRowReadAction, Action afterRowReadAction, params Action<object>[] actions) : base(name, xmla, beforeRowReadAction, afterRowReadAction, actions)
+        public XmlaTask(string xmla, Action beforeRowReadAction, Action afterRowReadAction, params Action<object>[] actions) : base(xmla, beforeRowReadAction, afterRowReadAction, actions)
         {
             Init();
         }
@@ -51,21 +51,23 @@ namespace ETLBox.ControlFlow.Tasks
         }
 
         /* Static methods for convenience */
+        public static int ExecuteNonQuery(string xmla) => new XmlaTask(xmla).ExecuteNonQuery();
         public static int ExecuteNonQuery(string name, string xmla) => new XmlaTask(name, xmla).ExecuteNonQuery();
+        public static object ExecuteScalar(string xmla) => new XmlaTask(xmla).ExecuteScalar();
         public static object ExecuteScalar(string name, string xmla) => new XmlaTask(name, xmla).ExecuteScalar();
+        public static Nullable<T> ExecuteScalar<T>(string xmla) where T : struct => new XmlaTask(xmla).ExecuteScalar<T>();
         public static Nullable<T> ExecuteScalar<T>(string name, string xmla) where T : struct => new XmlaTask(name, xmla).ExecuteScalar<T>();
+        public static bool ExecuteScalarAsBool(string xmla) => new XmlaTask(xmla).ExecuteScalarAsBool();
         public static bool ExecuteScalarAsBool(string name, string xmla) => new XmlaTask(name, xmla).ExecuteScalarAsBool();
-        public static void ExecuteReaderSingleLine(string name, string xmla, params Action<object>[] actions) =>
-           new XmlaTask(name, xmla, actions) { Limit = 1 }.ExecuteReader();
-        public static void ExecuteReader(string name, string xmla, params Action<object>[] actions) => new XmlaTask(name, xmla, actions).ExecuteReader();
-        public static void ExecuteReader(string name, string xmla, Action beforeRowReadAction, Action afterRowReadAction, params Action<object>[] actions) =>
-            new XmlaTask(name, xmla, beforeRowReadAction, afterRowReadAction, actions).ExecuteReader();
-        public static int ExecuteNonQuery(IConnectionManager connectionManager, string name, string xmla) => new XmlaTask(name, xmla) { ConnectionManager = connectionManager }.ExecuteNonQuery();
-        public static object ExecuteScalar(IConnectionManager connectionManager, string name, string xmla) => new XmlaTask(name, xmla) { ConnectionManager = connectionManager }.ExecuteScalar();
-        public static Nullable<T> ExecuteScalar<T>(IConnectionManager connectionManager, string name, string xmla) where T : struct => new XmlaTask(name, xmla) { ConnectionManager = connectionManager }.ExecuteScalar<T>();
-        public static bool ExecuteScalarAsBool(IConnectionManager connectionManager, string name, string xmla) => new XmlaTask(name, xmla) { ConnectionManager = connectionManager }.ExecuteScalarAsBool();
-        public static void ExecuteReader(IConnectionManager connectionManager, string name, string xmla, params Action<object>[] actions) => new XmlaTask(name, xmla, actions) { ConnectionManager = connectionManager }.ExecuteReader();
-        public static void ExecuteReader(IConnectionManager connectionManager, string name, string xmla, Action beforeRowReadAction, Action afterRowReadAction, params Action<object>[] actions) =>
-            new XmlaTask(name, xmla, beforeRowReadAction, afterRowReadAction, actions) { ConnectionManager = connectionManager }.ExecuteReader();
+        public static void ExecuteReader(string xmla, params Action<object>[] actions) => new XmlaTask(xmla, actions).ExecuteReader();
+        public static void ExecuteReader(string xmla, Action beforeRowReadAction, Action afterRowReadAction, params Action<object>[] actions) =>
+            new XmlaTask(xmla, beforeRowReadAction, afterRowReadAction, actions).ExecuteReader();
+        public static int ExecuteNonQuery(IConnectionManager connectionManager, string xmla) => new XmlaTask(xmla) { ConnectionManager = connectionManager }.ExecuteNonQuery();
+        public static object ExecuteScalar(IConnectionManager connectionManager, string xmla) => new XmlaTask(xmla) { ConnectionManager = connectionManager }.ExecuteScalar();
+        public static Nullable<T> ExecuteScalar<T>(IConnectionManager connectionManager, string xmla) where T : struct => new XmlaTask(xmla) { ConnectionManager = connectionManager }.ExecuteScalar<T>();
+        public static bool ExecuteScalarAsBool(IConnectionManager connectionManager, string xmla) => new XmlaTask(xmla) { ConnectionManager = connectionManager }.ExecuteScalarAsBool();
+        public static void ExecuteReader(IConnectionManager connectionManager, string xmla, params Action<object>[] actions) => new XmlaTask(xmla, actions) { ConnectionManager = connectionManager }.ExecuteReader();
+        public static void ExecuteReader(IConnectionManager connectionManager, string xmla, Action beforeRowReadAction, Action afterRowReadAction, params Action<object>[] actions) =>
+            new XmlaTask(xmla, beforeRowReadAction, afterRowReadAction, actions) { ConnectionManager = connectionManager }.ExecuteReader();
     }
 }

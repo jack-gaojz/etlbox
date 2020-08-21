@@ -46,11 +46,11 @@ namespace ETLBoxTests.ControlFlowTests
             string dbName = "ETLBox_TestXMLA";
             try
             {
-                XmlaTask.ExecuteNonQuery(DefaultCatalog, "Drop cube", DeleteCubeXMLA(dbName));
+                XmlaTask.ExecuteNonQuery(DefaultCatalog, DeleteCubeXMLA(dbName));
             }
             catch { }
-            XmlaTask.ExecuteNonQuery(DefaultCatalog, "Create cube", CreateCubeXMLA(dbName));
-            XmlaTask.ExecuteNonQuery(DefaultCatalog, "Delete cube", DeleteCubeXMLA(dbName));
+            XmlaTask.ExecuteNonQuery(DefaultCatalog, CreateCubeXMLA(dbName));
+            XmlaTask.ExecuteNonQuery(DefaultCatalog, DeleteCubeXMLA(dbName));
         }
     }
 }

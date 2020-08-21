@@ -160,7 +160,7 @@ namespace ETLBoxTests.ControlFlowTests
             string PP = "@";
             if (connection.GetType() == typeof(OracleConnectionManager))
                 PP = ":";
-            SqlTask.ExecuteReader(connection, "Test execute reader",
+            SqlTask.ExecuteReader(connection,
                 $"SELECT {tc.QB}Col1{tc.QE} FROM {tc.QB}ExecuteReaderWithPar{tc.QE} WHERE {tc.QB}Col2{tc.QE} = {PP}par1", parameter,
                 colA => asIsResult.Add(int.Parse(colA.ToString())));
             //Assert
@@ -203,8 +203,7 @@ namespace ETLBoxTests.ControlFlowTests
             MySimpleRow CurColumn = new MySimpleRow();
 
             //Act
-            SqlTask.ExecuteReader(connection,
-                "Test execute reader",
+            SqlTask.ExecuteReader(connection,              
                 $"SELECT * FROM {tc.QB}MultiColumnRead{tc.QE}"
                 , () => CurColumn = new MySimpleRow()
                 , () => asIsResult.Add(CurColumn)
