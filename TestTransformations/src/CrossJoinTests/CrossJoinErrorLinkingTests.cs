@@ -1,6 +1,7 @@
 using ETLBox.DataFlow;
 using ETLBox.DataFlow.Connectors;
 using ETLBox.DataFlow.Transformations;
+using ETLBox.Exceptions;
 using System;
 using System.Collections.Generic;
 using Xunit;
@@ -14,6 +15,40 @@ namespace ETLBoxTests.DataFlowTests
         {
             public int Col1 { get; set; }
             public string Col2 { get; set; }
+        }
+
+        [Fact]
+        public void CompleteBufferBeforeEnd()
+        {
+            MemorySource<string> source1 = new MemorySource<string>();
+            source1.DataAsList = new List<string>() { "A", "B" };
+            MemorySource<int> source2 = new MemorySource<int>();
+            source2.DataAsList = new List<int>() { 1, 2, 3 };
+            CrossJoin<string, int, string> crossJoin = new CrossJoin<string, int, string>(
+                (data1, data2) => {
+                    return data1 + data2.ToString();
+                    });
+            MemoryDestination<string> dest = new MemoryDestination<string>();
+
+
+            //Act & Assert
+            Assert.Throws<ETLBoxException>(() =>
+            {
+                try
+                {
+                    source1.LinkTo(crossJoin.InMemoryTarget);
+                    source2.LinkTo(crossJoin.PassingTarget);
+                    crossJoin.LinkTo(dest);
+                    source1.ExecuteAsync();
+                    crossJoin.SourceBlock.Complete();
+                    source2.ExecuteAsync();
+                    dest.Wait();
+                }
+                catch (AggregateException e)
+                {
+                    throw e.InnerException;
+                }
+            });
         }
 
         [Fact]
