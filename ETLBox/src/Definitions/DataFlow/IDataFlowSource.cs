@@ -6,7 +6,7 @@ namespace ETLBox.DataFlow
 {
     public interface IDataFlowSource
     {
-
+        ErrorSource ErrorSource { get; set; }
     }
 
     public interface IDataFlowSource<TOutput> : IDataFlowSource
@@ -20,10 +20,6 @@ namespace ETLBox.DataFlow
         IDataFlowSource<TConvert> LinkTo<TConvert>(IDataFlowDestination<TOutput> target, Predicate<TOutput> rowsToKeep);
         IDataFlowSource<TConvert> LinkTo<TConvert>(IDataFlowDestination<TOutput> target, Predicate<TOutput> rowsToKeep, Predicate<TOutput> rowsIntoVoid);
 
-        //Task ExecuteAsync();
-        //void Execute();
-
-        ErrorSource ErrorSource { get; set; }
 
         IDataFlowSource<ETLBoxError> LinkErrorTo(IDataFlowDestination<ETLBoxError> target);
     }
