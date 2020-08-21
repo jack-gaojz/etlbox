@@ -15,8 +15,10 @@ namespace ETLBoxTests.DataFlowTests
         {
         }
 
-        [Fact]
-        public void SplitInto2Tables()
+        [Theory]
+        [InlineData(-1)]
+        [InlineData(2)]
+        public void SplitInto2Tables(int maxBufferSize)
         {
             //Arrange
             TwoColumnsTableFixture sourceTable = new TwoColumnsTableFixture("Source");
@@ -27,9 +29,15 @@ namespace ETLBoxTests.DataFlowTests
             DbSource<string[]> source = new DbSource<string[]>(Connection, "Source");
             DbDestination<string[]> dest1 = new DbDestination<string[]>(Connection, "Destination1");
             DbDestination<string[]> dest2 = new DbDestination<string[]>(Connection, "Destination2");
-
-            //Act
             Multicast<string[]> multicast = new Multicast<string[]>();
+
+            if (maxBufferSize > 0)
+            {
+                dest1.MaxBufferSize = maxBufferSize;
+                dest1.BatchSize = maxBufferSize;
+            }
+            //Act
+
 
             source.LinkTo(multicast);
             multicast.LinkTo(dest1);

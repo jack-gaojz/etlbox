@@ -1,10 +1,12 @@
 ﻿using ETLBox.ControlFlow;
+using ETLBox.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-
+using System.Transactions;
 
 namespace ETLBox.DataFlow.Transformations
 {
@@ -24,8 +26,19 @@ namespace ETLBox.DataFlow.Transformations
         #region Public properties
 
         public override string TaskName { get; set; } = "Multicast - duplicate data";
-        public override ISourceBlock<TInput> SourceBlock => BroadcastBlock;
-        public override ITargetBlock<TInput> TargetBlock => BroadcastBlock;
+        public override ISourceBlock<TInput> SourceBlock
+        {
+            get
+            {
+                if (AvoidBroadcastBlock)
+                    return OutputBuffer?.LastOrDefault();
+                else
+                    return BroadcastBlock;
+            }
+        }
+
+        public override ITargetBlock<TInput> TargetBlock =>
+            AvoidBroadcastBlock ? (ITargetBlock<TInput>)OwnBroadcastBlock : BroadcastBlock;
 
         #endregion
 
@@ -43,10 +56,34 @@ namespace ETLBox.DataFlow.Transformations
 
         protected override void InternalInitBufferObjects()
         {
-            BroadcastBlock = new BroadcastBlock<TInput>(Clone, new DataflowBlockOptions()
+            if (Successors.Any(suc => suc.MaxBufferSize > 0))
             {
-                BoundedCapacity = MaxBufferSize
-            });
+                AvoidBroadcastBlock = true;
+                OwnBroadcastBlock = new ActionBlock<TInput>(Broadcast, new ExecutionDataflowBlockOptions()
+                {
+                    BoundedCapacity = MaxBufferSize
+                });
+            }
+            else
+            {
+                BroadcastBlock = new BroadcastBlock<TInput>(Clone, new DataflowBlockOptions()
+                {
+                    BoundedCapacity = MaxBufferSize
+                });
+            }
+        }
+
+        internal override void LinkBuffers(DataFlowTask successor, LinkPredicates linkPredicates)
+        {
+            if (AvoidBroadcastBlock)
+            {
+                var buffer = new BufferBlock<TInput>(new DataflowBlockOptions()
+                {
+                    BoundedCapacity = MaxBufferSize
+                });
+                OutputBuffer.Add(buffer);
+            }
+            base.LinkBuffers(successor, linkPredicates);
         }
 
         protected override void CleanUpOnSuccess()
@@ -56,11 +93,54 @@ namespace ETLBox.DataFlow.Transformations
 
         protected override void CleanUpOnFaulted(Exception e) { }
 
+        internal override Task BufferCompletion
+        {
+            get
+            {
+                if (AvoidBroadcastBlock)
+                    return Task.WhenAll(OutputBuffer.Select(b => b.Completion));
+                else
+                   return ((IDataflowBlock)BroadcastBlock).Completion;
+            }
+        }
+
+        internal override void CompleteBufferOnPredecessorCompletion()
+        {
+            if (AvoidBroadcastBlock)
+            {
+                OwnBroadcastBlock.Complete();
+                OwnBroadcastBlock.Completion.Wait();
+                foreach (var buffer in OutputBuffer)
+                    buffer.Complete();
+            }
+            else
+            {
+                BroadcastBlock.Complete();
+            }
+        }
+
+        internal override void FaultBufferOnPredecessorCompletion(Exception e)
+        {
+            if (AvoidBroadcastBlock)
+            {
+                ((IDataflowBlock)OwnBroadcastBlock).Fault(e);
+                OwnBroadcastBlock.Completion.Wait();
+                foreach (var buffer in OutputBuffer)
+                    ((IDataflowBlock)buffer).Fault(e);
+            }
+            else
+            {
+                ((IDataflowBlock)BroadcastBlock).Fault(e);
+            }
+        }
+
         #endregion
 
         #region Implementation
-
+        bool AvoidBroadcastBlock;
         BroadcastBlock<TInput> BroadcastBlock;
+        ActionBlock<TInput> OwnBroadcastBlock;
+        List<BufferBlock<TInput>> OutputBuffer = new List<BufferBlock<TInput>>();
         TypeInfo TypeInfo;
         ObjectCopy<TInput> ObjectCopy;
 
@@ -70,6 +150,16 @@ namespace ETLBox.DataFlow.Transformations
             TInput clone = ObjectCopy.Clone(row);
             LogProgress();
             return clone;
+        }
+
+        private void Broadcast(TInput row)
+        {
+            TInput clone = Clone(row);
+            foreach (var buffer in OutputBuffer)
+            {
+                if (!buffer.SendAsync(clone).Result)
+                    throw new ETLBoxException("Buffer already completed or faulted!", this.Exception);
+            }
         }
 
         #endregion

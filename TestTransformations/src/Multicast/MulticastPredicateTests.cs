@@ -22,8 +22,10 @@ namespace ETLBoxTests.DataFlowTests
             public string Col2 { get; set; }
         }
 
-        [Fact]
-        public void PredicateFilteringWithInteger()
+        [Theory]
+        [InlineData(-1)]
+        [InlineData(2)]
+        public void PredicateFilteringWithInteger(int maxBufferSize)
         {
             //Arrange
             TwoColumnsTableFixture sourceTable = new TwoColumnsTableFixture("Source");
@@ -34,12 +36,18 @@ namespace ETLBoxTests.DataFlowTests
             DbSource<MySimpleRow> source = new DbSource<MySimpleRow>(Connection, "Source");
             DbDestination<MySimpleRow> dest1 = new DbDestination<MySimpleRow>(Connection, "Destination1");
             DbDestination<MySimpleRow> dest2 = new DbDestination<MySimpleRow>(Connection, "Destination2");
-
-            //Act
             Multicast<MySimpleRow> multicast = new Multicast<MySimpleRow>();
+
+            if (maxBufferSize > 0)
+            {
+                dest2.MaxBufferSize = maxBufferSize;
+                dest2.BatchSize = maxBufferSize;
+            }
+            //Act
+
             source.LinkTo(multicast);
-            multicast.LinkTo(dest1, row => row.Col1 <= 2);
-            multicast.LinkTo(dest2, row => row.Col1 > 2);
+            multicast.LinkTo(dest1, row => row.Col1 <= 2, row => row.Col1 >= 2);
+            multicast.LinkTo(dest2, row => row.Col1 > 2, row => row.Col1 <= 2);
             source.Execute();
             dest1.Wait();
             dest2.Wait();

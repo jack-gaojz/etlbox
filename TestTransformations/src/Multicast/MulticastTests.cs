@@ -22,8 +22,10 @@ namespace ETLBoxTests.DataFlowTests
             public int Col3 => Col1;
         }
 
-        [Fact]
-        public void DuplicateDataInto3Destinations()
+        [Theory]
+        [InlineData(-1)]
+        [InlineData(2)]
+        public void DuplicateDataInto3Destinations(int maxBufferSIze)
         {
             //Arrange
             TwoColumnsTableFixture sourceTable = new TwoColumnsTableFixture("Source");
@@ -36,9 +38,17 @@ namespace ETLBoxTests.DataFlowTests
             DbDestination<MySimpleRow> dest1 = new DbDestination<MySimpleRow>(Connection, "Destination1");
             DbDestination<MySimpleRow> dest2 = new DbDestination<MySimpleRow>(Connection, "Destination2");
             DbDestination<MySimpleRow> dest3 = new DbDestination<MySimpleRow>(Connection, "Destination3");
+            Multicast<MySimpleRow> multicast = new Multicast<MySimpleRow>();
+
+            if (maxBufferSIze > 0)
+            {
+                source.MaxBufferSize = maxBufferSIze;
+                multicast.MaxBufferSize = maxBufferSIze;
+                dest1.MaxBufferSize = maxBufferSIze;
+                dest1.BatchSize = 2;
+            }
 
             //Act
-            Multicast<MySimpleRow> multicast = new Multicast<MySimpleRow>();
             source.LinkTo(multicast);
             multicast.LinkTo(dest1);
             multicast.LinkTo(dest2);

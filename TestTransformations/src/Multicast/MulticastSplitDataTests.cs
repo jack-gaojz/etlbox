@@ -36,8 +36,10 @@ namespace ETLBoxTests.DataFlowTests
             public decimal Col4 { get; set; }
         }
 
-        [Fact]
-        public void SplitCsvSourceIn2Tables()
+        [Theory]
+        [InlineData(-1)]
+        [InlineData(2)]
+        public void SplitCsvSourceIn2Tables(int maxBufferSize)
         {
             //Arrange
             TwoColumnsTableFixture dest1Table = new TwoColumnsTableFixture("SplitDataDestination1");
@@ -68,6 +70,12 @@ namespace ETLBoxTests.DataFlowTests
 
             var destination1 = new DbDestination<Entity1>(Connection, "SplitDataDestination1");
             var destination2 = new DbDestination<Entity2>(Connection, "SplitDataDestination2");
+
+            if (maxBufferSize > 0)
+            {
+                destination1.MaxBufferSize = maxBufferSize;
+                destination1.BatchSize = maxBufferSize;
+            }
 
             //Act
             source.LinkTo(multicast);
