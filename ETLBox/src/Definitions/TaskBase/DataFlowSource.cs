@@ -8,11 +8,11 @@ using System.Threading.Tasks.Dataflow;
 
 namespace ETLBox.DataFlow
 {
-    public abstract class DataFlowSource<TOutput> : DataFlowTask, IDataFlowSource<TOutput>
+    public abstract class DataFlowSource<TOutput> : DataFlowComponent, IDataFlowSource<TOutput>
     {
         public abstract ISourceBlock<TOutput> SourceBlock { get; }
 
-        internal override void LinkBuffers(DataFlowTask successor, LinkPredicates linkPredicates)
+        internal override void LinkBuffers(DataFlowComponent successor, LinkPredicates linkPredicates)
         {
             var s = successor as IDataFlowDestination<TOutput>;
             var linker = new BufferLinker<TOutput>(linkPredicates);

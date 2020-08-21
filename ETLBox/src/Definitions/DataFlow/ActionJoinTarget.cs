@@ -12,7 +12,7 @@ namespace ETLBox.DataFlow
         public override ITargetBlock<TInput> TargetBlock => JoinAction;
         ActionBlock<TInput> JoinAction;
         Action<TInput> Action;
-        public ActionJoinTarget(DataFlowTask parent, Action<TInput> action)
+        public ActionJoinTarget(DataFlowComponent parent, Action<TInput> action)
         {
             Action = action;
             CreateLinkInInternalFlow(parent);

@@ -9,7 +9,7 @@ using TSQL.Clauses;
 
 namespace ETLBox.DataFlow
 {
-    public abstract class DataFlowTask : GenericTask, ITask, IDataFlowComponent, IDataFlowLogging
+    public abstract class DataFlowComponent : GenericTask, ITask, IDataFlowComponent, IDataFlowLogging
     {
         #region Component properties
 
@@ -31,22 +31,22 @@ namespace ETLBox.DataFlow
 
         #region Linking
 
-        public List<DataFlowTask> Predecessors { get; protected set; } = new List<DataFlowTask>();
-        public List<DataFlowTask> Successors { get; protected set; } = new List<DataFlowTask>();
+        public List<DataFlowComponent> Predecessors { get; protected set; } = new List<DataFlowComponent>();
+        public List<DataFlowComponent> Successors { get; protected set; } = new List<DataFlowComponent>();
 
         public Task Completion { get; internal set; }
         internal virtual Task BufferCompletion { get; }
         protected Task PredecessorCompletion { get; set; }
-        protected DataFlowTask Parent { get; set; }
+        protected DataFlowComponent Parent { get; set; }
 
         protected bool WereBufferInitialized;
         protected bool ReadyForProcessing;
-        protected Dictionary<DataFlowTask, bool> WasLinked = new Dictionary<DataFlowTask, bool>();
-        internal Dictionary<DataFlowTask, LinkPredicates> LinkPredicates = new Dictionary<DataFlowTask, LinkPredicates>();
+        protected Dictionary<DataFlowComponent, bool> WasLinked = new Dictionary<DataFlowComponent, bool>();
+        internal Dictionary<DataFlowComponent, LinkPredicates> LinkPredicates = new Dictionary<DataFlowComponent, LinkPredicates>();
 
         protected IDataFlowSource<T> InternalLinkTo<T>(IDataFlowDestination target, object predicate = null, object voidPredicate = null)
         {
-            DataFlowTask tgt = target as DataFlowTask;
+            DataFlowComponent tgt = target as DataFlowComponent;
             LinkPredicates.Add(tgt, new LinkPredicates(predicate, voidPredicate));
             this.Successors.Add(tgt);
             tgt.Predecessors.Add(this);
@@ -56,7 +56,7 @@ namespace ETLBox.DataFlow
 
         protected void LinkBuffersRecursively()
         {
-            foreach (DataFlowTask predecessor in Predecessors)
+            foreach (DataFlowComponent predecessor in Predecessors)
             {
                 if (!predecessor.WasLinked.ContainsKey(this))
                 {
@@ -67,7 +67,7 @@ namespace ETLBox.DataFlow
                     predecessor.LinkBuffersRecursively();
                 }
             }
-            foreach (DataFlowTask successor in Successors)
+            foreach (DataFlowComponent successor in Successors)
             {
                 if (!WasLinked.ContainsKey(successor))
                 {
@@ -79,7 +79,7 @@ namespace ETLBox.DataFlow
                 }
             }
         }
-        internal virtual void LinkBuffers(DataFlowTask successor, LinkPredicates predicate)
+        internal virtual void LinkBuffers(DataFlowComponent successor, LinkPredicates predicate)
         {
             //No linking by default
         }
@@ -99,7 +99,7 @@ namespace ETLBox.DataFlow
 
         protected void InitBufferRecursively()
         {
-            foreach (DataFlowTask predecessor in Predecessors)
+            foreach (DataFlowComponent predecessor in Predecessors)
                 if (!predecessor.WereBufferInitialized)
                     predecessor.InitBufferRecursively();
 
@@ -109,7 +109,7 @@ namespace ETLBox.DataFlow
                 WereBufferInitialized = true;
             }
 
-            foreach (DataFlowTask successor in Successors)
+            foreach (DataFlowComponent successor in Successors)
                 if (!successor.WereBufferInitialized)
                     successor.InitBufferRecursively();
         }
@@ -123,7 +123,7 @@ namespace ETLBox.DataFlow
 
         protected void RunErrorSourceInitializationRecursively()
         {
-            foreach (DataFlowTask predecessor in Predecessors)
+            foreach (DataFlowComponent predecessor in Predecessors)
                 if (!predecessor.ReadyForProcessing)
                     predecessor.RunErrorSourceInitializationRecursively();
 
@@ -133,7 +133,7 @@ namespace ETLBox.DataFlow
                 ReadyForProcessing = true;
             }
 
-            foreach (DataFlowTask successor in Successors)
+            foreach (DataFlowComponent successor in Successors)
                 if (!successor.ReadyForProcessing)
                     successor.RunErrorSourceInitializationRecursively();
         }
@@ -146,7 +146,7 @@ namespace ETLBox.DataFlow
 
         protected void SetCompletionTaskRecursively()
         {
-            foreach (DataFlowTask predecessor in Predecessors)
+            foreach (DataFlowComponent predecessor in Predecessors)
                 if (predecessor.Completion == null)
                     predecessor.SetCompletionTaskRecursively();
 
@@ -160,7 +160,7 @@ namespace ETLBox.DataFlow
                 }
             }
 
-            foreach (DataFlowTask successor in Successors)
+            foreach (DataFlowComponent successor in Successors)
                 if (successor.Completion == null)
                     successor.SetCompletionTaskRecursively();
         }
@@ -168,7 +168,7 @@ namespace ETLBox.DataFlow
         private List<Task> CollectCompletionFromPredecessors()
         {
             List<Task> CompletionTasks = new List<Task>();
-            foreach (DataFlowTask pre in Predecessors)
+            foreach (DataFlowComponent pre in Predecessors)
             {
                 CompletionTasks.Add(pre.Completion);
                 CompletionTasks.Add(pre.BufferCompletion);
@@ -220,7 +220,7 @@ namespace ETLBox.DataFlow
         {
             Exception = e;
             FaultBufferOnPredecessorCompletion(e);
-            foreach (DataFlowTask pre in Predecessors)
+            foreach (DataFlowComponent pre in Predecessors)
                 pre.FaultPredecessorsRecursively(e);
         }
 

@@ -37,7 +37,7 @@ namespace ETLBox.DataFlow.Transformations
             public override ITargetBlock<TInput> TargetBlock => InMemoryTarget.TargetBlock;
             public MemoryDestination<TInput> InMemoryTarget { get; set; }
 
-            public InMemoryDestination(DataFlowTask parent)
+            public InMemoryDestination(DataFlowComponent parent)
             {
                 InMemoryTarget = new MemoryDestination<TInput>();
                 CreateLinkInInternalFlow(parent);

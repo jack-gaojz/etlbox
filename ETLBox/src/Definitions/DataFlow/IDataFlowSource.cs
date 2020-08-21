@@ -9,7 +9,7 @@ namespace ETLBox.DataFlow
     public interface IDataFlowSource
     {
         ErrorSource ErrorSource { get; set; }
-        List<DataFlowTask> Successors { get; }
+        List<DataFlowComponent> Successors { get; }
     }
 
     public interface IDataFlowSource<TOutput> : IDataFlowSource

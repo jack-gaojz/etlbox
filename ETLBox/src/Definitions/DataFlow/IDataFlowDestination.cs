@@ -7,7 +7,7 @@ namespace ETLBox.DataFlow
 {
     public interface IDataFlowDestination
     {
-        List<DataFlowTask> Predecessors { get; }
+        List<DataFlowComponent> Predecessors { get; }
     }
 
     public interface IDataFlowDestination<TInput> : IDataFlowDestination

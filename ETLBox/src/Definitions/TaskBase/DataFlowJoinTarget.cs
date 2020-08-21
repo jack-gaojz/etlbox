@@ -7,7 +7,7 @@ using System.Threading.Tasks.Dataflow;
 
 namespace ETLBox.DataFlow
 {
-    public abstract class DataFlowJoinTarget<TInput> : DataFlowTask, IDataFlowDestination<TInput>
+    public abstract class DataFlowJoinTarget<TInput> : DataFlowComponent, IDataFlowDestination<TInput>
     {
         internal override Task BufferCompletion => TargetBlock.Completion;
 
@@ -17,7 +17,7 @@ namespace ETLBox.DataFlow
 
         public virtual ITargetBlock<TInput> TargetBlock { get; }
 
-        public void CreateLinkInInternalFlow(DataFlowTask parent)
+        public void CreateLinkInInternalFlow(DataFlowComponent parent)
         {
             Parent = parent;
             InternalLinkTo<TInput>(parent as IDataFlowDestination);

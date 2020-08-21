@@ -73,7 +73,7 @@ namespace ETLBox.DataFlow.Transformations
             }
         }
 
-        internal override void LinkBuffers(DataFlowTask successor, LinkPredicates linkPredicates)
+        internal override void LinkBuffers(DataFlowComponent successor, LinkPredicates linkPredicates)
         {
             if (AvoidBroadcastBlock)
             {
