@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
@@ -7,6 +9,7 @@ namespace ETLBox.DataFlow
     public interface IDataFlowSource
     {
         ErrorSource ErrorSource { get; set; }
+        List<DataFlowTask> Successors { get; }
     }
 
     public interface IDataFlowSource<TOutput> : IDataFlowSource
@@ -20,7 +23,6 @@ namespace ETLBox.DataFlow
         IDataFlowSource<TConvert> LinkTo<TConvert>(IDataFlowDestination<TOutput> target, Predicate<TOutput> rowsToKeep);
         IDataFlowSource<TConvert> LinkTo<TConvert>(IDataFlowDestination<TOutput> target, Predicate<TOutput> rowsToKeep, Predicate<TOutput> rowsIntoVoid);
 
-
         IDataFlowSource<ETLBoxError> LinkErrorTo(IDataFlowDestination<ETLBoxError> target);
     }
 
@@ -28,5 +30,15 @@ namespace ETLBox.DataFlow
     {
         void Execute();
         Task ExecuteAsync();
+    }
+
+    public interface IDataFlowStreamSource<TOutput> : IDataFlowExecutableSource<TOutput>
+    {
+        string Uri { get; set; }
+        Func<StreamMetaData, string> GetNextUri { get; set; }
+        Func<StreamMetaData, bool> HasNextUri { get; set; }
+        ResourceType ResourceType { get; set; }
+        HttpClient HttpClient { get; set; }
+        HttpRequestMessage HttpRequestMessage { get; set; }
     }
 }

@@ -7,7 +7,7 @@ using ETLBox.Helper;
 
 namespace ETLBox.DataFlow
 {
-    public abstract class DataFlowStreamSource<TOutput> : DataFlowExecutableSource<TOutput>
+    public abstract class DataFlowStreamSource<TOutput> : DataFlowExecutableSource<TOutput>, IDataFlowStreamSource<TOutput>
     {
         #region Public properties
 
@@ -37,7 +37,6 @@ namespace ETLBox.DataFlow
         /// Specify ResourceType.File if you want to read from a json file.
         /// </summary>
         public ResourceType ResourceType { get; set; }
-
         public HttpClient HttpClient { get; set; } = new HttpClient();
         public HttpRequestMessage HttpRequestMessage { get; set; } = new HttpRequestMessage();
 

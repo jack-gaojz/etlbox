@@ -9,7 +9,7 @@ using TSQL.Clauses;
 
 namespace ETLBox.DataFlow
 {
-    public abstract class DataFlowTask : GenericTask, ITask
+    public abstract class DataFlowTask : GenericTask, ITask, IDataFlowComponent, IDataFlowLogging
     {
         #region Component properties
 
@@ -105,7 +105,6 @@ namespace ETLBox.DataFlow
 
             if (!WereBufferInitialized)
             {
-                OnBeforeInit?.Invoke();
                 InternalInitBufferObjects();
                 WereBufferInitialized = true;
             }
@@ -114,8 +113,6 @@ namespace ETLBox.DataFlow
                 if (!successor.WereBufferInitialized)
                     successor.InitBufferRecursively();
         }
-
-        internal Action OnBeforeInit { get; set; }
 
         public void InitBufferObjects() {
             InternalInitBufferObjects();

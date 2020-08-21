@@ -5,7 +5,7 @@ using System.Threading.Tasks.Dataflow;
 
 namespace ETLBox.DataFlow
 {
-    public abstract class DataFlowStreamDestination<TInput> : DataFlowDestination<TInput>
+    public abstract class DataFlowStreamDestination<TInput> : DataFlowDestination<TInput>, IDataFlowStreamDestination<TInput>
     {
         #region Public properties
         /* Public properties */
