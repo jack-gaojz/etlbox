@@ -7,30 +7,52 @@ using TheBoxOffice.LicenseManager;
 namespace ETLBox.DataFlow.Connectors
 {
     /// <summary>
-    /// Writes data into a text file. Each line is created by calling the LineSelector Func or by invoking ToString() on the object.
+    /// Writes data into a text file. Each line in the output is created by calling the
+    /// <see cref="WriteLineFunc"/> or by invoking ToString() on the object.
     /// </summary>
-    /// <typeparam name="TInput">Type of data input.</typeparam>
+    /// <typeparam name="TInput">The type of ingoing data.</typeparam>
     public class TextDestination<TInput> : DataFlowStreamDestination<TInput>, ILoggableTask, IDataFlowDestination<TInput>
     {
-        /* ITask Interface */
+        #region Public properties
+
+        /// <inheritdoc/>
         public override string TaskName => $"Write text data into file {Uri ?? ""}";
 
-        public Func<TInput, string> LineSelector { get; set; }
+        /// <summary>
+        /// Defines how each row from the input is written into the file.
+        /// The input for the Func is an object of the ingoing data type and return a string that is written into the target.
+        /// </summary>
+        public Func<TInput, string> WriteLineFunc { get; set; }
 
+        #endregion
+
+        #region Constructors
+
+        /// <summary>
+        /// The default <see cref="ResourceType"/> for a TextDestination is a file.
+        /// </summary>
         public TextDestination()
         {
             ResourceType = ResourceType.File;
         }
+
+        /// <param name="filename">Will set the <see cref="Uri"/> to the given file name.</param>
 
         public TextDestination(string filename) : this()
         {
             Uri = filename;
         }
 
-        public TextDestination(string filename, Func<TInput, string> lineSelector) : this(filename)
+        /// <param name="filename">Will set the <see cref="Uri"/> to the given file name.</param>
+        /// <param name="writeLineFunc"><see cref="WriteLineFunc"/></param>
+        public TextDestination(string filename, Func<TInput, string> writeLineFunc) : this(filename)
         {
-            LineSelector = lineSelector;
+            WriteLineFunc = writeLineFunc;
         }
+
+        #endregion
+
+        #region Implementation
 
         protected override void InitStream()
         {
@@ -48,8 +70,8 @@ namespace ETLBox.DataFlow.Connectors
             try
             {
                 string line;
-                if (LineSelector != null)
-                    line = LineSelector?.Invoke(data);
+                if (WriteLineFunc != null)
+                    line = WriteLineFunc?.Invoke(data);
                 else
                     line = data.ToString();
                 StreamWriter.WriteLine(line);
@@ -63,18 +85,19 @@ namespace ETLBox.DataFlow.Connectors
         protected override void CloseStream()
         {
         }
+
+        #endregion
+
     }
 
-    /// <summary>
-    /// Writes data into a text file. Each line is created by calling the LineSelector Func or by invoking ToString() on the object.
-    /// </summary>
+    /// <inheritdoc/>
     public class TextDestination : TextDestination<ExpandoObject>
     {
         public TextDestination() : base() { }
 
         public TextDestination(string fileName) : base(fileName) { }
 
-        public TextDestination(string fileName, Func<ExpandoObject, string> lineSelector) : base(fileName, lineSelector) { }
+        public TextDestination(string fileName, Func<ExpandoObject, string> writeLineFunc) : base(fileName, writeLineFunc) { }
 
     }
 

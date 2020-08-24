@@ -30,7 +30,7 @@ namespace ETLBoxTests.DataFlowTests
             //Act
             TextSource<MyTextRow> source = new TextSource<MyTextRow>();
             source.Uri = "res/TextSource/Test.txt";
-            source.WriteLineIntoObject = (line, o) => o.Text = line;
+            source.ParseLineAction = (line, o) => o.Text = line;
             source.LinkTo(dest);
             source.Execute();
             dest.Wait();
@@ -53,7 +53,7 @@ namespace ETLBoxTests.DataFlowTests
             //Act
             TextSource source = new TextSource();
             source.Uri = "res/TextSource/Test.txt";
-            source.WriteLineIntoObject = (line, dynob) =>
+            source.ParseLineAction = (line, dynob) =>
             {
                 dynamic o = dynob as ExpandoObject;
                 o.Text = line;
@@ -80,7 +80,7 @@ namespace ETLBoxTests.DataFlowTests
             //Act
             TextSource<string[]> source = new TextSource<string[]>();
             source.Uri = "res/TextSource/Test.txt";
-            source.WriteLineIntoObject = (line, o) => o[0] = line;
+            source.ParseLineAction = (line, o) => o[0] = line;
             source.LinkTo(dest);
             source.Execute();
             dest.Wait();

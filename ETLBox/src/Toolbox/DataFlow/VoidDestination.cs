@@ -12,7 +12,7 @@ namespace ETLBox.DataFlow.Connectors
     /// Every records in the dataflow needs to enter any kind of destination in order to have a dataflow completed.
     /// Use this target for data that you don't want to use in a destination, but you still want your dataflow to complete property.
     /// </summary>
-    /// <typeparam name="TInput">Type of ingoing data.</typeparam>
+    /// <typeparam name="TInput">The type of ingoing data.</typeparam>
     public class VoidDestination<TInput> : DataFlowDestination<TInput>
     {
         #region Public properties
