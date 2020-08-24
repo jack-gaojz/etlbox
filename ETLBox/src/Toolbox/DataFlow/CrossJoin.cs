@@ -45,7 +45,7 @@ namespace ETLBox.DataFlow.Transformations
 
             protected override void InternalInitBufferObjects()
             {
-                InMemoryTarget.CopyTaskProperties(Parent);
+                InMemoryTarget.CopyLogTaskProperties(Parent);
                 InMemoryTarget.MaxBufferSize = -1;
                 InMemoryTarget.InitBufferObjects();
             }

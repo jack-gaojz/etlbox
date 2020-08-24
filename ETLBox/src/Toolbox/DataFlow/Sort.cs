@@ -19,7 +19,7 @@ namespace ETLBox.DataFlow.Transformations
     /// Sort&lt;MyDataRow&gt; block = new Sort&lt;MyDataRow&gt;(comp);
     /// </code>
     /// </example>
-    public class Sort<TInput> : DataFlowTransformation<TInput, TInput>, ITask, IDataFlowTransformation<TInput, TInput>
+    public class Sort<TInput> : DataFlowTransformation<TInput, TInput>, ILoggableTask, IDataFlowTransformation<TInput, TInput>
     {
         #region Public properties
 
@@ -58,7 +58,7 @@ namespace ETLBox.DataFlow.Transformations
 
         protected override void InternalInitBufferObjects()
         {
-            BlockTransformation.CopyTaskProperties(this);
+            BlockTransformation.CopyLogTaskProperties(this);
             if (MaxBufferSize > 0) BlockTransformation.MaxBufferSize = this.MaxBufferSize;
             BlockTransformation.InitBufferObjects();
         }

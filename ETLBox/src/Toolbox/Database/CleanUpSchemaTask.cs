@@ -11,7 +11,7 @@ namespace ETLBox.ControlFlow.Tasks
     /// CleanUpSchemaTask.CleanUp("demo");
     /// </code>
     /// </example>
-    public class CleanUpSchemaTask : GenericTask, ITask
+    public class CleanUpSchemaTask : ControlFlowTask
     {
         /* ITask Interface */
         public override string TaskName => $"Clean up schema {SchemaName}";

@@ -11,7 +11,7 @@ namespace ETLBox.ControlFlow.Tasks
     /// TruncateTableTask.Truncate("demo.table1");
     /// </code>
     /// </example>
-    public class TruncateTableTask : GenericTask, ITask
+    public class TruncateTableTask : ControlFlowTask
     {
         /* ITask Interface */
         public override string TaskName => $"Truncate table {TableName}";

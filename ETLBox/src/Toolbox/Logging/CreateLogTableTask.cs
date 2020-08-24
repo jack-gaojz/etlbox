@@ -11,7 +11,7 @@ namespace ETLBox.Logging
     /// update your nlog.config add add this table as database target automatically.
     /// Or you can update your nlog.config manually.
     /// </summary>
-    public class CreateLogTableTask : GenericTask, ITask
+    public class CreateLogTableTask : ControlFlowTask
     {
         /* ITask Interface */
         public override string TaskName => $"Create default etlbox log table";
@@ -20,7 +20,8 @@ namespace ETLBox.Logging
         public CreateTableTask LogTable { get; private set; }
         public void Execute()
         {
-            LogTable.CopyTaskProperties(this);
+            LogTable.CopyLogTaskProperties(this);
+            LogTable.ConnectionManager = this.ConnectionManager;
             LogTable.DisableLogging = true;
             LogTable.Create();
             ControlFlow.ControlFlow.LogTable = LogTableName;

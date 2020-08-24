@@ -12,16 +12,11 @@
 ## Refactoring
 
 - Remove SqlTask: Add task name & Comments before sql code Make sql task name optional
-- The MaxBufferSize parameter does call every time InitBufferObjects to reinitialize the TPL dataflow object with the new bounded capacity. This is due to the restrictions
-that the bounded capacity can only be set when creating the TPL objects. It would be good to have everything more abstract and cleaner: The constructor should not initialize any objects whatsoever. The whole linking of objects would only between the abstract ETLBox objects. Then, when starting the data flow, the initialization would take place. This means not only the creation of the TPL objects, but also the linking between them as well as the other thing like waiting for completion (AddPredecessorCompletion) etc. This would mean that the whole DataFlowLinker as well as the current interfaces are refactored. 
 
 ## Bugs
 
 - PrimaryKeyConstrainName now is part of TableDefinition, but not read from "GetTableDefinitionFrom"
 - GCPressure was detected on CSVSource - verify if CSVSource really is the root cause. (See performance tests, improve tests that uses memory as source) 
-- Multicast: When DataFlow has set a MaxBufferSize, the Multicast will loose messages if the buffer of the linked target is "full":
-https://stackoverflow.com/questions/22127660/broadcastblock-with-guaranteed-delivery-in-tpl-dataflow/22128371#22128371
-This should be avoided, e.g. by replacing the BroadcastBlock
 
 # Improved Odbc support:
 

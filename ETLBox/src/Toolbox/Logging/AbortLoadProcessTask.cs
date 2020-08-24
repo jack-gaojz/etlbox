@@ -10,7 +10,7 @@ namespace ETLBox.Logging
     /// <summary>
     /// Will set the table entry for current load process to aborted.
     /// </summary>
-    public class AbortLoadProcessTask : GenericTask, ITask
+    public class AbortLoadProcessTask : ControlFlowTask
     {
         /* ITask Interface */
         public override string TaskName => $"Abort process with key {LoadProcessId}";

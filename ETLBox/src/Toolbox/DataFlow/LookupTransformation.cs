@@ -108,7 +108,7 @@ namespace ETLBox.DataFlow.Transformations
         private void InitRowTransformationManually(Action initAction)
         {
             RowTransformation.TransformationFunc = TransformationFunc;
-            RowTransformation.CopyTaskProperties(this);
+            RowTransformation.CopyLogTaskProperties(this);
             RowTransformation.InitAction = initAction;
             RowTransformation.MaxBufferSize = this.MaxBufferSize;
             RowTransformation.InitBufferObjects();
@@ -117,7 +117,7 @@ namespace ETLBox.DataFlow.Transformations
         private void LinkInternalLoadBufferFlow()
         {
             if (Source == null) throw new ETLBoxException("You need to define a lookup source before using a LookupTransformation in a data flow");
-            LookupBuffer.CopyTaskProperties(this);
+            LookupBuffer.CopyLogTaskProperties(this);
             Source.LinkTo(LookupBuffer);
         }
 

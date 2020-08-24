@@ -21,7 +21,7 @@ namespace ETLBox.Helper
                 return "";
         }
 
-        public static string Encrypt_Char40(ITask task) => Encrypt_Char40(task.TaskName + "|" + task.TaskType);
-        public static string Encrypt_Char40(ITask task, string id) => Encrypt_Char40(task.TaskName + "|" + task.TaskType + "|" + id);
+        public static string Encrypt_Char40(ILoggableTask task) => Encrypt_Char40(task.TaskName + "|" + task.TaskType);
+        public static string Encrypt_Char40(ILoggableTask task, string id) => Encrypt_Char40(task.TaskName + "|" + task.TaskType + "|" + id);
     }
 }

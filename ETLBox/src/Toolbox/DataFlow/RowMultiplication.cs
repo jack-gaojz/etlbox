@@ -12,7 +12,7 @@ namespace ETLBox.DataFlow.Transformations
     /// </summary>
     /// <typeparam name="TInput">Type of data input</typeparam>
     /// <typeparam name="TOutput">Type of data output</typeparam>
-    public class RowMultiplication<TInput, TOutput> : DataFlowTransformation<TInput, TOutput>, ITask, IDataFlowTransformation<TInput, TOutput>
+    public class RowMultiplication<TInput, TOutput> : DataFlowTransformation<TInput, TOutput>, ILoggableTask, IDataFlowTransformation<TInput, TOutput>
     {
         #region Public properties
 

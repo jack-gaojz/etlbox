@@ -10,7 +10,7 @@ namespace ETLBox.Logging
     /// <summary>
     /// Read load processes by Id, all processes or last finished/successful/aborted.
     /// </summary>
-    public class ReadLoadProcessTableTask : GenericTask, ITask
+    public class ReadLoadProcessTableTask : ControlFlowTask
     {
         /* ITask Interface */
         public override string TaskName => $"Read load processes by Id, all processes or last finished/successful/aborted.";
@@ -128,9 +128,10 @@ ORDER BY {QB}end_date{QE} DESC, {QB}id{QE} DESC";
             this.LoadProcessId = loadProcessId;
         }
 
-        public ReadLoadProcessTableTask(ITask callingTask, long? loadProcessId) : this(loadProcessId)
+        internal ReadLoadProcessTableTask(ControlFlowTask callingTask, long? loadProcessId) : this(loadProcessId)
         {
-            this.CopyTaskProperties(callingTask);
+            this.CopyLogTaskProperties(callingTask);
+            this.ConnectionManager = callingTask.ConnectionManager;
         }
 
         public static LoadProcess Read(long? loadProcessId)

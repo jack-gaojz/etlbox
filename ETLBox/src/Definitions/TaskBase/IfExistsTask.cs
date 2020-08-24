@@ -3,7 +3,7 @@ using ETLBox.Helper;
 
 namespace ETLBox.ControlFlow
 {
-    public abstract class IfExistsTask : GenericTask, ITask
+    public abstract class IfExistsTask : ControlFlowTask
     {
         public override string TaskName => $"Check if {ObjectName} exists";
         public void Execute()

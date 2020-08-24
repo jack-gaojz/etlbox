@@ -3,7 +3,7 @@ using ETLBox.Helper;
 
 namespace ETLBox.ControlFlow
 {
-    public abstract class DropTask<T> : GenericTask, ITask where T : IfExistsTask, new()
+    public abstract class DropTask<T> : ControlFlowTask where T : IfExistsTask, new()
     {
         public override string TaskName => $"Drop Object {ObjectName}";
         public void Execute()

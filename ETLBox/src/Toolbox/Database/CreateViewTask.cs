@@ -6,7 +6,7 @@ namespace ETLBox.ControlFlow.Tasks
     /// <summary>
     /// Creates or updates a view.
     /// </summary>
-    public class CreateViewTask : GenericTask, ITask
+    public class CreateViewTask : ControlFlowTask
     {
         public override string TaskName => $"Create or alter view {ViewName ?? string.Empty}";
         public void Execute()

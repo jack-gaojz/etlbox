@@ -11,7 +11,7 @@ namespace ETLBox.ControlFlow.Tasks
     /// DropDatabaseTask.Delete("DemoDB");
     /// </code>
     /// </example>
-    public class DropDatabaseTask : DropTask<IfDatabaseExistsTask>, ITask
+    public class DropDatabaseTask : DropTask<IfDatabaseExistsTask>
     {
         internal override string GetSql()
         {

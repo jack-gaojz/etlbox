@@ -36,6 +36,27 @@ namespace ETLBox.DataFlow.Connectors
 
         #endregion
 
+        #region Connection manager
+
+        public virtual IConnectionManager ConnectionManager { get; set; }
+
+        internal virtual IConnectionManager DbConnectionManager
+        {
+            get
+            {
+                if (ConnectionManager == null)
+                    return (IConnectionManager)ControlFlow.ControlFlow.DefaultDbConnection;
+                else
+                    return (IConnectionManager)ConnectionManager;
+            }
+        }
+
+        public string QB => DbConnectionManager.QB;
+        public string QE => DbConnectionManager.QE;
+        public ConnectionManagerType ConnectionType => this.DbConnectionManager.ConnectionManagerType;
+
+        #endregion
+
         #region Constructors
 
         public DbDestination()
@@ -97,11 +118,12 @@ namespace ETLBox.DataFlow.Connectors
             {
                 TableData.ClearData();
                 ConvertAndAddRows(data);
-                var sql = new SqlTask(this, $"Execute Bulk insert")
+                var sql = new SqlTask($"Execute Bulk insert")
                 {
                     DisableLogging = true,
                     ConnectionManager = BulkInsertConnectionManager
                 };
+                sql.CopyLogTaskProperties(this);
                 sql
                 .BulkInsert(TableData, DestinationTableDefinition.Name);
                 BulkInsertConnectionManager.CheckLicenseOrThrow(ProgressCount);
@@ -109,8 +131,6 @@ namespace ETLBox.DataFlow.Connectors
             catch (Exception e)
             {
                 ThrowOrRedirectError(e, ErrorSource.ConvertErrorData<TInput[]>(data));
-                //if (!ErrorHandler.HasErrorBuffer) throw e;
-                //ErrorHandler.Send(e, ErrorHandler.ConvertErrorData<TInput[]>(data));
             }
         }
 

@@ -10,7 +10,7 @@ namespace ETLBox.DataFlow.Connectors
     /// Writes data into a text file. Each line is created by calling the LineSelector Func or by invoking ToString() on the object.
     /// </summary>
     /// <typeparam name="TInput">Type of data input.</typeparam>
-    public class TextDestination<TInput> : DataFlowStreamDestination<TInput>, ITask, IDataFlowDestination<TInput>
+    public class TextDestination<TInput> : DataFlowStreamDestination<TInput>, ILoggableTask, IDataFlowDestination<TInput>
     {
         /* ITask Interface */
         public override string TaskName => $"Write text data into file {Uri ?? ""}";

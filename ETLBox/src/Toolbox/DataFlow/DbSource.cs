@@ -55,6 +55,26 @@ namespace ETLBox.DataFlow.Connectors
 
         #endregion
 
+        #region Connection Manager
+
+        public virtual IConnectionManager ConnectionManager { get; set; }
+
+        internal virtual IConnectionManager DbConnectionManager
+        {
+            get
+            {
+                if (ConnectionManager == null)
+                    return (IConnectionManager)ControlFlow.ControlFlow.DefaultDbConnection;
+                else
+                    return (IConnectionManager)ConnectionManager;
+            }
+        }
+
+        public string QB => DbConnectionManager.QB;
+        public string QE => DbConnectionManager.QE;
+        public ConnectionManagerType ConnectionType => this.DbConnectionManager.ConnectionManagerType;
+        #endregion
+
         #region Constructors
 
         public DbSource()
@@ -176,10 +196,12 @@ namespace ETLBox.DataFlow.Connectors
 
         private SqlTask CreateSqlTask(string sql)
         {
-            var sqlT = new SqlTask(this, sql)
+            var sqlT = new SqlTask(sql)
             {
                 DisableLogging = true,
+                ConnectionManager = this.ConnectionManager
             };
+            sqlT.CopyLogTaskProperties(this);
             sqlT.Actions = new List<Action<object>>();
             return sqlT;
         }

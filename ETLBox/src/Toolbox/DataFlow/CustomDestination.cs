@@ -9,7 +9,7 @@ namespace ETLBox.DataFlow.Connectors
     /// Define your own destination block.
     /// </summary>
     /// <typeparam name="TInput">Type of datasource input.</typeparam>
-    public class CustomDestination<TInput> : DataFlowDestination<TInput>, ITask, IDataFlowDestination<TInput>
+    public class CustomDestination<TInput> : DataFlowDestination<TInput>, ILoggableTask, IDataFlowDestination<TInput>
     {
         #region Public properties
 

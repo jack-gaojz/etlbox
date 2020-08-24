@@ -6,7 +6,7 @@ namespace ETLBox.ControlFlow.Tasks
     /// <summary>
     /// Drops a procedure. Use DropIfExists to drop a procedure only if it exists.
     /// </summary>
-    public class DropProcedureTask : DropTask<IfProcedureExistsTask>, ITask
+    public class DropProcedureTask : DropTask<IfProcedureExistsTask>, ILoggableTask
     {
         internal override string GetSql()
         {

@@ -17,7 +17,7 @@ namespace ETLBox.DataFlow.Connectors
     /// identified by the ValueSelector.
     /// A line is defined as a sequence of characters followed by a line feed("\n"), a carriage return ("\r"), or a carriage return immediately followed by a line feed("\r\n").
     /// </summary>
-    public class TextSource<TOutput> : DataFlowStreamSource<TOutput>, ITask, IDataFlowSource<TOutput>
+    public class TextSource<TOutput> : DataFlowStreamSource<TOutput>, ILoggableTask, IDataFlowSource<TOutput>
     {
         #region Public properties
         public override string TaskName => $"Read text data Uri: {CurrentRequestUri ?? ""}";

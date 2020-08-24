@@ -23,7 +23,7 @@ namespace ETLBox.ControlFlow.Tasks
 
         public SqlTask(string sql) : base(sql) { }
 
-        internal SqlTask(ITask callingTask, string sql) : base(callingTask, sql) { }
+        internal SqlTask(ControlFlowTask callingTask, string sql) : base(callingTask, sql) { }
 
         public SqlTask(string name, string sql) : base(name, sql) { }
 

@@ -14,7 +14,7 @@ namespace ETLBox.ControlFlow.Tasks
     /// int count = RowCountTask.Count("tableName").Value;
     /// </code>
     /// </example>
-    public class RowCountTask : GenericTask, ITask
+    public class RowCountTask : ControlFlowTask
     {
         /* ITask Interface */
         public override string TaskName => $"Count Rows for {TableName}" + (HasCondition ? $" with condition {Condition}" : "");

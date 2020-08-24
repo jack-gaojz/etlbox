@@ -4,7 +4,7 @@ using System;
 
 namespace ETLBox.ControlFlow
 {
-    public abstract class GenericTask : ITask
+    public abstract class LoggableTask : ILoggableTask
     {
         private string _taskType;
         public virtual string TaskType
@@ -14,23 +14,6 @@ namespace ETLBox.ControlFlow
         }
         public virtual string TaskName { get; set; } = "N/A";
         public NLog.Logger NLogger { get; set; } = ControlFlow.GetLogger();
-
-        public virtual IConnectionManager ConnectionManager { get; set; }
-
-        internal virtual IConnectionManager DbConnectionManager
-        {
-            get
-            {
-                if (ConnectionManager == null)
-                    return (IConnectionManager)ControlFlow.DefaultDbConnection;
-                else
-                    return (IConnectionManager)ConnectionManager;
-            }
-        }
-
-        public ConnectionManagerType ConnectionType => this.DbConnectionManager.ConnectionManagerType;
-        public string QB => DbConnectionManager.QB;
-        public string QE => DbConnectionManager.QE;
 
         public bool _disableLogging;
         public virtual bool DisableLogging
@@ -67,16 +50,16 @@ namespace ETLBox.ControlFlow
         }
         internal virtual bool HasName => !String.IsNullOrWhiteSpace(TaskName);
 
-        public GenericTask()
+        public LoggableTask()
         { }
 
-        public void CopyTaskProperties(ITask otherTask)
+        public void CopyLogTaskProperties(ILoggableTask otherTask)
         {
             this.TaskName = otherTask.TaskName;
             this.TaskHash = otherTask.TaskHash;
             this.TaskType = otherTask.TaskType;
-            this.ConnectionManager = otherTask.ConnectionManager;
-            this.DisableLogging = otherTask.DisableLogging;
+            if (this.DisableLogging == false)
+                this.DisableLogging = otherTask.DisableLogging;
         }
     }
 }

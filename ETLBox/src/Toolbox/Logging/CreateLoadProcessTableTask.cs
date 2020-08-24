@@ -14,7 +14,7 @@ namespace ETLBox.Logging
     /// <see cref="StartLoadProcessTask"/>
     /// <see cref="EndLoadProcessTask" />
     /// <see cref="AbortLoadProcessTask" />
-    public class CreateLoadProcessTableTask : GenericTask, ITask
+    public class CreateLoadProcessTableTask : ControlFlowTask
     {
         /* ITask Interface */
         public override string TaskName => $"Create default etlbox load process table";
@@ -23,7 +23,8 @@ namespace ETLBox.Logging
         public CreateTableTask LoadProcessTable { get; private set; }
         public void Execute()
         {
-            LoadProcessTable.CopyTaskProperties(this);
+            LoadProcessTable.CopyLogTaskProperties(this);
+            LoadProcessTable.ConnectionManager = this.ConnectionManager;
             LoadProcessTable.DisableLogging = true;
             LoadProcessTable.Create();
             ControlFlow.ControlFlow.LoadProcessTable = LoadProcessTableName;

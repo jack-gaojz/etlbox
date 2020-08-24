@@ -14,7 +14,7 @@ namespace ETLBox.ControlFlow.Tasks
     /// GetDatabaseListTask.List();
     /// </code>
     /// </example>
-    public class GetDatabaseListTask : GenericTask, ITask
+    public class GetDatabaseListTask : ControlFlowTask
     {
         /* ITask Interface */
         public override string TaskName => $"Get names of all databases";

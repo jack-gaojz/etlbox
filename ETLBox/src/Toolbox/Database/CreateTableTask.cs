@@ -19,7 +19,7 @@ namespace ETLBox.ControlFlow.Tasks
     /// });
     /// </code>
     /// </example>
-    public class CreateTableTask : GenericTask, ITask
+    public class CreateTableTask : ControlFlowTask
     {
         /* ITask Interface */
         public override string TaskName => $"Create table {TableName}";

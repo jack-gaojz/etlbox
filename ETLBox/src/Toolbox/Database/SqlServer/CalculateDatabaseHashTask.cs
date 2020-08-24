@@ -16,7 +16,7 @@ namespace ETLBox.ControlFlow.Tasks
     /// CalculateDatabaseHashTask.Calculate(new List&lt;string&gt;() { "demo", "dbo" });
     /// </code>
     /// </example>
-    public class CalculateDatabaseHashTask : GenericTask, ITask
+    public class CalculateDatabaseHashTask : ControlFlowTask
     {
         /* ITask Interface */
         public override string TaskName => $"Calculate hash value for schema(s) {SchemaNamesAsString}";

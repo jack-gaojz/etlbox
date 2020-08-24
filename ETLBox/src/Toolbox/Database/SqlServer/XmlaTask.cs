@@ -25,7 +25,7 @@ namespace ETLBox.ControlFlow.Tasks
             Init();
         }
 
-        internal XmlaTask(ITask callingTask, string xmla) : base(callingTask, xmla)
+        internal XmlaTask(ControlFlowTask callingTask, string xmla) : base(callingTask, xmla)
         {
             Init();
         }

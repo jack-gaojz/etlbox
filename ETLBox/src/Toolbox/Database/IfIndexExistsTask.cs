@@ -5,7 +5,7 @@ namespace ETLBox.ControlFlow.Tasks
     /// <summary>
     /// Checks if an index exists.
     /// </summary>
-    public class IfIndexExistsTask : IfExistsTask, ITask
+    public class IfIndexExistsTask : IfExistsTask, ILoggableTask
     {
         /* ITask Interface */
         internal override string GetSql()

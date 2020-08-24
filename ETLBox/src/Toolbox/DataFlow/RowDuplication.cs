@@ -11,7 +11,7 @@ namespace ETLBox.DataFlow.Transformations
     /// Creates one or more duplicates of your incoming rows.
     /// </summary>
     /// <typeparam name="TInput">Type of data input</typeparam>
-    public class RowDuplication<TInput> : DataFlowTransformation<TInput, TInput>, ITask, IDataFlowTransformation<TInput, TInput>
+    public class RowDuplication<TInput> : DataFlowTransformation<TInput, TInput>, ILoggableTask, IDataFlowTransformation<TInput, TInput>
     {
         #region Public properties
 

@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace ETLBox.ControlFlow
 {
-    public abstract class DbTask : GenericTask
+    public abstract class DbTask : ControlFlowTask
     {
 
         /* Public Properties */
@@ -54,9 +54,10 @@ namespace ETLBox.ControlFlow
             this.TaskName = name;
         }
 
-        public DbTask(ITask callingTask, string sql) : this(sql)
+        public DbTask(ControlFlowTask callingTask, string sql) : this(sql)
         {
-            CopyTaskProperties(callingTask);
+            CopyLogTaskProperties(callingTask);
+            this.ConnectionManager = callingTask.ConnectionManager;
         }
 
         public DbTask(string sql, params Action<object>[] actions) : this(sql)

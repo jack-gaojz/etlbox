@@ -15,7 +15,7 @@ namespace ETLBox.ControlFlow.Tasks
     /// CRUDProcedureTask.CreateOrAlter("demo.proc1", "select 1 as test");
     /// </code>
     /// </example>
-    public class CreateProcedureTask : GenericTask, ITask
+    public class CreateProcedureTask : ControlFlowTask
     {
         /* ITask Interface */
         public override string TaskName => $"{CreateOrAlterSql} procedure {ProcedureName}";

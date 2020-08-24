@@ -6,7 +6,7 @@ namespace ETLBox.Logging
     /// <summary>
     /// A package is a shortcute for custom task, but with the TaskType "PACKAGE".
     /// </summary>
-    public class Package : GenericTask, ITask
+    public class Package : ControlFlowTask
     {
         public override string TaskName { get; set; } = "Package";
         public void Execute() => new CustomTask(TaskName) { TaskType = this.TaskType, TaskHash = this.TaskHash }.Execute(Tasks);

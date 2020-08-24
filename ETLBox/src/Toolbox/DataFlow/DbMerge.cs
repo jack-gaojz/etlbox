@@ -52,7 +52,26 @@ namespace ETLBox.DataFlow.Connectors
 
         public int BatchSize { get; set; } = DataFlowBatchDestination<TInput>.DEFAULT_BATCH_SIZE;
 
-        public override IConnectionManager ConnectionManager { get; set; }
+        #endregion
+
+        #region Connection Manager
+
+        public virtual IConnectionManager ConnectionManager { get; set; }
+
+        internal virtual IConnectionManager DbConnectionManager
+        {
+            get
+            {
+                if (ConnectionManager == null)
+                    return (IConnectionManager)ControlFlow.ControlFlow.DefaultDbConnection;
+                else
+                    return (IConnectionManager)ConnectionManager;
+            }
+        }
+
+        public string QB => DbConnectionManager.QB;
+        public string QE => DbConnectionManager.QE;
+        public ConnectionManagerType ConnectionType => this.DbConnectionManager.ConnectionManagerType;
 
         #endregion
 
@@ -445,14 +464,17 @@ namespace ETLBox.DataFlow.Connectors
             string idNames = $"{QB}{IdColumnNames.First()}{QE}";
             if (IdColumnNames.Count > 1)
                 idNames = CreateConcatSqlForNames();
-            new SqlTask(this, $@"
+            var sql = new SqlTask($@"
             DELETE FROM {TN.QuotatedFullName} 
             WHERE {idNames} IN (
             {String.Join(",", deleteString)}
             )")
             {
                 DisableLogging = true,
-            }.ExecuteNonQuery();
+                ConnectionManager = this.ConnectionManager
+            };
+            sql.CopyLogTaskProperties(this);
+            sql.ExecuteNonQuery();
         }
 
         private void ReinsertTruncatedRecords()

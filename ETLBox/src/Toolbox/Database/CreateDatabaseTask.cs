@@ -12,7 +12,7 @@ namespace ETLBox.ControlFlow.Tasks
     /// CreateDatabaseTask.Create("DemoDB");
     /// </code>
     /// </example>
-    public class CreateDatabaseTask : GenericTask, ITask
+    public class CreateDatabaseTask : ControlFlowTask
     {
         /* ITask Interface */
         public override string TaskName => $"Create DB {DatabaseName}";

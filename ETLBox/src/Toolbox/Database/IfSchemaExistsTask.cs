@@ -6,7 +6,7 @@ namespace ETLBox.ControlFlow.Tasks
     /// <summary>
     /// Checks if a schema exists. In MySql, use the IfDatabaseExistsTask instead.
     /// </summary>
-    public class IfSchemaExistsTask : IfExistsTask, ITask
+    public class IfSchemaExistsTask : IfExistsTask
     {
         /* ITask Interface */
         internal override string GetSql()

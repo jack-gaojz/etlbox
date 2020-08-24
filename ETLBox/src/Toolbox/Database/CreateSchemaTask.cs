@@ -12,7 +12,7 @@ namespace ETLBox.ControlFlow.Tasks
     /// CreateSchemaTask.Create("demo");
     /// </code>
     /// </example>
-    public class CreateSchemaTask : GenericTask, ITask
+    public class CreateSchemaTask : ControlFlowTask
     {
         /* ITask Interface */
         public override string TaskName => $"Create schema {SchemaName}";

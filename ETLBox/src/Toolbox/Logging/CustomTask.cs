@@ -6,7 +6,7 @@ namespace ETLBox.Logging
     /// <summary>
     /// A custom task allows you to run your own code (defined as an Action object), with additionally logging in place. (TaskType: CUSTOM)
     /// </summary>
-    public class CustomTask : GenericTask, ITask
+    public class CustomTask : ControlFlowTask
     {
         /* ITask interface */
         public override string TaskName { get; set; }
