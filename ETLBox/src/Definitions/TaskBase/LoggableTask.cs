@@ -4,18 +4,35 @@ using System;
 
 namespace ETLBox.ControlFlow
 {
+    /// <summary>
+    /// This class contains properties that are needed for logging.
+    /// </summary>
     public abstract class LoggableTask : ILoggableTask
     {
         private string _taskType;
+
+        /// <summary>
+        /// A type description of the task or component. This is usually the class name.
+        /// </summary>
         public virtual string TaskType
         {
             get => String.IsNullOrEmpty(_taskType) ? this.GetType().Name : _taskType;
             set => _taskType = value;
         }
+
+        /// <summary>
+        /// A name to identify the task or component. Every component or task comes
+        /// with a default name that can be overwritten.
+        /// </summary>
         public virtual string TaskName { get; set; } = "N/A";
-        public NLog.Logger NLogger { get; set; } = ControlFlow.GetLogger();
+
+        internal NLog.Logger NLogger { get; set; } = ControlFlow.GetLogger();
 
         public bool _disableLogging;
+
+        /// <summary>
+        /// If set to true, the component or task won't produce any log output.
+        /// </summary>
         public virtual bool DisableLogging
         {
             get
@@ -33,7 +50,9 @@ namespace ETLBox.ControlFlow
 
         private string _taskHash;
 
-
+        /// <summary>
+        /// Creates a unique hash value to identify the task. 
+        /// </summary>
         public virtual string TaskHash
         {
             get
