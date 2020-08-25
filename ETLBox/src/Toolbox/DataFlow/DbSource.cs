@@ -12,30 +12,31 @@ using System.Threading.Tasks.Dataflow;
 namespace ETLBox.DataFlow.Connectors
 {
     /// <summary>
-    /// A database source defines either a table or sql query that returns data from a database. While reading the result set or the table, data is asnychronously posted
-    /// into the targets.
+    /// A database source defines either a table or sql query that returns data from a database.
+    /// Multiple database are supported. Use the corresponding connection manager that fits to your database.
     /// </summary>
-    /// <typeparam name="TOutput">Type of data output.</typeparam>
+    /// <typeparam name="TOutput">Type of outgoing data.</typeparam>
     /// <example>
     /// <code>
-    /// DbSource&lt;MyRow&gt; source = new DbSource&lt;MyRow&gt;("dbo.table");
-    /// source.LinkTo(dest); //Transformation or Destination
-    /// source.Execute(); //Start the data flow
+    /// SqlConnectionManager connMan = new SqlConnectionManager("Data Source=localhost");
+    /// DbSource&lt;MyRow&gt; source = new DbSource&lt;MyRow&gt;(connMan, "dbo.table");
     /// </code>
     /// </example>
     public class DbSource<TOutput> : DataFlowExecutableSource<TOutput>
     {
         #region Public properties
 
+        /// <inheritdoc/>
         public override string TaskName => $"Read data from {SourceDescription}";
 
         /// <summary>
         /// Pass a table definition that describe the source table.
         /// Column names can be read from the table definition (if a table name is given)
-        /// or extracted from the sql query. If a TableDefinition is present, this will always be used to determin the columns names.
+        /// or extracted from the sql query. If a TableDefinition is present, this will always be used to determine the columns names.
         /// </summary>
         ///
         public TableDefinition SourceTableDefinition { get; set; }
+
         /// <summary>
         /// By default, column names are read from the table defition, extracted from the database or parsed from the sql query.
         /// The column name is used to map the data from the database source to the right property in the object used for the data flow.
@@ -57,6 +58,9 @@ namespace ETLBox.DataFlow.Connectors
 
         #region Connection Manager
 
+        /// <summary>
+        /// The connection manager used to connect to the database - use the right connection manager for your database type.
+        /// </summary>
         public virtual IConnectionManager ConnectionManager { get; set; }
 
         internal virtual IConnectionManager DbConnectionManager
@@ -70,9 +74,9 @@ namespace ETLBox.DataFlow.Connectors
             }
         }
 
-        public string QB => DbConnectionManager.QB;
-        public string QE => DbConnectionManager.QE;
-        public ConnectionManagerType ConnectionType => this.DbConnectionManager.ConnectionManagerType;
+        private string QB => DbConnectionManager.QB;
+        private string QE => DbConnectionManager.QE;
+        private ConnectionManagerType ConnectionType => this.DbConnectionManager.ConnectionManagerType;
         #endregion
 
         #region Constructors
@@ -82,16 +86,20 @@ namespace ETLBox.DataFlow.Connectors
             TypeInfo = new DBTypeInfo(typeof(TOutput));
         }
 
+        /// <param name="tableName">Sets the <see cref="TableName" /></param>
         public DbSource(string tableName) : this()
         {
             TableName = tableName;
         }
 
+        /// <param name="connectionManager">Sets the <see cref="ConnectionManager" /></param>
         public DbSource(IConnectionManager connectionManager) : this()
         {
             ConnectionManager = connectionManager;
         }
 
+        /// <param name="connectionManager">Sets the <see cref="ConnectionManager" /></param>
+        /// <param name="tableName">Sets the <see cref="TableName" /></param>
         public DbSource(IConnectionManager connectionManager, string tableName) : this(tableName)
         {
             ConnectionManager = connectionManager;
@@ -327,18 +335,7 @@ namespace ETLBox.DataFlow.Connectors
         #endregion
     }
 
-    /// <summary>
-    /// A database source defines either a table or sql query that returns data from a database. While reading the result set or the table, data is asnychronously posted
-    /// into the targets. The non generic version of the DbSource uses a dynamic object that contains the data.
-    /// </summary>
-    /// <see cref="DbSource{TOutput}"/>
-    /// <example>
-    /// <code>
-    /// DbSource source = new DbSource("dbo.table");
-    /// source.LinkTo(dest); //Transformation or Destination
-    /// source.Execute(); //Start the data flow
-    /// </code>
-    /// </example>
+    /// <inheritdoc/>
     public class DbSource : DbSource<ExpandoObject>
     {
         public DbSource() : base() { }

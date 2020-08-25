@@ -7,15 +7,24 @@ using System.Threading.Tasks.Dataflow;
 namespace ETLBox.DataFlow.Connectors
 {
     /// <summary>
-    /// Define your own source block.
+    /// Define your own source block. This block generates data from a your own custom written functions.
     /// </summary>
-    /// <typeparam name="TOutput">Type of data output.</typeparam>
-    public class CustomSource<TOutput> : DataFlowExecutableSource<TOutput>, ILoggableTask, IDataFlowSource<TOutput>
+    /// <typeparam name="TOutput">Type of outgoing data.</typeparam>
+    public class CustomSource<TOutput> : DataFlowExecutableSource<TOutput>
     {
         #region Public properties
 
+        /// <inheritdoc/>
         public override string TaskName => $"Read data from custom source";
+
+        /// <summary>
+        /// The Func that returns a data row as output.
+        /// </summary>
         public Func<TOutput> ReadFunc { get; set; }
+
+        /// <summary>
+        /// This Func returns true when all rows for the flow are successfully returned from the <see cref="ReadFunc"/>.
+        /// </summary>
         public Func<bool> ReadCompletedFunc { get; set; }
 
         #endregion
@@ -26,6 +35,8 @@ namespace ETLBox.DataFlow.Connectors
         {
         }
 
+        /// <param name="readFunc">Sets the <see cref="ReadFunc"/></param>
+        /// <param name="readCompletedFunc">Sets the <see cref="ReadCompletedFunc"/></param>
         public CustomSource(Func<TOutput> readFunc, Func<bool> readCompletedFunc) : this()
         {
             ReadFunc = readFunc;
@@ -80,9 +91,7 @@ namespace ETLBox.DataFlow.Connectors
 
     }
 
-    /// <summary>
-    /// Define your own source block. The non generic implementation returns a dynamic object as output.
-    /// </summary>
+    /// <inheritdoc/>
     public class CustomSource : CustomSource<ExpandoObject>
     {
         public CustomSource() : base()

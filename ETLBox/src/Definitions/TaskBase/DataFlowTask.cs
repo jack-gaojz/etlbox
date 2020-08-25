@@ -13,6 +13,11 @@ namespace ETLBox.DataFlow
     {
         #region Component properties
 
+        /// <summary>
+        /// Each component can have one or more buffers to improve throughput and allow faster processing of data.
+        /// Set this value to restrict the number of rows that can be stored in the buffer.
+        /// The default value is -1 (unlimited)
+        /// </summary>
         public int MaxBufferSize
         {
             get
@@ -31,9 +36,20 @@ namespace ETLBox.DataFlow
 
         #region Linking
 
+        /// <summary>
+        /// All predecessor that are linked to this component.
+        /// </summary>
         public List<DataFlowComponent> Predecessors { get; protected set; } = new List<DataFlowComponent>();
+
+        /// <summary>
+        /// All successor that this component is linked to.
+        /// </summary>
         public List<DataFlowComponent> Successors { get; protected set; } = new List<DataFlowComponent>();
 
+        /// <summary>
+        /// The completion task of the component. A component is completed when all predecessors (if any) are
+        /// completed and the current component has completed its buffer.
+        /// </summary>
         public Task Completion { get; internal set; }
         internal virtual Task BufferCompletion { get; }
         protected Task PredecessorCompletion { get; set; }
@@ -114,6 +130,10 @@ namespace ETLBox.DataFlow
                     successor.InitBufferRecursively();
         }
 
+        /// <summary>
+        /// Inits the underlying TPL.Dataflow buffer objects. After this, the component is ready for linking
+        /// its source or target blocks.
+        /// </summary>
         public void InitBufferObjects() {
             InternalInitBufferObjects();
             WereBufferInitialized = true;
@@ -142,6 +162,9 @@ namespace ETLBox.DataFlow
 
         #region Completion tasks handling
 
+        /// <summary>
+        /// When a component has completed and processed all rows, the OnCompletion action is executed.
+        /// </summary>
         public Action OnCompletion { get; set; }
 
         protected void SetCompletionTaskRecursively()
@@ -228,12 +251,15 @@ namespace ETLBox.DataFlow
 
         #region Error Handling
 
-        public Exception Exception {
-            get => exception ?? new ETLBoxException("Can't post rows into completed or faulted buffers!");
-            private set => exception = value;
-        }
-        private Exception exception;
+        /// <summary>
+        /// If a component encountered an exception or entered a fault state because another component
+        /// in the data flow faulted, the thrown exception will be stored in this property.
+        /// </summary>
+        public Exception Exception { get; set; }
 
+        /// <summary>
+        /// The ErrorSource is the source block used for sending errors into the linked error flow.
+        /// </summary>
         public ErrorSource ErrorSource { get; set; }
 
         protected IDataFlowSource<ETLBoxError> InternalLinkErrorTo(IDataFlowDestination<ETLBoxError> target)
@@ -265,6 +291,11 @@ namespace ETLBox.DataFlow
         #region Logging
 
         protected int? _loggingThresholdRows;
+
+        /// <summary>
+        /// To avoid getting log message for every message, by default only log message are produced are 1000 rows
+        /// are processed. Set this property to decrease or increase this value.
+        /// </summary>
         public virtual int? LoggingThresholdRows
         {
             get
@@ -280,7 +311,11 @@ namespace ETLBox.DataFlow
             }
         }
 
+        /// <summary>
+        /// The amount of rows the current component has currently processed.
+        /// </summary>
         public int ProgressCount { get; set; }
+
         protected bool HasLoggingThresholdRows => LoggingThresholdRows != null && LoggingThresholdRows > 0;
         protected int ThresholdCount { get; set; } = 1;
         protected bool WasLoggingStarted;

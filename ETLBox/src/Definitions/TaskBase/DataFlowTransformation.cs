@@ -9,6 +9,9 @@ namespace ETLBox.DataFlow
 {
     public abstract class DataFlowTransformation<TInput, TOutput> : DataFlowSource<TOutput>, IDataFlowTransformation<TInput, TOutput>
     {
+        /// <summary>
+        /// TargetBlock from the underlying TPL.Dataflow which is used as input buffer for the component.
+        /// </summary>
         public abstract ITargetBlock<TInput> TargetBlock { get; }
 
         internal override Task BufferCompletion => SourceBlock.Completion;

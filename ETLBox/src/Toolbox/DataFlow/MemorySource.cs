@@ -9,15 +9,23 @@ using System.Threading.Tasks.Dataflow;
 
 namespace ETLBox.DataFlow.Connectors
 {
+
     /// <summary>
-    /// Reads data from a memory source. While reading the data from the list, data is also asnychronously posted into the targets.
-    /// Data is read a as string from the source and dynamically converted into the corresponding data format.
+    /// Define a source based on a generic .NET collection. This could be a List&lt;T&gt; or any other IEnumerable&lt;T&gt;.
+    /// By default, an empty List&lt;T&gt; is created which can be filled with data.
     /// </summary>
+    /// <typeparam name="TOutput">Type of outgoing data.</typeparam>
     public class MemorySource<TOutput> : DataFlowExecutableSource<TOutput>
     {
         #region Public properties
+
+        /// <inheritdoc/>
         public override string TaskName => $"Read data from memory";
+
+        /// The .NET collection that is used to read the data from.
         public IEnumerable<TOutput> Data { get; set; }
+
+        /// If the source collection implements IList&lt;T&gt; then this property will convert the collection into this interface type.
         public IList<TOutput> DataAsList
         {
             get
@@ -39,6 +47,7 @@ namespace ETLBox.DataFlow.Connectors
             Data = new List<TOutput>();
         }
 
+        /// <param name="data">Set the source collection and stores it in <see cref="Data"/></param>
         public MemorySource(IEnumerable<TOutput> data)
         {
             Data = data;
@@ -80,12 +89,7 @@ namespace ETLBox.DataFlow.Connectors
         #endregion
     }
 
-    /// <summary>
-    /// Reads data from a memory source. While reading the data from the file, data is also asnychronously posted into the targets.
-    /// MemorySource as a nongeneric type always return a dynamic object as output. If you need typed output, use
-    /// the MemorySource&lt;TOutput&gt; object instead.
-    /// </summary>
-    /// <see cref="MemorySource{TOutput}"/>
+    /// <inheritdoc/>
     public class MemorySource : MemorySource<ExpandoObject>
     {
         public MemorySource() : base() { }

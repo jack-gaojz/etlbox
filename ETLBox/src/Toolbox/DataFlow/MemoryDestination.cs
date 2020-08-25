@@ -10,15 +10,21 @@ using System.Threading.Tasks.Dataflow;
 namespace ETLBox.DataFlow.Connectors
 {
     /// <summary>
-    /// A destination in memory - it will store all you data in a list
+    /// A destination in memory - it will store all data in a List&lt;T&gt;
+    /// If you need to access the data concurrently while rows are still written into the target,
+    /// see the <see cref="ConcurrentMemoryDestination"/>.
     /// </summary>
-    /// <see cref="MemoryDestination"/>
-    /// <typeparam name="TInput">Type of data input.</typeparam>
+    /// <typeparam name="TInput">Type of ingoing data.</typeparam>
     public class MemoryDestination<TInput> : DataFlowDestination<TInput>
     {
         #region Public properties
 
+        /// <inheritdoc/>
         public override string TaskName => $"Write data into memory";
+
+        /// <summary>
+        /// The generic List&lt;T&gt; that will store all rows of incoming data in memory.
+        /// </summary>
         public IList<TInput> Data { get; set; } = new List<TInput>();
 
         #endregion
@@ -67,11 +73,7 @@ namespace ETLBox.DataFlow.Connectors
         #endregion
     }
 
-    /// <summary>
-    /// A destination in memory - it will store all you data in a list.
-    /// The MemoryDestination uses a dynamic object as input type. If you need other data types, use the generic CsvDestination instead.
-    /// </summary>
-    /// <see cref="MemoryDestination{TInput}"/>
+    /// <inheritdoc/>
     public class MemoryDestination : MemoryDestination<ExpandoObject>
     {
         public MemoryDestination() : base() { }

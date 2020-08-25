@@ -7,18 +7,18 @@ using System.Threading.Tasks.Dataflow;
 namespace ETLBox.DataFlow.Transformations
 {
     /// <summary>
-    /// Transforms the data row-by-row with the help of the transformation function.
+    /// The RowTransformation will apply the TransformationFunc to each row of data once.
     /// </summary>
-    /// <typeparam name="TInput">Type of input data.</typeparam>
-    /// <typeparam name="TOutput">Type of output data.</typeparam>
+    /// <typeparam name="TInput">The type of ingoing data.</typeparam>
+    /// <typeparam name="TOutput">The type of outgoing data.</typeparam>
     /// <see cref="RowTransformation"/>
     /// <example>
     /// <code>
-    /// RowTransformation&lt;string[], MyDataRow&gt; trans = new RowTransformation&lt;string[], MyDataRow&gt;(
-    ///     csvdata => {
-    ///       return new MyDataRow() { Value1 = csvdata[0], Value2 = int.Parse(csvdata[1]) };
+    /// RowTransformation&lt;MyDataRow&gt; trans = new RowTransformation&lt;MyDataRow&gt;(
+    ///     row => {
+    ///       row.Value += 1;
+    ///       return row;
     /// });
-    /// trans.LinkTo(dest);
     /// </code>
     /// </example>
     public class RowTransformation<TInput, TOutput> : DataFlowTransformation<TInput, TOutput>
@@ -26,10 +26,23 @@ namespace ETLBox.DataFlow.Transformations
 
         #region Public properties
 
+        /// <inheritdoc/>
         public override string TaskName { get; set; } = "Execute row transformation";
+
+        /// <summary>
+        /// Each ingoing row will be transformed using this Func.
+        /// </summary>
         public Func<TInput, TOutput> TransformationFunc { get; set; }
+
+        /// <summary>
+        /// The init action is executed shortly before the first data row is processed.
+        /// </summary>
         public Action InitAction { get; set; }
+
+        /// <inheritdoc />
         public override ITargetBlock<TInput> TargetBlock => TransformBlock;
+
+        /// <inheritdoc />
         public override ISourceBlock<TOutput> SourceBlock => TransformBlock;
 
         #endregion
@@ -42,12 +55,15 @@ namespace ETLBox.DataFlow.Transformations
         {
         }
 
-        public RowTransformation(Func<TInput, TOutput> rowTransformationFunc) : this()
+        /// <param name="transformationFunc">Will set the <see cref="TransformationFunc"/></param>
+        public RowTransformation(Func<TInput, TOutput> transformationFunc) : this()
         {
-            TransformationFunc = rowTransformationFunc;
+            TransformationFunc = transformationFunc;
         }
 
-        public RowTransformation(Func<TInput, TOutput> rowTransformationFunc, Action initAction) : this(rowTransformationFunc)
+        /// <param name="transformationFunc">Will set the <see cref="TransformationFunc"/></param>
+        /// <param name="initAction">Will set the <see cref="InitAction"/></param>
+        public RowTransformation(Func<TInput, TOutput> transformationFunc, Action initAction) : this(transformationFunc)
         {
             this.InitAction = initAction;
         }
@@ -106,21 +122,7 @@ namespace ETLBox.DataFlow.Transformations
         #endregion
     }
 
-    /// <summary>
-    /// Transforms the data row-by-row with the help of the transformation function.
-    /// </summary>
-    /// <typeparam name="TInput">Type of input (and output) data.</typeparam>
-    /// <see cref="RowTransformation{TInput, TOutput}"/>
-    /// <example>
-    /// <code>
-    /// RowTransformation&lt;MyDataRow&gt; trans = new RowTransformation&lt;MyDataRow&gt;(
-    ///     row => {
-    ///       row.Value += 1;
-    ///       return row;
-    /// });
-    /// trans.LinkTo(dest);
-    /// </code>
-    /// </example>
+    /// <inheritdoc />
     public class RowTransformation<TInput> : RowTransformation<TInput, TInput>
     {
         public RowTransformation() : base() { }
@@ -128,23 +130,7 @@ namespace ETLBox.DataFlow.Transformations
         public RowTransformation(Func<TInput, TInput> rowTransformationFunc, Action initAction) : base(rowTransformationFunc, initAction) { }
     }
 
-    /// <summary>
-    /// Transforms the data row-by-row with the help of the transformation function.
-    /// The non generic RowTransformation accepts a dynamic object as input and returns a dynamic object as output.
-    /// If you need other data types, use the generic RowTransformation instead.
-    /// </summary>
-    /// <see cref="RowTransformation{TInput, TOutput}"/>
-    /// <example>
-    /// <code>
-    /// //Non generic RowTransformation works with dynamic object as input and output
-    /// //use RowTransformation&lt;TInput,TOutput&gt; for generic usage!
-    /// RowTransformation trans = new RowTransformation(
-    ///     csvdata => {
-    ///       return new string[] { csvdata[0],  int.Parse(csvdata[1]) };
-    /// });
-    /// trans.LinkTo(dest);
-    /// </code>
-    /// </example>
+    /// <inheritdoc />
     public class RowTransformation : RowTransformation<ExpandoObject>
     {
         public RowTransformation() : base() { }

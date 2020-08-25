@@ -7,15 +7,17 @@ using System.Threading.Tasks.Dataflow;
 namespace ETLBox.DataFlow.Connectors
 {
     /// <summary>
-    /// A destination in memory which can be accessed concurrently - it will store all you data in a blocking collection.
+    /// A destination in memory - it will store all data in a BlockingCollection&lt;T&gt;
+    /// The BlockingCollection&lt;T&gt; allows you to access the data concurrently while rows are still written into the target.
+    /// If you don't need to work with your data before the flow finishes, you can use
+    /// the <see cref="MemoryDestination"/> which uses a regular List&lt;T&gt;.
     /// </summary>
-    /// <see cref="MemoryDestination"/>
-    /// <typeparam name="TInput">Type of data input.</typeparam>
+    /// <typeparam name="TInput">Type of ingoing data.</typeparam>
     public class ConcurrentMemoryDestination<TInput> : DataFlowDestination<TInput>
     {
         #region Public properties
 
-        public override string TaskName => $"Write data into memory";
+        public override string TaskName => $"Write data into a blocking collection.";
         public BlockingCollection<TInput> Data { get; set; } = new BlockingCollection<TInput>();
 
         #endregion
@@ -66,11 +68,7 @@ namespace ETLBox.DataFlow.Connectors
         #endregion
     }
 
-    /// <summary>
-    /// A destination in memory - it will store all you data in a blocking collection.
-    /// The MemoryDestination uses a dynamic object as input type. If you need other data types, use the generic CsvDestination instead.
-    /// </summary>
-    /// <see cref="MemoryDestination{TInput}"/>
+    /// <inheritdoc/>
     public class ConcurrentMemoryDestination : ConcurrentMemoryDestination<ExpandoObject>
     {
         public ConcurrentMemoryDestination() : base() { }

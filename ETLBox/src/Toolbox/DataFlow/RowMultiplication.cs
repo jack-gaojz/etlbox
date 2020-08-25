@@ -8,17 +8,24 @@ using System.Threading.Tasks.Dataflow;
 namespace ETLBox.DataFlow.Transformations
 {
     /// <summary>
-    /// This transformation allow you to transform your input data into multple output data records.
+    /// This transformation allow you to transform one row of your input data into multiple rows.
     /// </summary>
-    /// <typeparam name="TInput">Type of data input</typeparam>
-    /// <typeparam name="TOutput">Type of data output</typeparam>
+    /// <typeparam name="TInput">Type of ingoing data.</typeparam>
+    /// <typeparam name="TOutput">Type of outgoing data.</typeparam>
     public class RowMultiplication<TInput, TOutput> : DataFlowTransformation<TInput, TOutput>, ILoggableTask, IDataFlowTransformation<TInput, TOutput>
     {
         #region Public properties
 
+        /// <inheritdoc/>
         public override string TaskName { get; set; } = $"Duplicate rows";
+        /// <inheritdoc/>
         public override ISourceBlock<TOutput> SourceBlock => TransformBlock;
+        /// <inheritdoc/>
         public override ITargetBlock<TInput> TargetBlock => TransformBlock;
+
+        /// <summary>
+        /// The transformation func that produces multiple rows for each ingoing row.
+        /// </summary>
         public Func<TInput, IEnumerable<TOutput>> MultiplicationFunc { get; set; }
 
         #endregion
@@ -30,6 +37,7 @@ namespace ETLBox.DataFlow.Transformations
 
         }
 
+        /// <param name="multiplicationFunc">Sets the <see cref="MultiplicationFunc"/></param>
         public RowMultiplication(Func<TInput, IEnumerable<TOutput>> multiplicationFunc) : this()
         {
             MultiplicationFunc = multiplicationFunc;
@@ -77,10 +85,7 @@ namespace ETLBox.DataFlow.Transformations
         #endregion
     }
 
-    /// <summary>
-    /// This transformation allow you to transform your input data into multple output data records.
-    /// </summary>
-    /// <see cref="RowMultiplication{TInput, TOutput}"/>
+    /// <inheritdoc/>
     public class RowMultiplication : RowMultiplication<ExpandoObject, ExpandoObject>
     {
         public RowMultiplication() : base()

@@ -10,27 +10,36 @@ using System.Threading.Tasks.Dataflow;
 namespace ETLBox.DataFlow.Transformations
 {
     /// <summary>
-    /// A block transformation will wait for all data to be loaded into the buffer before the transformation is applied. After all data is in the buffer, the transformation
-    /// is execution and the result posted into the targets.
+    /// A block transformation will wait for all data from the flow to be loaded into its buffer.
+    /// After all data is in the buffer, the transformation function
+    /// is executed for the complete data and the result posted into the targets.
+    /// The block transformations allows you to access all data in the flow in one generic collection.
+    /// But as this block any processing until all data is buffered, it will also need to store the whole data in memory.
     /// </summary>
-    /// <typeparam name="TInput">Type of data input</typeparam>
-    /// <typeparam name="TOutput">Type of data output</typeparam>
+    /// <typeparam name="TInput">Type of ingoing data.</typeparam>
+    /// <typeparam name="TOutput">Type of outgoing data.</typeparam>
     /// <example>
     /// <code>
     /// BlockTransformation&lt;MyInputRow, MyOutputRow&gt; block = new BlockTransformation&lt;MyInputRow, MyOutputRow&gt;(
     ///     inputDataAsList => {
     ///         return inputData.Select( inputRow => new MyOutputRow() { Value2 = inputRow.Value1 }).ToList();
     ///     });
-    /// block.LinkTo(dest);
     /// </code>
     /// </example>
     public class BlockTransformation<TInput, TOutput> : DataFlowTransformation<TInput, TOutput>
     {
         #region Public properties
 
+        /// <inheritdoc/>
         public override string TaskName { get; set; } = "Excecute block transformation";
+        /// <summary>
+        /// The transformation Func that is executed on the all input data. It should return a new list that
+        /// contains all output data for further processing.
+        /// </summary>
         public Func<List<TInput>, List<TOutput>> BlockTransformationFunc { get; set; }
+        /// <inheritdoc/>
         public override ISourceBlock<TOutput> SourceBlock => OutputBuffer;
+        /// <inheritdoc/>
         public override ITargetBlock<TInput> TargetBlock => InputBuffer;
 
         #endregion
@@ -42,6 +51,7 @@ namespace ETLBox.DataFlow.Transformations
             InputData = new List<TInput>();
         }
 
+        /// <param name="blockTransformationFunc">Sets the <see cref="BlockTransformationFunc"/></param>
         public BlockTransformation(Func<List<TInput>, List<TOutput>> blockTransformationFunc) : this()
         {
             BlockTransformationFunc = blockTransformationFunc;
@@ -115,34 +125,17 @@ namespace ETLBox.DataFlow.Transformations
         #endregion
     }
 
-    /// <summary>
-    /// A block transformation will wait for all data to be loaded into the buffer before the transformation is applied. After all data is in the buffer, the transformation
-    /// is execution and the result posted into the targets.
-    /// </summary>
-    /// <typeparam name="TInput">Type of data input (equal type of data output)</typeparam>
-    /// <example>
-    /// <code>
-    /// BlockTransformation&lt;MyDataRow&gt; block = new BlockTransformation&lt;MyDataRow&gt;(
-    ///     inputData => {
-    ///         return inputData.Select( row => new MyDataRow() { Value1 = row.Value1, Value2 = 3 }).ToList();
-    ///     });
-    /// block.LinkTo(dest);
-    /// </code>
-    /// </example>
+    /// <inheritdoc/>
     public class BlockTransformation<TInput> : BlockTransformation<TInput, TInput>
     {
-        public BlockTransformation() : base ()
+        public BlockTransformation() : base()
         { }
         public BlockTransformation(Func<List<TInput>, List<TInput>> blockTransformationFunc) : base(blockTransformationFunc)
         { }
 
     }
 
-    /// <summary>
-    /// A block transformation will wait for all data to be loaded into the buffer before the transformation is applied. After all data is in the buffer, the transformation
-    /// is execution and the result posted into the targets.
-    /// The non generic implementation uses dynamic objects as input and output
-    /// </summary>
+    /// <inheritdoc/>
     public class BlockTransformation : BlockTransformation<ExpandoObject>
     {
         public BlockTransformation() : base()

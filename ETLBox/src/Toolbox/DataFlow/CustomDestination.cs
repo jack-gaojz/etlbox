@@ -6,14 +6,18 @@ using System.Threading.Tasks.Dataflow;
 namespace ETLBox.DataFlow.Connectors
 {
     /// <summary>
-    /// Define your own destination block.
+    /// Define your own destination block. This block accepts all data from the flow and sends it to your custom written Action.
     /// </summary>
-    /// <typeparam name="TInput">Type of datasource input.</typeparam>
-    public class CustomDestination<TInput> : DataFlowDestination<TInput>, ILoggableTask, IDataFlowDestination<TInput>
+    /// <typeparam name="TInput">Type of ingoing data.</typeparam>
+    public class CustomDestination<TInput> : DataFlowDestination<TInput>
     {
         #region Public properties
 
+        /// <inheritdoc/>
         public override string TaskName { get; set; } = $"Write data into custom target";
+        /// <summary>
+        /// Each row that the CustomDestination receives is send into this Action.
+        /// </summary>
         public Action<TInput> WriteAction { get; set; }
 
         #endregion
@@ -25,6 +29,7 @@ namespace ETLBox.DataFlow.Connectors
 
         }
 
+        /// <param name="writeAction">Sets the <see cref="WriteAction"/></param>
         public CustomDestination(Action<TInput> writeAction) : this()
         {
             WriteAction = writeAction;
@@ -74,14 +79,14 @@ namespace ETLBox.DataFlow.Connectors
         #endregion
     }
 
-    /// <summary>
-    /// Define your own destination block. The non generic implementation uses a dynamic object as input.
-    /// </summary>
+    /// <inheritdoc/>
     public class CustomDestination : CustomDestination<ExpandoObject>
     {
+        /// <inheritdoc/>
         public CustomDestination() : base()
         { }
 
+        /// <inheritdoc/>
         public CustomDestination(Action<ExpandoObject> writeAction) : base(writeAction)
         { }
     }

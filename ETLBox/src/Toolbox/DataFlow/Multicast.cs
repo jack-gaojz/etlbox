@@ -11,21 +11,26 @@ using System.Transactions;
 namespace ETLBox.DataFlow.Transformations
 {
     /// <summary>
-    /// A multicast duplicates data from the input into two outputs.
+    /// A multicast broadcast data from the input into two or more outputs.
+    /// Every linked component will receive a copy of the rows that the Multicast receives.
+    /// There is no limit how many target the Multicast can be linked to.
     /// </summary>
-    /// <typeparam name="TInput">Type of input data.</typeparam>
+    /// <typeparam name="TInput">Type of ingoing data.</typeparam>
     /// <example>
     /// <code>
     /// Multicast&lt;MyDataRow&gt; multicast = new Multicast&lt;MyDataRow&gt;();
     /// multicast.LinkTo(dest1);
     /// multicast.LinkTo(dest2);
+    /// multicast.LinkTo(dest3);
     /// </code>
     /// </example>
     public class Multicast<TInput> : DataFlowTransformation<TInput, TInput>
     {
         #region Public properties
 
+        /// <inheritdoc />
         public override string TaskName { get; set; } = "Multicast - duplicate data";
+        /// <inheritdoc/>
         public override ISourceBlock<TInput> SourceBlock
         {
             get
@@ -36,7 +41,7 @@ namespace ETLBox.DataFlow.Transformations
                     return BroadcastBlock;
             }
         }
-
+        /// <inheritdoc/>
         public override ITargetBlock<TInput> TargetBlock =>
             AvoidBroadcastBlock ? (ITargetBlock<TInput>)OwnBroadcastBlock : BroadcastBlock;
 
@@ -137,6 +142,7 @@ namespace ETLBox.DataFlow.Transformations
         #endregion
 
         #region Implementation
+
         bool AvoidBroadcastBlock;
         BroadcastBlock<TInput> BroadcastBlock;
         ActionBlock<TInput> OwnBroadcastBlock;
@@ -165,19 +171,7 @@ namespace ETLBox.DataFlow.Transformations
         #endregion
     }
 
-    /// <summary>
-    /// A multicast duplicates data from the input into two outputs. The non generic version or the multicast
-    /// excepct a dynamic object as input and has two output with the copies of the input.
-    /// </summary>
-    /// <see cref="Multicast{TInput}"></see>
-    /// <example>
-    /// <code>
-    /// //Non generic Multicast works with dynamic object as input and output
-    /// Multicast multicast = new Multicast();
-    /// multicast.LinkTo(dest1);
-    /// multicast.LinkTo(dest2);
-    /// </code>
-    /// </example>
+    /// <inheritdoc/>
     public class Multicast : Multicast<ExpandoObject>
     {
         public Multicast() : base() { }

@@ -8,17 +8,31 @@ using System.Threading.Tasks.Dataflow;
 namespace ETLBox.DataFlow.Transformations
 {
     /// <summary>
-    /// Creates one or more duplicates of your incoming rows.
+    /// Creates one or more duplicates of your incoming row.
     /// </summary>
-    /// <typeparam name="TInput">Type of data input</typeparam>
+    /// <typeparam name="TInput">Type of ingoing data.</typeparam>
     public class RowDuplication<TInput> : DataFlowTransformation<TInput, TInput>, ILoggableTask, IDataFlowTransformation<TInput, TInput>
     {
         #region Public properties
 
+        /// <inheritdoc/>
         public override string TaskName { get; set; } = $"Duplicate rows.";
+
+        /// <summary>
+        /// Number of duplicates to be created for each ingoing row.
+        /// Default is 1 (meaning the incoming row plus one copy).
+        /// </summary>
         public int NumberOfDuplicates { get; set; } = 1;
+
+        /// <summary>
+        /// A predicate that describe if a will be duplicated or not.
+        /// </summary>
         public Predicate<TInput> CanDuplicate { get; set; }
+
+        /// <inheritdoc/>
         public override ISourceBlock<TInput> SourceBlock => TransformBlock;
+
+        /// <inheritdoc/>
         public override ITargetBlock<TInput> TargetBlock => TransformBlock;
 
         #endregion
@@ -31,16 +45,20 @@ namespace ETLBox.DataFlow.Transformations
             ObjectCopy = new ObjectCopy<TInput>(TypeInfo);
         }
 
+        /// <param name="numberOfDuplicates">Sets the <see cref="NumberOfDuplicates"/></param>
         public RowDuplication(int numberOfDuplicates) : this()
         {
             this.NumberOfDuplicates = numberOfDuplicates;
         }
 
+        /// <param name="canDuplicate">Sets the <see cref="CanDuplicate"/> predicate</param>
+        /// <param name="numberOfDuplicates">Sets the <see cref="NumberOfDuplicates"/></param>
         public RowDuplication(Predicate<TInput> canDuplicate, int numberOfDuplicates) : this(numberOfDuplicates)
         {
             this.CanDuplicate = canDuplicate;
         }
 
+        /// <param name="canDuplicate">Sets the <see cref="CanDuplicate"/> predicate</param>
         public RowDuplication(Predicate<TInput> canDuplicate) : this()
         {
             this.CanDuplicate = canDuplicate;
@@ -96,11 +114,7 @@ namespace ETLBox.DataFlow.Transformations
         #endregion
     }
 
-    /// <summary>
-    /// Creates one or more duplicates of your incoming rows.
-    /// The non generic implementation works with dynamic object.
-    /// </summary>
-    /// <see cref="RowDuplication{TInput}"/>
+    /// <inheritdoc />
     public class RowDuplication : RowDuplication<ExpandoObject>
     {
         public RowDuplication() : base()

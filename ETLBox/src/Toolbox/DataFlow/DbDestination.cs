@@ -10,34 +10,42 @@ using System.Reflection;
 namespace ETLBox.DataFlow.Connectors
 {
     /// <summary>
-    /// A database destination represents a table where data from the flow is inserted.
-    /// Inserts are done in batches (using Bulk insert or an equivalent).
+    /// A DbDestination represents a database table where ingoing data from the flow is written into.
+    /// Inserts are done in batches (using Bulk insert or an equivalent INSERT statement).
     /// </summary>
-    /// <see cref="DbDestination"/>
-    /// <typeparam name="TInput">Data type for input, preferably representing the destination table.</typeparam>
+    /// <typeparam name="TInput">Data type for ingoing data, preferably representing the data type for the destination table.</typeparam>
     public class DbDestination<TInput> : DataFlowBatchDestination<TInput>
     {
         #region Public properties
 
+        /// <inheritdoc/>
         public override string TaskName => $"Write data into table {DestinationTableDefinition?.Name ?? TableName}";
 
         /// <summary>
-        /// If you don't want ETLBox to dynamically read the destination table definition from the database,
-        /// you can provide your own table definition.
+        /// The table definition of the destination table. By default, the table definition is read from the database.
+        /// Provide a table definition if the definition of the target can't be read automatically or you want the DbDestination
+        /// only to use the columns in the provided definition.
         /// </summary>
         public TableDefinition DestinationTableDefinition { get; set; }
 
         /// <summary>
-        /// Name of the target table that receives the data from the data flow.
+        /// Name of the database table that receives the data from the data flow.
         /// </summary>
         public string TableName { get; set; }
 
+        /// <summary>
+        /// The connection manager used for the bulk inserts. This is a copy of the provided connection
+        /// manager.
+        /// </summary>
         public IConnectionManager BulkInsertConnectionManager { get; protected set; }
 
         #endregion
 
         #region Connection manager
 
+        /// <summary>
+        /// The connection manager used to connect to the database - use the right connection manager for your database type.
+        /// </summary>
         public virtual IConnectionManager ConnectionManager { get; set; }
 
         internal virtual IConnectionManager DbConnectionManager
@@ -51,10 +59,6 @@ namespace ETLBox.DataFlow.Connectors
             }
         }
 
-        public string QB => DbConnectionManager.QB;
-        public string QE => DbConnectionManager.QE;
-        public ConnectionManagerType ConnectionType => this.DbConnectionManager.ConnectionManagerType;
-
         #endregion
 
         #region Constructors
@@ -64,21 +68,30 @@ namespace ETLBox.DataFlow.Connectors
             TypeInfo = new TypeInfo(typeof(TInput)).GatherTypeInfo();
         }
 
+
+        /// <param name="tableName">Sets the <see cref="TableName" /></param>
         public DbDestination(string tableName) : this()
         {
             TableName = tableName;
         }
 
+        /// <param name="connectionManager">Sets the <see cref="ConnectionManager" /></param>
+        /// <param name="tableName">Sets the <see cref="TableName" /></param>
         public DbDestination(IConnectionManager connectionManager, string tableName) : this(tableName)
         {
             ConnectionManager = connectionManager;
         }
 
+        /// <param name="tableName">Sets the <see cref="TableName" /></param>
+        /// <param name="batchSize">Sets the <see cref="DataFlowBatchDestination{TInput}.BatchSize" /></param>
         public DbDestination(string tableName, int batchSize) : this(tableName)
         {
             BatchSize= batchSize;
         }
 
+        /// <param name="connectionManager">Sets the <see cref="ConnectionManager" /></param>
+        /// <param name="tableName">Sets the <see cref="TableName" /></param>
+        /// <param name="batchSize">Sets the <see cref="DataFlowBatchDestination{TInput}.BatchSize" /></param>
         public DbDestination(IConnectionManager connectionManager, string tableName, int batchSize) : this(connectionManager, tableName)
         {
             BatchSize = batchSize;
@@ -199,13 +212,7 @@ namespace ETLBox.DataFlow.Connectors
         #endregion
     }
 
-    /// <summary>
-    /// A database destination represents a table where data from the flow is inserted.
-    /// Inserts are done in batches (using Bulk insert or an equivalent).
-    /// The DbDestination uses the dynamic ExpandoObject as input type.
-    /// If you need other data types, use the generic DbDestination instead.
-    /// </summary>
-    /// <see cref="DbDestination{TInput}"/>
+    /// <inheritdoc/>
     public class DbDestination : DbDestination<ExpandoObject>
     {
         public DbDestination() : base() { }

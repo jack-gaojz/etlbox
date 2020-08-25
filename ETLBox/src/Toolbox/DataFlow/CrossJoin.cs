@@ -12,8 +12,8 @@ namespace ETLBox.DataFlow.Transformations
 {
     /// <summary>
     /// Will cross join data from the two inputs into one output. The input for the first table will be loaded into memory before the actual
-    /// join can start. After this, every incoming row will be joined with every row of the InMemory-Table by the given function CrossJoinFunc.
-    /// The InMemory target should always have the smaller amount of data to reduce memory consumption and processing time.
+    /// join can start. After this, every incoming row will be joined with every row of the InMemory-Table by the function CrossJoinFunc.
+    /// The InMemory target should always be the target of the smaller amount of data to reduce memory consumption and processing time.
     /// </summary>
     /// <typeparam name="TInput1">Type of data for in memory input block.</typeparam>
     /// <typeparam name="TInput2">Type of data for processing input block.</typeparam>
@@ -22,10 +22,22 @@ namespace ETLBox.DataFlow.Transformations
     {
         #region Public properties
 
+        /// <inheritdoc/>
         public override string TaskName { get; set; } = "Cross join data";
+        /// <summary>
+        /// The in-memory target of the CrossJoin. This will block processing until all data is received that is designated for this target.
+        /// Always have the smaller amount of data flown into this target.
+        /// </summary>
         public InMemoryDestination<TInput1> InMemoryTarget { get; set; }
+        /// <summary>
+        /// Every row that the PassingTarget receives is joined with all data from the <see cref="InMemoryData"/>.
+        /// </summary>
         public ActionJoinTarget<TInput2> PassingTarget { get; set; }
+        /// <summary>
+        /// The cross join function that describes how records from the both target can be joined.
+        /// </summary>
         public Func<TInput1, TInput2, TOutput> CrossJoinFunc { get; set; }
+        /// <inheritdoc/>
         public override ISourceBlock<TOutput> SourceBlock => this.Buffer;
 
         #endregion
@@ -65,6 +77,7 @@ namespace ETLBox.DataFlow.Transformations
             PassingTarget = new ActionJoinTarget<TInput2>(this, CrossJoinData);
         }
 
+        /// <param name="crossJoinFunc">Sets the <see cref="CrossJoinFunc"/></param>
         public CrossJoin(Func<TInput1, TInput2, TOutput> crossJoinFunc) : this()
         {
             CrossJoinFunc = crossJoinFunc;
@@ -117,7 +130,7 @@ namespace ETLBox.DataFlow.Transformations
         bool WasInMemoryTableLoaded;
         IEnumerable<TInput1> InMemoryData => InMemoryTarget.InMemoryTarget.Data;
 
-        public void CrossJoinData(TInput2 passingRow)
+        private void CrossJoinData(TInput2 passingRow)
         {
             NLogStartOnce();
             if (!WasInMemoryTableLoaded)
@@ -153,12 +166,7 @@ namespace ETLBox.DataFlow.Transformations
         #endregion
     }
 
-    /// <summary>
-    /// Will cross join data from the two inputs into one output. The input for the first table will be loaded into memory before the actual
-    /// join can start. After this, every incoming row will be joined with every row of the InMemory-Table by the given function CrossJoinFunc.
-    /// The InMemory target should always have the smaller amount of data to reduce memory consumption and processing time.
-    /// </summary>
-    /// <typeparam name="TInput">Type of data for both inputs and output.</typeparam>
+    /// <inheritdoc/>
     public class CrossJoin<TInput> : CrossJoin<TInput, TInput, TInput>
     {
         public CrossJoin() : base()
@@ -168,12 +176,7 @@ namespace ETLBox.DataFlow.Transformations
         { }
     }
 
-    /// <summary>
-    /// Will cross join data from the two inputs into one output. The input for the first table will be loaded into memory before the actual
-    /// join can start. After this, every incoming row will be joined with every row of the InMemory-Table by the given function CrossJoinFunc.
-    /// The InMemory target should always have the smaller amount of data to reduce memory consumption and processing time.
-    /// The non generic implementation deals with a dynamic object for both inputs and output.
-    /// </summary>
+    /// <inheritdoc/>
     public class CrossJoin : CrossJoin<ExpandoObject, ExpandoObject, ExpandoObject>
     {
         public CrossJoin() : base()

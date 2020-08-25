@@ -18,7 +18,7 @@ namespace ETLBox.DataFlow.Connectors
     /// A line is defined as a sequence of characters followed by a line feed("\n"), a carriage return ("\r"),
     /// or a carriage return immediately followed by a line feed("\r\n").
     /// </summary>
-    /// <typeparam name="TOutput">The type of outgoing data.</typeparam>
+    /// <typeparam name="TOutput">Type of outgoing data.</typeparam>
     public class TextSource<TOutput> : DataFlowStreamSource<TOutput>, ILoggableTask, IDataFlowSource<TOutput>
     {
         #region Public properties

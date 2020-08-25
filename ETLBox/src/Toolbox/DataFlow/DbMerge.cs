@@ -14,25 +14,58 @@ using System.Threading.Tasks.Dataflow;
 namespace ETLBox.DataFlow.Connectors
 {
     /// <summary>
-    /// Inserts, updates and (optionally) deletes data in db target.
+    /// Inserts, updates and (optionally) deletes data in database target.
+    /// Before the Merge is executed, all data from the destination is read into memory.
+    /// A delta table is generated that stores information if a records was inserted, updated, deleted or hasn't been touched (existed).
     /// </summary>
-    /// <typeparam name="TInput">Type of input data.</typeparam>
-    /// <example>
-    /// <code>
-    /// </code>
-    /// </example>
+    /// <typeparam name="TInput">Type of ingoing data.</typeparam>
     public class DbMerge<TInput> : DataFlowTransformation<TInput, TInput>, IDataFlowBatchDestination<TInput>
     {
         #region Public properties
 
+        /// <inheritdoc/>
         public override string TaskName { get; set; } = "Insert, update or delete in destination";
+        /// <inheritdoc/>
         public override ISourceBlock<TInput> SourceBlock => OutputSource.SourceBlock;
+        /// <inheritdoc/>
         public override ITargetBlock<TInput> TargetBlock => Lookup.TargetBlock;
+
+        /// <summary>
+        /// Defines the type of target data which affects how deletions or insertions are handled.
+        /// Full means that source contains all data, NoDeletions that source contains all data but no deletions are executed,
+        /// Delta means that source has only delta information and deletions are deferred from a particular property and
+        /// OnlyUpdates means that only updates are applied to the destination.
+        /// </summary>
         public MergeMode MergeMode { get; set; }
+
+        /// <summary>
+        /// The table definition of the destination table. By default, the table definition is read from the database.
+        /// Provide a table definition if the definition of the target can't be read automatically or you want the DbMerge
+        /// only to use the columns in the provided definition.
+        /// </summary>
         public TableDefinition DestinationTableDefinition { get; set; }
+
+        /// <summary>
+        /// The name of the target database table for the merge.
+        /// </summary>
         public string TableName { get; set; }
+
+        /// <summary>
+        /// A list that is filled with delta information when the merge is executed.
+        /// It will contain inserted, updated, deleted and untouched (existing) rows.
+        /// </summary>
         public List<TInput> DeltaTable { get; set; } = new List<TInput>();
+
+        /// <summary>
+        /// A list of property names that are used in the Merge.
+        /// </summary>
         public MergeProperties MergeProperties { get; set; } = new MergeProperties();
+
+        /// <summary>
+        /// By default, only records are deleted that either need to be deleted or inserted by using a DELETE FROM statement.
+        /// If this property is set to true, all records are delete before using a TRUNCATE, then subsequently records are reinserted again.
+        /// This can be faster if many records would need to be deleted from the destination.
+        /// </summary>
         public bool UseTruncateMethod
         {
             get
@@ -50,12 +83,18 @@ namespace ETLBox.DataFlow.Connectors
         }
         bool _useTruncateMethod;
 
+        /// <summary>
+        /// The batch size used when inserted data into the database table.
+        /// </summary>
         public int BatchSize { get; set; } = DataFlowBatchDestination<TInput>.DEFAULT_BATCH_SIZE;
 
         #endregion
 
         #region Connection Manager
 
+        /// <summary>
+        /// The connection manager used to connect to the database - use the right connection manager for your database type.
+        /// </summary>
         public virtual IConnectionManager ConnectionManager { get; set; }
 
         internal virtual IConnectionManager DbConnectionManager
@@ -69,9 +108,9 @@ namespace ETLBox.DataFlow.Connectors
             }
         }
 
-        public string QB => DbConnectionManager.QB;
-        public string QE => DbConnectionManager.QE;
-        public ConnectionManagerType ConnectionType => this.DbConnectionManager.ConnectionManagerType;
+        private string QB => DbConnectionManager.QB;
+        private string QE => DbConnectionManager.QE;
+        private ConnectionManagerType ConnectionType => this.DbConnectionManager.ConnectionManagerType;
 
         #endregion
 
@@ -267,7 +306,7 @@ namespace ETLBox.DataFlow.Connectors
         bool WasTruncationExecuted;
         DBMergeTypeInfo TypeInfo;
 
-        public ChangeAction? GetChangeAction(TInput row)
+        private ChangeAction? GetChangeAction(TInput row)
         {
             if (TypeInfo.IsDynamic)
             {
@@ -285,7 +324,7 @@ namespace ETLBox.DataFlow.Connectors
                     "contain a property ChangeAction (public ChangeAction? ChangeAction {get;set;}");
         }
 
-        public void SetChangeAction(TInput row, ChangeAction? changeAction)
+        private void SetChangeAction(TInput row, ChangeAction? changeAction)
         {
             if (TypeInfo.IsDynamic)
             {
@@ -301,7 +340,7 @@ namespace ETLBox.DataFlow.Connectors
     "contain a property ChangeAction (public ChangeAction? ChangeAction {get;set;}");
         }
 
-        public string GetUniqueId(TInput row)
+        private string GetUniqueId(TInput row)
         {
             string result = "";
             if (TypeInfo.IsDynamic && MergeProperties.IdPropertyNames.Count > 0)
@@ -326,7 +365,7 @@ namespace ETLBox.DataFlow.Connectors
   "to identify matching rows - please use the IdColumn attribute or add a property name in the MergeProperties.IdProperyNames list.");
         }
 
-        public bool GetIsDeletion(TInput row)
+        private bool GetIsDeletion(TInput row)
         {
             bool result = true;
             if (TypeInfo.IsDynamic && MergeProperties.DeletionProperties.Count > 0)
@@ -351,7 +390,7 @@ namespace ETLBox.DataFlow.Connectors
                 return false;
         }
 
-        public void SetChangeDate(TInput row, DateTime changeDate)
+        private void SetChangeDate(TInput row, DateTime changeDate)
         {
             if (TypeInfo.IsDynamic)
             {
@@ -367,7 +406,7 @@ namespace ETLBox.DataFlow.Connectors
     "contain a property ChangeDate (public DateTime ChangeDate {get;set;}");
         }
 
-        public bool AreEqual(object self, object other)
+        private bool AreEqual(object self, object other)
         {
             if (other == null || self == null) return false;
             bool result = true;
@@ -431,7 +470,7 @@ namespace ETLBox.DataFlow.Connectors
                 InputDataDict.Add(GetUniqueId(d), d);
         }
 
-        void TruncateDestinationOnce()
+        private void TruncateDestinationOnce()
         {
             if (WasTruncationExecuted == true) return;
             WasTruncationExecuted = true;
@@ -439,7 +478,7 @@ namespace ETLBox.DataFlow.Connectors
             TruncateTableTask.Truncate(this.ConnectionManager, TableName);
         }
 
-        void IdentifyAndDeleteMissingEntries()
+        private void IdentifyAndDeleteMissingEntries()
         {
             if (MergeMode == MergeMode.NoDeletions || MergeMode == MergeMode.OnlyUpdates) return;
             IEnumerable<TInput> deletions = null;

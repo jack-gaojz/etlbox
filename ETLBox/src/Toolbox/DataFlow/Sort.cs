@@ -8,9 +8,10 @@ using System.Threading.Tasks.Dataflow;
 namespace ETLBox.DataFlow.Transformations
 {
     /// <summary>
-    /// Sort the input with the given sort function.
+    /// Sort the incoming data with the given sort function.
+    /// This is a blocking transformation - no output will be produced until all input data has arrived in the transformation.
     /// </summary>
-    /// <typeparam name="TInput">Type of input data (equal type of output data).</typeparam>
+    /// <typeparam name="TInput">Type of ingoing (and also outgoing) data.</typeparam>
     /// <example>
     /// <code>
     /// Comparison&lt;MyDataRow&gt; comp = new Comparison&lt;MyDataRow&gt;(
@@ -19,23 +20,24 @@ namespace ETLBox.DataFlow.Transformations
     /// Sort&lt;MyDataRow&gt; block = new Sort&lt;MyDataRow&gt;(comp);
     /// </code>
     /// </example>
-    public class Sort<TInput> : DataFlowTransformation<TInput, TInput>, ILoggableTask, IDataFlowTransformation<TInput, TInput>
+    public class Sort<TInput> : DataFlowTransformation<TInput, TInput>
     {
         #region Public properties
 
+        /// <inheritdoc/>
         public override string TaskName { get; set; } = "Sort";
-        public Comparison<TInput> SortFunction { get; set; }
-        //{
-        //    get { return _sortFunction; }
-        //    set
-        //    {
-        //        _sortFunction = value;
-        //        InitBufferObjects();
-        //    }
-        //}
 
+        /// <summary>
+        /// A System.Comparison used to sort the data.
+        /// </summary>
+        public Comparison<TInput> SortFunction { get; set; }
+
+        /// <inheritdoc/>
         public override ISourceBlock<TInput> SourceBlock => BlockTransformation.SourceBlock;
+        /// <inheritdoc/>
         public override ITargetBlock<TInput> TargetBlock => BlockTransformation.TargetBlock;
+
+        public new int MaxBufferSize => -1;
 
         #endregion
 
@@ -46,6 +48,7 @@ namespace ETLBox.DataFlow.Transformations
             BlockTransformation = new BlockTransformation<TInput, TInput>(SortByFunc);
         }
 
+        /// <param name="sortFunction">Will set the <see cref="SortFunction"/></param>
         public Sort(Comparison<TInput> sortFunction) : this()
         {
             SortFunction = sortFunction;
@@ -59,7 +62,7 @@ namespace ETLBox.DataFlow.Transformations
         protected override void InternalInitBufferObjects()
         {
             BlockTransformation.CopyLogTaskProperties(this);
-            if (MaxBufferSize > 0) BlockTransformation.MaxBufferSize = this.MaxBufferSize;
+            BlockTransformation.MaxBufferSize = -1; //Blocking transformation
             BlockTransformation.InitBufferObjects();
         }
 
@@ -68,13 +71,10 @@ namespace ETLBox.DataFlow.Transformations
             NLogFinishOnce();
         }
 
-
         protected override void CleanUpOnFaulted(Exception e) { }
         internal override void CompleteBufferOnPredecessorCompletion() => BlockTransformation.CompleteBufferOnPredecessorCompletion();
 
         internal override void FaultBufferOnPredecessorCompletion(Exception e) => BlockTransformation.FaultBufferOnPredecessorCompletion(e);
-
-
 
         #endregion
 
@@ -92,9 +92,7 @@ namespace ETLBox.DataFlow.Transformations
 
     }
 
-    /// <summary>
-    /// Sort the input with the given sort function. The non generic implementation works with a dyanmic object.
-    /// </summary>
+    /// <inheritdoc/>
     public class Sort : Sort<ExpandoObject>
     {
         public Sort() : base()

@@ -12,18 +12,38 @@ using System.Threading.Tasks.Dataflow;
 namespace ETLBox.DataFlow.Transformations
 {
     /// <summary>
-    /// Aggregates data by the given aggregation method.
+    /// Aggregates data by the given aggregation methods.
+    /// The aggregate is a partial-blocking transformation - only the aggregation values are stored in separate memory objects.
+    /// When all rows have been processed by the aggregation, the aggregated values are written into the output.
     /// </summary>
-    /// <typeparam name="TInput">Type of data input</typeparam>
-    /// <typeparam name="TOutput">Type of data output</typeparam>
+    /// <typeparam name="TInput">Type of ingoing data.</typeparam>
+    /// <typeparam name="TOutput">Type of outgoing data.</typeparam>
     public class Aggregation<TInput, TOutput> : DataFlowTransformation<TInput, TOutput>
     {
         #region Public properties
+
+        /// <inheritdoc/>
         public override string TaskName { get; set; } = "Execute aggregation block";
+
+        /// <summary>
+        /// This action describes how the input data is aggregated
+        /// </summary>
         public Action<TInput, TOutput> AggregationAction { get; set; }
+
+        /// <summary>
+        /// This Func defines the aggregation level for the input data
+        /// </summary>
         public Func<TInput, object> GroupingFunc { get; set; }
+
+        /// <summary>
+        /// This action will store the result of the aggregation from the input in the output object
+        /// </summary>
         public Action<object, TOutput> StoreKeyAction { get; set; }
+
+        /// <inheritdoc/>
         public override ISourceBlock<TOutput> SourceBlock => OutputBuffer;
+
+        /// <inheritdoc/>
         public override ITargetBlock<TInput> TargetBlock => InputBuffer;
 
         #endregion
@@ -36,17 +56,23 @@ namespace ETLBox.DataFlow.Transformations
             CheckTypeInfo();
         }
 
+        /// <param name="aggregationAction">Sets the <see cref="AggregationAction"/></param>
         public Aggregation(Action<TInput, TOutput> aggregationAction) : this()
         {
             AggregationAction = aggregationAction;
         }
 
+        /// <param name="aggregationAction">Sets the <see cref="AggregationAction"/></param>
+        /// <param name="groupingFunc">Sets the <see cref="GroupingFunc"/></param>
         public Aggregation(Action<TInput, TOutput> aggregationAction, Func<TInput, object> groupingFunc)
             : this(aggregationAction)
         {
             GroupingFunc = groupingFunc;
         }
 
+        /// <param name="aggregationAction">Sets the <see cref="AggregationAction"/></param>
+        /// <param name="groupingFunc">Sets the <see cref="GroupingFunc"/></param>
+        /// <param name="storeKeyAction">Sets the <see cref="StoreKeyAction"/></param>
         public Aggregation(Action<TInput, TOutput> aggregationAction, Func<TInput, object> groupingFunc, Action<object, TOutput> storeKeyAction)
             : this(aggregationAction, groupingFunc)
         {
@@ -239,11 +265,7 @@ namespace ETLBox.DataFlow.Transformations
         Count
     }
 
-    /// <summary>
-    /// Aggregates data by the given aggregation method.
-    /// The non generic implementation uses dynamic objects.
-    /// </summary>
-    /// <see cref="Aggregation{TInput, TOutput}"/>
+    /// <inheritdoc />
     public class Aggregation : Aggregation<ExpandoObject, ExpandoObject>
     {
         public Aggregation(Action<ExpandoObject, ExpandoObject> aggregationAction) : base(aggregationAction)

@@ -10,7 +10,7 @@ namespace ETLBox.DataFlow.Connectors
     /// Writes data into a text file. Each line in the output is created by calling the
     /// <see cref="WriteLineFunc"/> or by invoking ToString() on the object.
     /// </summary>
-    /// <typeparam name="TInput">The type of ingoing data.</typeparam>
+    /// <typeparam name="TInput">Type of ingoing data.</typeparam>
     public class TextDestination<TInput> : DataFlowStreamDestination<TInput>, ILoggableTask, IDataFlowDestination<TInput>
     {
         #region Public properties
@@ -37,14 +37,13 @@ namespace ETLBox.DataFlow.Connectors
         }
 
         /// <param name="filename">Will set the <see cref="Uri"/> to the given file name.</param>
-
         public TextDestination(string filename) : this()
         {
             Uri = filename;
         }
 
         /// <param name="filename">Will set the <see cref="Uri"/> to the given file name.</param>
-        /// <param name="writeLineFunc"><see cref="WriteLineFunc"/></param>
+        /// <param name="writeLineFunc">Sets the <see cref="WriteLineFunc"/></param>
         public TextDestination(string filename, Func<TInput, string> writeLineFunc) : this(filename)
         {
             WriteLineFunc = writeLineFunc;
