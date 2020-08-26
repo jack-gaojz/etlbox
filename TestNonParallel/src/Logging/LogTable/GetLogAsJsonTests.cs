@@ -18,15 +18,16 @@ namespace ETLBoxTests.Logging
         {
             CreateLoadProcessTableTask.Create(SqlConnection);
             CreateLogTableTask.Create(SqlConnection);
-            ControlFlow.AddLoggingDatabaseToConfig(SqlConnection);
-            ControlFlow.DefaultDbConnection = SqlConnection;
+            ETLBox.Logging.Logging.AddLoggingDatabaseToConfig(SqlConnection);
+            ETLBox.ControlFlow.ControlFlow.DefaultDbConnection = SqlConnection;
         }
 
         public void Dispose()
         {
-            DropTableTask.Drop(SqlConnection, ControlFlow.LogTable);
-            DropTableTask.Drop(SqlConnection, ControlFlow.LoadProcessTable);
-            ControlFlow.ClearSettings();
+            DropTableTask.Drop(SqlConnection, ETLBox.Logging.Logging.LogTable);
+            DropTableTask.Drop(SqlConnection, ETLBox.Logging.Logging.LoadProcessTable);
+            ETLBox.Logging.Logging.ClearSettings();
+            ETLBox.ControlFlow.ControlFlow.ClearSettings();
         }
 
         private static string RemoveHashes(string jsonresult) => Regex.Replace(jsonresult, @"""taskhash"": ""[A-Za-z0-9]*""", @"""taskHash"": """"");

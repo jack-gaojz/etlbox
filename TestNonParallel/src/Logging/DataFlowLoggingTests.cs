@@ -21,13 +21,14 @@ namespace ETLBoxTests.Logging
         public DataFlowLoggingTests(LoggingDatabaseFixture dbFixture)
         {
             CreateLogTableTask.Create(SqlConnection);
-            ControlFlow.AddLoggingDatabaseToConfig(SqlConnection);
+            ETLBox.Logging.Logging.AddLoggingDatabaseToConfig(SqlConnection);
         }
 
         public void Dispose()
         {
-            DropTableTask.Drop(SqlConnection, ControlFlow.LogTable);
-            ControlFlow.ClearSettings();
+            DropTableTask.Drop(SqlConnection, ETLBox.Logging.Logging.LogTable);
+            ETLBox.Logging.Logging.ClearSettings();
+            ETLBox.ControlFlow.ControlFlow.ClearSettings();
             DataFlow.ClearSettings();
         }
 

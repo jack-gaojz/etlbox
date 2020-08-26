@@ -55,13 +55,13 @@ namespace ETLBox.Logging
         void NLogStart()
         {
             if (!DisableLogging)
-                NLogger.Info(TaskName, TaskType, "START", TaskHash, ControlFlow.ControlFlow.STAGE, ControlFlow.ControlFlow.CurrentLoadProcess?.Id);
+                NLogger.Info(TaskName, TaskType, "START", TaskHash, Logging.STAGE, Logging.CurrentLoadProcess?.Id);
         }
 
         void NLogFinish()
         {
             if (!DisableLogging)
-                NLogger.Info(TaskName, TaskType, "END", TaskHash, ControlFlow.ControlFlow.STAGE, ControlFlow.ControlFlow.CurrentLoadProcess?.Id);
+                NLogger.Info(TaskName, TaskType, "END", TaskHash, Logging.STAGE, Logging.CurrentLoadProcess?.Id);
         }
 
 

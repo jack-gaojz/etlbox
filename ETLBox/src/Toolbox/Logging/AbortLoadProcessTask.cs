@@ -29,7 +29,7 @@ namespace ETLBox.Logging
                 DisableLogging = true,
             };
             rlp.Execute();
-            ControlFlow.ControlFlow.CurrentLoadProcess = rlp.LoadProcess;
+            Logging.CurrentLoadProcess = rlp.LoadProcess;
         }
 
         /* Public properties */
@@ -38,7 +38,7 @@ namespace ETLBox.Logging
         {
             get
             {
-                return _loadProcessId ?? ControlFlow.ControlFlow.CurrentLoadProcess?.Id;
+                return _loadProcessId ?? Logging.CurrentLoadProcess?.Id;
             }
             set
             {
@@ -57,7 +57,7 @@ namespace ETLBox.Logging
   , {QB}abort_message{QE} = {PP}AbortMessage
   WHERE {QB}id{QE} = {PP}LoadProcessId
 ";
-        ObjectNameDescriptor TN => new ObjectNameDescriptor(ControlFlow.ControlFlow.LoadProcessTable, QB, QE);
+        ObjectNameDescriptor TN => new ObjectNameDescriptor(Logging.LoadProcessTable, QB, QE);
 
         public AbortLoadProcessTask()
         {

@@ -48,7 +48,7 @@ namespace ETLBox.Logging
         {
             get
             {
-                return _loadProcessId ?? ControlFlow.ControlFlow.CurrentLoadProcess?.Id;
+                return _loadProcessId ?? Logging.CurrentLoadProcess?.Id;
             }
             set
             {
@@ -117,7 +117,7 @@ ORDER BY {QB}end_date{QE} DESC, {QB}id{QE} DESC";
             }
         }
 
-        ObjectNameDescriptor TN => new ObjectNameDescriptor(ControlFlow.ControlFlow.LoadProcessTable, QB, QE);
+        ObjectNameDescriptor TN => new ObjectNameDescriptor(Logging.LoadProcessTable, QB, QE);
 
         public ReadLoadProcessTableTask()
         {

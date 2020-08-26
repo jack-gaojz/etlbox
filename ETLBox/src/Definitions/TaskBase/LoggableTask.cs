@@ -26,7 +26,7 @@ namespace ETLBox.ControlFlow
         /// </summary>
         public virtual string TaskName { get; set; } = "N/A";
 
-        internal NLog.Logger NLogger { get; set; } = ControlFlow.GetLogger();
+        internal NLog.Logger NLogger { get; set; } = Logging.Logging.GetLogger();
 
         public bool _disableLogging;
 
@@ -37,10 +37,10 @@ namespace ETLBox.ControlFlow
         {
             get
             {
-                if (ControlFlow.DisableAllLogging == false)
+                if (Logging.Logging.DisableAllLogging == false)
                     return _disableLogging;
                 else
-                    return ControlFlow.DisableAllLogging;
+                    return Logging.Logging.DisableAllLogging;
             }
             set
             {
@@ -51,7 +51,7 @@ namespace ETLBox.ControlFlow
         private string _taskHash;
 
         /// <summary>
-        /// Creates a unique hash value to identify the task. 
+        /// Creates a unique hash value to identify the task.
         /// </summary>
         public virtual string TaskHash
         {

@@ -25,7 +25,7 @@ namespace ETLBoxTests.Logging
 
         public void Dispose()
         {
-            ControlFlow.ClearSettings();
+            ETLBox.Logging.Logging.ClearSettings();
         }
 
         [Fact]

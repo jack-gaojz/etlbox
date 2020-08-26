@@ -73,7 +73,7 @@ namespace ETLBox.Logging
         {
             get
             {
-                return _loadProcessKey ?? ControlFlow.ControlFlow.CurrentLoadProcess?.Id;
+                return _loadProcessKey ?? Logging.CurrentLoadProcess?.Id;
             }
             set
             {

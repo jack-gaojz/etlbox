@@ -17,14 +17,14 @@ namespace ETLBoxTests.Logging
         {
             CreateLogTableTask.Create(SqlConnection);
             CreateLoadProcessTableTask.Create(SqlConnection);
-            ControlFlow.AddLoggingDatabaseToConfig(SqlConnection);
+            ETLBox.Logging.Logging.AddLoggingDatabaseToConfig(SqlConnection);
         }
 
         public void Dispose()
         {
-            DropTableTask.Drop(SqlConnection, ControlFlow.LogTable);
-            DropTableTask.Drop(SqlConnection, ControlFlow.LoadProcessTable);
-            ControlFlow.ClearSettings();
+            DropTableTask.Drop(SqlConnection, ETLBox.Logging.Logging.LogTable);
+            DropTableTask.Drop(SqlConnection, ETLBox.Logging.Logging.LoadProcessTable);
+            ETLBox.Logging.Logging.ClearSettings();
         }
 
         private void RunProcess1()

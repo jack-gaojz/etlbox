@@ -22,7 +22,7 @@ namespace ETLBoxTests.Logging
 
         public void Dispose()
         {
-            ControlFlow.ClearSettings();
+            ETLBox.Logging.Logging.ClearSettings();
         }
 
         [Theory, MemberData(nameof(Connections))]
@@ -46,7 +46,7 @@ namespace ETLBoxTests.Logging
         {
             //Arrange
             CreateLogTableTask.Create(conn, "test_log");
-            ControlFlow.AddLoggingDatabaseToConfig(conn, NLog.LogLevel.Trace, "test_log");
+            ETLBox.Logging.Logging.AddLoggingDatabaseToConfig(conn, NLog.LogLevel.Trace, "test_log");
             //Act
             LogTask.Error(conn, "Error!");
             LogTask.Warn(conn, "Warn!");
@@ -55,21 +55,21 @@ namespace ETLBoxTests.Logging
             LogTask.Trace(conn, "Trace!");
             LogTask.Fatal(conn, "Fatal!");
             //Assert
-            Assert.Equal(1, RowCountTask.Count(conn, ControlFlow.LogTable,
+            Assert.Equal(1, RowCountTask.Count(conn, ETLBox.Logging.Logging.LogTable,
                 $"{conn.QB}message{conn.QE} = 'Error!' AND {conn.QB}level{conn.QE} = 'Error' AND {conn.QB}task_action{conn.QE} = 'LOG'"));
-            Assert.Equal(1, RowCountTask.Count(conn, ControlFlow.LogTable,
+            Assert.Equal(1, RowCountTask.Count(conn, ETLBox.Logging.Logging.LogTable,
                 $"{conn.QB}message{conn.QE} = 'Warn!' AND {conn.QB}level{conn.QE} = 'Warn' AND {conn.QB}task_action{conn.QE} = 'LOG'"));
-            Assert.Equal(1, RowCountTask.Count(conn, ControlFlow.LogTable,
+            Assert.Equal(1, RowCountTask.Count(conn, ETLBox.Logging.Logging.LogTable,
                 $"{conn.QB}message{conn.QE} = 'Info!' AND {conn.QB}level{conn.QE} = 'Info' AND {conn.QB}task_action{conn.QE} = 'LOG'"));
-            Assert.Equal(1, RowCountTask.Count(conn, ControlFlow.LogTable,
+            Assert.Equal(1, RowCountTask.Count(conn, ETLBox.Logging.Logging.LogTable,
                 $"{conn.QB}message{conn.QE} = 'Debug!' AND {conn.QB}level{conn.QE} = 'Debug' AND {conn.QB}task_action{conn.QE} = 'LOG'"));
-            Assert.Equal(1, RowCountTask.Count(conn, ControlFlow.LogTable,
+            Assert.Equal(1, RowCountTask.Count(conn, ETLBox.Logging.Logging.LogTable,
                 $"{conn.QB}message{conn.QE} = 'Trace!' AND {conn.QB}level{conn.QE} = 'Trace' AND {conn.QB}task_action{conn.QE} = 'LOG'"));
-            Assert.Equal(1, RowCountTask.Count(conn, ControlFlow.LogTable,
+            Assert.Equal(1, RowCountTask.Count(conn, ETLBox.Logging.Logging.LogTable,
                 $"{conn.QB}message{conn.QE} = 'Fatal!' AND {conn.QB}level{conn.QE} = 'Fatal' AND {conn.QB}task_action{conn.QE} = 'LOG'"));
 
             //Cleanup
-            DropTableTask.Drop(conn, ControlFlow.LogTable);
+            DropTableTask.Drop(conn, ETLBox.Logging.Logging.LogTable);
         }
 
         [Fact]
@@ -77,10 +77,10 @@ namespace ETLBoxTests.Logging
         {
             //Arrange
             CreateLogTableTask.Create(SqlConnection, "test_log_stage");
-            ControlFlow.AddLoggingDatabaseToConfig(SqlConnection, NLog.LogLevel.Debug, "test_log_stage");
+            ETLBox.Logging.Logging.AddLoggingDatabaseToConfig(SqlConnection, NLog.LogLevel.Debug, "test_log_stage");
 
             //Act
-            ControlFlow.STAGE = "SETUP";
+            ETLBox.Logging.Logging.STAGE = "SETUP";
             SqlTask.ExecuteNonQuery(SqlConnection, "Test Task", "Select 1 as test");
 
             //Assert
@@ -92,7 +92,7 @@ namespace ETLBoxTests.Logging
             }.Count().Rows);
 
             //Cleanup
-            DropTableTask.Drop(SqlConnection, ControlFlow.LogTable);
+            DropTableTask.Drop(SqlConnection, ETLBox.Logging.Logging.LogTable);
         }
 
         [Theory, MemberData(nameof(Connections))]
@@ -100,7 +100,7 @@ namespace ETLBoxTests.Logging
         {
             //Arrange
             CreateLogTableTask.Create(connection, "test_readlog");
-            ControlFlow.AddLoggingDatabaseToConfig(connection, NLog.LogLevel.Info, "test_readlog");
+            ETLBox.Logging.Logging.AddLoggingDatabaseToConfig(connection, NLog.LogLevel.Info, "test_readlog");
             string fromdual = connection.GetType() == typeof(OracleConnectionManager) ? " FROM DUAL" : "";
             SqlTask.ExecuteNonQuery(connection, "Test Task", $"Select 1 as test {fromdual}");
 
@@ -114,7 +114,7 @@ namespace ETLBoxTests.Logging
                  );
 
             //Cleanup
-            DropTableTask.Drop(connection, ControlFlow.LogTable);
+            DropTableTask.Drop(connection, ETLBox.Logging.Logging.LogTable);
         }
     }
 }

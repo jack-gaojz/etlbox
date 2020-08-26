@@ -26,13 +26,14 @@ namespace ETLBoxTests.Logging
         public DifferentLoggingDBTests(LoggingDatabaseFixture dbFixture, OtherDBFixture odbFixture)
         {
             CreateLogTableTask.Create(LoggingConnection);
-            ControlFlow.AddLoggingDatabaseToConfig(LoggingConnection);
+            ETLBox.Logging.Logging.AddLoggingDatabaseToConfig(LoggingConnection);
         }
 
         public void Dispose()
         {
-            DropTableTask.Drop(LoggingConnection, ControlFlow.LogTable);
-            ControlFlow.ClearSettings();
+            DropTableTask.Drop(LoggingConnection, ETLBox.Logging.Logging.LogTable);
+            ETLBox.Logging.Logging.ClearSettings();
+            ETLBox.ControlFlow.ControlFlow.ClearSettings();
             DataFlow.ClearSettings();
         }
 
@@ -45,7 +46,7 @@ namespace ETLBoxTests.Logging
             SqlTask.ExecuteNonQuery(NoLogConnection, "Create source table", @"CREATE TABLE CFLogSource
                             (Col1 INT NOT NULL, Col2 NVARCHAR(50) NULL)");
 
-            ControlFlow.DefaultDbConnection = NoLogConnection;
+            ETLBox.ControlFlow.ControlFlow.DefaultDbConnection = NoLogConnection;
 
             SqlTask.ExecuteNonQuery("Insert demo data", "INSERT INTO CFLogSource VALUES(1,'Test1')");
 
