@@ -16,18 +16,32 @@ namespace ETLBox.ControlFlow.Tasks
     /// </example>
     public class RowCountTask : ControlFlowTask
     {
-        /* ITask Interface */
+        /// <inheritdoc/>
         public override string TaskName => $"Count Rows for {TableName}" + (HasCondition ? $" with condition {Condition}" : "");
-        public void Execute()
-        {
-            Rows = new SqlTask(this, Sql).ExecuteScalar<int>();
-        }
 
+        /// <summary>
+        /// Name of the table on which the rows are counted
+        /// </summary>
         public string TableName { get; set; }
+
+        /// <summary>
+        /// The formatted table table name
+        /// </summary>
         public ObjectNameDescriptor TN => new ObjectNameDescriptor(TableName, QB, QE);
+
+        /// <summary>
+        /// Part of the sql where condition which restrict which rows are counted
+        /// </summary>
         public string Condition { get; set; }
-        public bool HasCondition => !String.IsNullOrWhiteSpace(Condition);
+
+        /// <summary>
+        /// Will hold the number of counted rows after execution
+        /// </summary>
         public int? Rows { get; private set; }
+
+        /// <summary>
+        /// Indicates if the table contains rows - only has a value after the execution
+        /// </summary>
         public bool? HasRows => Rows > 0;
 
         /// <summary>
@@ -40,6 +54,10 @@ namespace ETLBox.ControlFlow.Tasks
         /// (but while counting the tables new data could be inserted, which could lead to wrong results).
         /// </summary>
         public bool NoLock { get; set; }
+
+        /// <summary>
+        /// The sql that is executed to count the rows in the table - will change depending on your parameters.
+        /// </summary>
         public string Sql
         {
             get
@@ -54,6 +72,14 @@ SELECT COUNT(*)
 FROM {TN.QuotatedFullName} 
 {WhereClause} {Condition} {NoLockHint}";
             }
+        }
+
+        /// <summary>
+        /// Performs the row count
+        /// </summary>
+        public void Execute()
+        {
+            Rows = new SqlTask(this, Sql).ExecuteScalar<int>();
         }
 
         public RowCountTask() { }
@@ -98,6 +124,7 @@ FROM {TN.QuotatedFullName}
         public static int? Count(IConnectionManager connectionManager, string tableName, string condition) => new RowCountTask(tableName, condition) { ConnectionManager = connectionManager }.Count().Rows;
         public static int? Count(IConnectionManager connectionManager, string tableName, string condition, RowCountOptions options) => new RowCountTask(tableName, condition, options) { ConnectionManager = connectionManager }.Count().Rows;
 
+        bool HasCondition => !String.IsNullOrWhiteSpace(Condition);
         string WhereClause => HasCondition ? "WHERE" : String.Empty;
         string NoLockHint => NoLock ? "WITH (NOLOCK)" : String.Empty;
 

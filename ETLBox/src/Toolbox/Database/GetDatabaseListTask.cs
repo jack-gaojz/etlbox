@@ -16,8 +16,12 @@ namespace ETLBox.ControlFlow.Tasks
     /// </example>
     public class GetDatabaseListTask : ControlFlowTask
     {
-        /* ITask Interface */
+        /// <inheritdoc/>
         public override string TaskName => $"Get names of all databases";
+
+        /// <summary>
+        /// Queries the server for all user database names. The result is stored in <see cref="DatabaseNames"/>
+        /// </summary>
         public void Execute()
         {
             if (!DbConnectionManager.SupportDatabases)
@@ -37,7 +41,14 @@ namespace ETLBox.ControlFlow.Tasks
         }
 
 
+        /// <summary>
+        /// A list containing all databases after executing.
+        /// </summary>
         public List<string> DatabaseNames { get; set; }
+
+        /// <summary>
+        /// The sql code generated to query all database names
+        /// </summary>
         public string Sql
         {
             get
@@ -72,8 +83,18 @@ namespace ETLBox.ControlFlow.Tasks
             return this;
         }
 
+        /// <summary>
+        /// Runs sql code to determine all user database names.
+        /// </summary>
+        /// <returns>A list of all user database names</returns>
         public static List<string> List()
             => new GetDatabaseListTask().GetList().DatabaseNames;
+
+        /// <summary>
+        /// Runs sql code to determine all user database names.
+        /// </summary>
+        /// <param name="connectionManager">The connection manager of the server you want to connect</param>
+        /// <returns>A list of all user database names</returns>
         public static List<string> List(IConnectionManager connectionManager)
             => new GetDatabaseListTask() { ConnectionManager = connectionManager }.GetList().DatabaseNames;
 

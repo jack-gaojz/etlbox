@@ -13,16 +13,30 @@ namespace ETLBox.ControlFlow.Tasks
     /// </example>
     public class TruncateTableTask : ControlFlowTask
     {
-        /* ITask Interface */
+        /// <inheritdoc/>
         public override string TaskName => $"Truncate table {TableName}";
+
+        /// <summary>
+        /// Executes the table truncation.
+        /// </summary>
         public void Execute()
         {
             new SqlTask(this, Sql).ExecuteNonQuery();
         }
 
-        /* Public properties */
+        /// <summary>
+        /// Name of the table that should be truncated
+        /// </summary>
         public string TableName { get; set; }
+
+        /// <summary>
+        /// The formatted table table name
+        /// </summary>
         public ObjectNameDescriptor TN => new ObjectNameDescriptor(TableName, QB, QE);
+
+        /// <summary>
+        /// Sql code that is used when the task is executed.
+        /// </summary>
         public string Sql
         {
             get
@@ -39,14 +53,24 @@ namespace ETLBox.ControlFlow.Tasks
         {
 
         }
+
+        /// <param name="tableName">Sets the <see cref="TableName"/></param>
         public TruncateTableTask(string tableName) : this()
         {
             this.TableName = tableName;
         }
 
+        /// <summary>
+        /// Execute a table truncation
+        /// </summary>
+        /// <param name="tableName">Table that should be truncated</param>
         public static void Truncate(string tableName) => new TruncateTableTask(tableName).Execute();
+
+        /// <summary>
+        /// Execute a table truncation
+        /// </summary>
+        /// <param name="tableName">Table name that should be truncated</param>
+        /// <param name="connection">Database connection manager to connect with the database</param>
         public static void Truncate(IConnectionManager connection, string tableName) => new TruncateTableTask(tableName) { ConnectionManager = connection }.Execute();
-
-
     }
 }

@@ -4,11 +4,21 @@ using ETLBox.Helper;
 namespace ETLBox.ControlFlow.Tasks
 {
     /// <summary>
-    /// Creates or updates a view.
+    /// Creates or alters a view.
     /// </summary>
+    /// <example>
+    /// <code>
+    /// CreateViewTask.CreateOrAlter("viewname","SELECT value FROM table");
+    /// </code>
+    /// </example>
     public class CreateViewTask : ControlFlowTask
     {
+        /// <inheritdoc/>
         public override string TaskName => $"Create or alter view {ViewName ?? string.Empty}";
+
+        /// <summary>
+        /// Executes the creation/altering of the view.
+        /// </summary>
         public void Execute()
         {
             IsExisting = new IfTableOrViewExistsTask(ViewName) { ConnectionManager = this.ConnectionManager, DisableLogging = true }.Exists();
@@ -20,10 +30,24 @@ namespace ETLBox.ControlFlow.Tasks
             new SqlTask(this, Sql).ExecuteNonQuery();
         }
 
+        /// <summary>
+        /// The name of the view
+        /// </summary>
         public string ViewName { get; set; }
+
+        /// <summary>
+        /// The formatted name of the view
+        /// </summary>
         public ObjectNameDescriptor VN => new ObjectNameDescriptor(ViewName, QB, QE);
-        string CreateViewName => ConnectionType == ConnectionManagerType.Access ? VN.UnquotatedFullName : VN.QuotatedFullName;
+
+        /// <summary>
+        /// The view definition.
+        /// </summary>
         public string Definition { get; set; }
+
+        /// <summary>
+        /// The sql that is generated to create the view
+        /// </summary>
         public string Sql
         {
             get
@@ -44,9 +68,22 @@ AS
             this.Definition = definition;
         }
 
+        /// <summary>
+        /// Creates or alter a view.
+        /// </summary>
+        /// <param name="viewName">The name of the view</param>
+        /// <param name="definition">The view definition</param>
         public static void CreateOrAlter(string viewName, string definition) => new CreateViewTask(viewName, definition).Execute();
+
+        /// <summary>
+        /// Creates or alter a view.
+        /// </summary>
+        /// <param name="connectionManager">The connection manager of the database you want to connect</param>
+        /// <param name="viewName">The name of the view</param>
+        /// <param name="definition">The view definition</param>
         public static void CreateOrAlter(IConnectionManager connectionManager, string viewName, string definition) => new CreateViewTask(viewName, definition) { ConnectionManager = connectionManager }.Execute();
 
+        string CreateViewName => ConnectionType == ConnectionManagerType.Access ? VN.UnquotatedFullName : VN.QuotatedFullName;
         bool IsExisting { get; set; }
         string CreateOrAlterSql {
             get {

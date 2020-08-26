@@ -77,20 +77,37 @@ AND(object_name = '{ON.UnquotatedFullName}'
             this.ConnectionManager = connectionManager;
         }
 
+        /// <summary>
+        /// Ćhecks if the table or view exists
+        /// </summary>
+        /// <param name="objectName">The table or view name that you want to check for existence</param>
+        /// <returns>True if the table or view exists</returns>
         public static bool IsExisting(string objectName) => new IfTableOrViewExistsTask(objectName).Exists();
+
+        /// <summary>
+        /// Ćhecks if the table or view exists
+        /// </summary>
+        /// <param name="connectionManager">The connection manager of the database you want to connect</param>
+        /// <param name="objectName">The table or view name that you want to check for existence</param>
+        /// <returns>True if the table or view exists</returns>
         public static bool IsExisting(IConnectionManager connectionManager, string objectName)
             => new IfTableOrViewExistsTask(objectName) { ConnectionManager = connectionManager }.Exists();
 
-
-        public static void ThrowExceptionIfNotExists(IConnectionManager connectionManager, string tableName)
+        /// <summary>
+        /// Ćhecks if the table or view exists. If the table doesn't exists, an ETLBoxException is thrown.        ///
+        /// </summary>
+        /// <param name="connectionManager">The connection manager of the database you want to connect</param>
+        /// <param name="objectName">The table or view name that you want to check for existence</param>
+        /// <exception cref="ETLBoxException" />
+        public static void ThrowExceptionIfNotExists(IConnectionManager connectionManager, string objectName)
         {
-            bool tableExists = new IfTableOrViewExistsTask(tableName)
+            bool tableExists = new IfTableOrViewExistsTask(objectName)
             {
                 ConnectionManager = connectionManager,
                 DisableLogging = true
             }.Exists();
             if (!tableExists)
-                throw new ETLBoxException($"A table {tableName} does not exists in the database!");
+                throw new ETLBoxException($"A table {objectName} does not exists in the database!");
         }
     }
 }

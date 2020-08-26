@@ -17,8 +17,12 @@ namespace ETLBox.ControlFlow.Tasks
     /// </example>
     public class CreateProcedureTask : ControlFlowTask
     {
-        /* ITask Interface */
+        /// <inheritdoc/>
         public override string TaskName => $"{CreateOrAlterSql} procedure {ProcedureName}";
+
+        /// <summary>
+        /// Creates or updates the procedure on the database if the database does support procedures.
+        /// </summary>
         public void Execute()
         {
             if (!DbConnectionManager.SupportProcedures)
@@ -30,11 +34,29 @@ namespace ETLBox.ControlFlow.Tasks
             new SqlTask(this, Sql).ExecuteNonQuery();
         }
 
-        /* Public properties */
+        /// <summary>
+        /// The name of the procedure
+        /// </summary>
         public string ProcedureName { get; set; }
+
+        /// <summary>
+        /// The formatted procedure name
+        /// </summary>
         public ObjectNameDescriptor PN => new ObjectNameDescriptor(ProcedureName, QB, QE);
+
+        /// <summary>
+        /// The sql code of the procedure
+        /// </summary>
         public string ProcedureDefinition { get; set; }
+
+        /// <summary>
+        /// The parameters for the procedure
+        /// </summary>
         public IList<ProcedureParameter> ProcedureParameters { get; set; }
+
+        /// <summary>
+        /// The sql code that is used to create/update the procedure.
+        /// </summary>
         public string Sql => $@"{CreateOrAlterSql} PROCEDURE {PN.QuotatedFullName}{ParameterDefinition}{Language}
 {AS}
 {BEGIN}
@@ -66,15 +88,53 @@ namespace ETLBox.ControlFlow.Tasks
             this.ProcedureParameters = definition.Parameter;
         }
 
+        /// <summary>
+        /// Creates or updates a procedure.
+        /// </summary>
+        /// <param name="procedureName">The name of the procedure</param>
+        /// <param name="procedureDefinition">The sql code of the procedure</param>
         public static void CreateOrAlter(string procedureName, string procedureDefinition) => new CreateProcedureTask(procedureName, procedureDefinition).Execute();
+
+        /// <summary>
+        /// Creates or updates a procedure.
+        /// </summary>
+        /// <param name="procedureName">The name of the procedure</param>
+        /// <param name="procedureDefinition">The sql code of the procedure</param>
+        /// <param name="procedureParameter">A list of the parameters for the procedure</param>
         public static void CreateOrAlter(string procedureName, string procedureDefinition, IList<ProcedureParameter> procedureParameter)
             => new CreateProcedureTask(procedureName, procedureDefinition, procedureParameter).Execute();
+
+        /// <summary>
+        /// Creates or updates a procedure.
+        /// </summary>
+        /// <param name="procedure">The procedure definition object containing procedure name, code and potential parameters</param>
         public static void CreateOrAlter(ProcedureDefinition procedure)
             => new CreateProcedureTask(procedure).Execute();
+
+        /// <summary>
+        /// Creates or updates a procedure.
+        /// </summary>
+        /// <param name="connectionManager">The connection manager of the database you want to connect</param>
+        /// <param name="procedureName">The name of the procedure</param>
+        /// <param name="procedureDefinition">The sql code of the procedure</param>
         public static void CreateOrAlter(IConnectionManager connectionManager, string procedureName, string procedureDefinition)
             => new CreateProcedureTask(procedureName, procedureDefinition) { ConnectionManager = connectionManager }.Execute();
+
+        /// <summary>
+        /// Creates or updates a procedure.
+        /// </summary>
+        /// <param name="connectionManager">The connection manager of the database you want to connect</param>
+        /// <param name="procedureName">The name of the procedure</param>
+        /// <param name="procedureDefinition">The sql code of the procedure</param>
+        /// <param name="procedureParameter">A list of the parameters for the procedure</param>
         public static void CreateOrAlter(IConnectionManager connectionManager, string procedureName, string procedureDefinition, IList<ProcedureParameter> procedureParameter)
             => new CreateProcedureTask(procedureName, procedureDefinition, procedureParameter) { ConnectionManager = connectionManager }.Execute();
+
+        /// <summary>
+        /// Creates or updates a procedure.
+        /// </summary>
+        /// <param name="connectionManager">The connection manager of the database you want to connect</param>
+        /// <param name="procedure">The procedure definition object containing procedure name, code and potential parameters</param>
         public static void CreateOrAlter(IConnectionManager connectionManager, ProcedureDefinition procedure)
             => new CreateProcedureTask(procedure) { ConnectionManager = connectionManager }.Execute();
 
@@ -109,7 +169,7 @@ namespace ETLBox.ControlFlow.Tasks
             }
         }
 
-        public string ParameterSql(ProcedureParameter par)
+        private string ParameterSql(ProcedureParameter par)
         {
             string sql = Environment.NewLine + "";
             if (ConnectionType == ConnectionManagerType.SqlServer)

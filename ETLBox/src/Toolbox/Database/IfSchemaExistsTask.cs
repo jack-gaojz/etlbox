@@ -4,11 +4,10 @@ using ETLBox.Exceptions;
 namespace ETLBox.ControlFlow.Tasks
 {
     /// <summary>
-    /// Checks if a schema exists. In MySql, use the IfDatabaseExistsTask instead.
+    /// Checks if a schema exists. In MySql or MariaDb, use the IfDatabaseExistsTask instead.
     /// </summary>
     public class IfSchemaExistsTask : IfExistsTask
     {
-        /* ITask Interface */
         internal override string GetSql()
         {
             if (!DbConnectionManager.SupportSchemas)
@@ -33,7 +32,6 @@ IF EXISTS (SELECT schema_name(schema_id) FROM sys.schemas WHERE schema_name(sche
             }
         }
 
-        /* Some constructors */
         public IfSchemaExistsTask()
         {
         }
@@ -44,9 +42,20 @@ IF EXISTS (SELECT schema_name(schema_id) FROM sys.schemas WHERE schema_name(sche
         }
 
 
-        /* Static methods for convenience */
+        /// <summary>
+        /// Ćhecks if the schema exists
+        /// </summary>
+        /// <param name="schemaName">The schema name that you want to check for existence</param>
+        /// <returns>True if the schema exists</returns>
         public static bool IsExisting(string schemaName)
             => new IfSchemaExistsTask(schemaName).Exists();
+
+        /// <summary>
+        /// Ćhecks if the schema exists
+        /// </summary>
+        /// <param name="connectionManager">The connection manager of the database you want to connect</param>
+        /// <param name="schemaName">The schema name that you want to check for existence</param>
+        /// <returns>True if the schema exists</returns>
         public static bool IsExisting(IConnectionManager connectionManager, string schemaName)
             => new IfSchemaExistsTask(schemaName) { ConnectionManager = connectionManager }.Exists();
 

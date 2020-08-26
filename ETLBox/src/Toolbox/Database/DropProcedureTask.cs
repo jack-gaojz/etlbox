@@ -25,18 +25,34 @@ namespace ETLBox.ControlFlow.Tasks
             ObjectName = procedureName;
         }
 
+        /// <summary>
+        /// Drops a procedure.
+        /// </summary>
+        /// <param name="procedureName">Name of the procedure to drop</param>
         public static void Drop(string procedureName)
             => new DropProcedureTask(procedureName).Drop();
+
+        /// <summary>
+        /// Drops a procedure.
+        /// </summary>
+        /// <param name="connectionManager">The connection manager of the database you want to connect</param>
+        /// <param name="procedureName">Name of the procedure to drop</param>
         public static void Drop(IConnectionManager connectionManager, string procedureName)
             => new DropProcedureTask(procedureName) { ConnectionManager = connectionManager }.Drop();
+
+        /// <summary>
+        /// Drops a procedure if the procedure exists.
+        /// </summary>
+        /// <param name="procedureName">Name of the procedure to drop</param>
         public static void DropIfExists(string procedureName)
             => new DropProcedureTask(procedureName).DropIfExists();
+
+        /// <summary>
+        /// Drops a procedure if the procedure exists.
+        /// </summary>
+        /// <param name="connectionManager">The connection manager of the database you want to connect</param>
+        /// <param name="procedureName">Name of the procedure to drop</param>
         public static void DropIfExists(IConnectionManager connectionManager, string procedureName)
             => new DropProcedureTask(procedureName) { ConnectionManager = connectionManager }.DropIfExists();
-
-
-
     }
-
-
 }

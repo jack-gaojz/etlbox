@@ -18,8 +18,12 @@ namespace ETLBox.ControlFlow.Tasks
     /// </example>
     public class CalculateDatabaseHashTask : ControlFlowTask
     {
-        /* ITask Interface */
+        /// <inheritdoc/>
         public override string TaskName => $"Calculate hash value for schema(s) {SchemaNamesAsString}";
+
+        /// <summary>
+        /// Runs the sql code to execute the database hash
+        /// </summary>
         public void Execute()
         {
             if (ConnectionType != ConnectionManagerType.SqlServer)
@@ -36,12 +40,21 @@ namespace ETLBox.ControlFlow.Tasks
             DatabaseHash = HashHelper.Encrypt_Char40(String.Join("|", allColumns));
         }
 
-        /* Public properties */
+        /// <summary>
+        /// List of schema names that should be included in the database hash calculation
+        /// </summary>
         public List<string> SchemaNames { get; set; }
 
+        /// <summary>
+        /// A unique hash value that can identify a database based on it's object
+        /// </summary>
         public string DatabaseHash { get; private set; }
 
         string SchemaNamesAsString => String.Join(",", SchemaNames.Select(name => $"'{name}'"));
+
+        /// <summary>
+        /// The sql code generated to calculate the database hash value
+        /// </summary>
         public string Sql => $@"
 SELECT sch.name + '.' + tbls.name + N'|' + 
 	   cols.name + N'|' + 

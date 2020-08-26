@@ -5,8 +5,9 @@ using System.Collections.Generic;
 namespace ETLBox.ControlFlow.Tasks
 {
     /// <summary>
-    /// Executes any sql on the database. Use ExecuteNonQuery for SQL statements returning no data, ExecuteScalar for statements with one row and one column or
-    /// ExecuteReader for SQL that returns a result set.
+    /// Executes any sql on the database. Use ExecuteNonQuery for SQL statements returning no data,
+    /// ExecuteScalar for statements that return only one row and one column or
+    /// ExecuteReader for SQL that returns multiple rows or columns
     /// </summary>
     /// <example>
     /// <code>
@@ -15,12 +16,18 @@ namespace ETLBox.ControlFlow.Tasks
     /// </example>
     public class SqlTask : DbTask
     {
+        /// <inheritdoc/>
         public override string TaskName { get; set; } = "Run some sql";
+
+        /// <summary>
+        /// Executes a non query sql
+        /// </summary>
         public void Execute() => ExecuteNonQuery();
 
         public SqlTask() : base()
         { }
 
+        /// <param name="sql">Sets the <see cref="DbTask.Sql"/></param>
         public SqlTask(string sql) : base(sql) { }
 
         internal SqlTask(ControlFlowTask callingTask, string sql) : base(callingTask, sql) { }

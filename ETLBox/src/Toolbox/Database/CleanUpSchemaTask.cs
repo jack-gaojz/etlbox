@@ -5,6 +5,7 @@ namespace ETLBox.ControlFlow.Tasks
 {
     /// <summary>
     /// Tries to remove all database objects from the given schema(s).
+    /// Currently only SqlServer and Oracle support this task.
     /// </summary>
     /// <example>
     /// <code>
@@ -13,16 +14,27 @@ namespace ETLBox.ControlFlow.Tasks
     /// </example>
     public class CleanUpSchemaTask : ControlFlowTask
     {
-        /* ITask Interface */
+        /// <inheritdoc/>
         public override string TaskName => $"Clean up schema {SchemaName}";
+
+        /// <summary>
+        /// Runs the sql to clean up the schema
+        /// </summary>
         public void Execute()
         {
             if (ConnectionType != ConnectionManagerType.SqlServer && ConnectionType != ConnectionManagerType.Oracle)
-                throw new ETLBoxNotSupportedException("This task is only supported with SqlServer!");
+                throw new ETLBoxNotSupportedException("This task is only supported with SqlServer or Oracle!");
             new SqlTask(this, Sql).ExecuteNonQuery();
         }
-        /* Public properties */
+
+        /// <summary>
+        /// The name of the schema
+        /// </summary>
         public string SchemaName { get; set; }
+
+        /// <summary>
+        /// The sql code that is used to clean up the schema.
+        /// </summary>
         public string Sql
         {
             get
@@ -187,10 +199,28 @@ BEGIN
         }
 
 
-        /* Static methods for convenience */
+        /// <summary>
+        /// Runs the sql to clean up the user schema. (Oracle only)
+        /// </summary>
         public static void CleanUp() => new CleanUpSchemaTask().Execute();
+
+        /// <summary>
+        /// Runs the sql to clean up the user schema. (Oracle only)
+        /// </summary>
+        /// <param name="connectionManager">The connection manager of the database you want to connect</param>
         public static void CleanUp(IConnectionManager connectionManager) => new CleanUpSchemaTask() { ConnectionManager = connectionManager }.Execute();
+
+        /// <summary>
+        /// Runs the sql to clean up a schema. (Oracle and SqlServer only)
+        /// </summary>
+        /// <param name="schemaName">The name of the schema</param>
         public static void CleanUp(string schemaName) => new CleanUpSchemaTask(schemaName).Execute();
+
+        /// <summary>
+        /// Runs the sql to clean up a schema.(Oracle and SqlServer only)
+        /// </summary>
+        /// <param name="connectionManager">The connection manager of the database you want to connect</param>
+        /// <param name="schemaName">The name of the schema</param>
         public static void CleanUp(IConnectionManager connectionManager, string schemaName) => new CleanUpSchemaTask(schemaName) { ConnectionManager = connectionManager }.Execute();
 
 

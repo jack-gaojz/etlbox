@@ -7,7 +7,6 @@ namespace ETLBox.ControlFlow.Tasks
     /// </summary>
     public class IfIndexExistsTask : IfExistsTask, ILoggableTask
     {
-        /* ITask Interface */
         internal override string GetSql()
         {
             if (this.ConnectionType == ConnectionManagerType.SQLite)
@@ -63,7 +62,6 @@ AND aidx.INDEX_NAME   = '{ON.UnquotatedObjectName}'
             }
         }
 
-        /* Some constructors */
         public IfIndexExistsTask()
         {
         }
@@ -74,9 +72,21 @@ AND aidx.INDEX_NAME   = '{ON.UnquotatedObjectName}'
             OnObjectName = tableName;
         }
 
-
-        /* Static methods for convenience */
+        /// <summary>
+        /// Ćhecks if the index exists
+        /// </summary>
+        /// <param name="indexName">The index name that you want to check for existence</param>
+        /// <param name="tableName">The table name on which the index is based on</param>
+        /// <returns>True if the index exists</returns>
         public static bool IsExisting(string indexName, string tableName) => new IfIndexExistsTask(indexName, tableName).Exists();
+
+        /// <summary>
+        /// Ćhecks if the index exists
+        /// </summary>
+        /// <param name="connectionManager">The connection manager of the database you want to connect</param>
+        /// <param name="indexName">The index name that you want to check for existence</param>
+        /// <param name="tableName">The table name on which the index is based on</param>
+        /// <returns>True if the index exists</returns>
         public static bool IsExisting(IConnectionManager connectionManager, string indexName, string tableName)
             => new IfIndexExistsTask(indexName, tableName) { ConnectionManager = connectionManager }.Exists();
 

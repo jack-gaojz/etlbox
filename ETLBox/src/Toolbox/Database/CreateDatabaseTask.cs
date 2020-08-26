@@ -5,7 +5,7 @@ using System;
 namespace ETLBox.ControlFlow.Tasks
 {
     /// <summary>
-    /// Will create a database if the database doesn't exists. In MySql, this will create a schema.
+    /// Will create a database if the database doesn't exists. In MySql or MariaDb, this will create a schema.
     /// </summary>
     /// <example>
     /// <code>
@@ -14,8 +14,12 @@ namespace ETLBox.ControlFlow.Tasks
     /// </example>
     public class CreateDatabaseTask : ControlFlowTask
     {
-        /* ITask Interface */
+        /// <inheritdoc/>
         public override string TaskName => $"Create DB {DatabaseName}";
+
+        /// <summary>
+        /// Runs the sql code to create the database.
+        /// </summary>
         public void Execute()
         {
             if (!DbConnectionManager.SupportDatabases)
@@ -26,12 +30,29 @@ namespace ETLBox.ControlFlow.Tasks
                 new SqlTask(this, Sql).ExecuteNonQuery();
         }
 
+        /// <summary>
+        /// Runs the sql code to create the database.
+        /// </summary>
         public void Create() => Execute();
 
-        /* Public properties */
+        /// <summary>
+        /// The name of the database (In MySql: The schema name)
+        /// </summary>
         public string DatabaseName { get; set; }
+
+        /// <summary>
+        /// Sql Server only: The recovery model of the database
+        /// </summary>
         public RecoveryModel RecoveryModel { get; set; } = RecoveryModel.Simple;
+
+        /// <summary>
+        /// The default collation for the database
+        /// </summary>
         public string Collation { get; set; }
+
+        /// <summary>
+        /// The sql code that is used to generate the database
+        /// </summary>
         public string Sql
         {
             get
@@ -53,10 +74,6 @@ SELECT @dbReady = CASE WHEN DATABASEPROPERTYEX('{DatabaseName}', 'Collation') IS
 END
 ";
                 }
-                //else if (ConnectionType == ConnectionManagerType.MySql)
-                //{
-                //    return $@"CREATE DATABASE IF NOT EXISTS {DatabaseName} {CollationString}";
-                //}
                 else
                 {
                     return $@"CREATE DATABASE {QB}{DatabaseName}{QE} {CollationString}";
@@ -64,7 +81,6 @@ END
             }
         }
 
-        /* Some constructors */
         public CreateDatabaseTask()
         {
         }
@@ -79,15 +95,40 @@ END
             Collation = collation;
         }
 
-        /* Static methods for convenience */
+        /// <summary>
+        /// Creates a database if the database doesn't exists. In MySql or MariaDb, this will create a schema.
+        /// Make sure that your default connection string points to the server itself and to an existing database (e.g. a system database).
+        /// </summary>
+        /// <param name="databaseName">The name of the database</param>
         public static void Create(string databaseName) => new CreateDatabaseTask(databaseName).Execute();
+
+        /// <summary>
+        /// Creates a database if the database doesn't exists. In MySql or MariaDb, this will create a schema.
+        /// Make sure that your default connection string points to the server itself and to an existing database (e.g. a system database).
+        /// </summary>
+        /// <param name="databaseName">The name of the database</param>
+        /// <param name="collation">The default collation of the database.</param>
         public static void Create(string databaseName, string collation) => new CreateDatabaseTask(databaseName, collation).Execute();
+
+        /// <summary>
+        /// Creates a database if the database doesn't exists. In MySql or MariaDb, this will create a schema.
+        /// </summary>
+        /// <param name="connectionManager">The connection manager of the server you want to connect. Make sure this points to a database
+        /// that does exist (e.g. a system database)</param>
+        /// <param name="databaseName">The name of the database</param>
         public static void Create(IConnectionManager connectionManager, string databaseName)
             => new CreateDatabaseTask(databaseName) { ConnectionManager = connectionManager }.Execute();
+
+        /// <summary>
+        /// Creates a database if the database doesn't exists. In MySql or MariaDb, this will create a schema.
+        /// </summary>
+        /// <param name="connectionManager">The connection manager of the server you want to connect. Make sure this points to a database
+        /// that does exist (e.g. a system database)</param>
+        /// <param name="databaseName">The name of the database</param>
+        /// <param name="collation">The default collation of the database.</param>
         public static void Create(IConnectionManager connectionManager, string databaseName, string collation)
             => new CreateDatabaseTask(databaseName, collation) { ConnectionManager = connectionManager }.Execute();
 
-        /* Implementation & stuff */
         string RecoveryModelAsString
         {
             get
@@ -119,6 +160,9 @@ END
 
     }
 
+    /// <summary>
+    /// The sql server recovery models.
+    /// </summary>
     public enum RecoveryModel
     {
         Default, Simple, BulkLogged, Full
