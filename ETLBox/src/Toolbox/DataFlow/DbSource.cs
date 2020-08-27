@@ -142,7 +142,7 @@ namespace ETLBox.DataFlow.Connectors
                     if (!HasSourceTableDefinition)
                         LoadTableDefinition();
                     var TN = new ObjectNameDescriptor(SourceTableDefinition.Name, QB, QE);
-                    return $@"SELECT {SourceTableDefinition.Columns.AsString("", QB, QE)} FROM {TN.QuotatedFullName}";
+                    return $@"SELECT {TableColumn.ColumnsAsString(SourceTableDefinition.Columns, QB, QE)} FROM {TN.QuotatedFullName}";
                 }
 
             }

@@ -4,7 +4,8 @@ using System.Data;
 
 namespace ETLBox.ControlFlow
 {
-    public class TableColumn : ITableColumn, IColumnMapping
+    public class TableColumn : //ITableColumn,
+        IColumnMapping
     {
         private string _dataSetColumn;
         private string _sourceColumn;
@@ -63,5 +64,8 @@ namespace ETLBox.ControlFlow
         {
             IsIdentity = isIdentity;
         }
+
+        internal static string ColumnsAsString(IEnumerable<TableColumn> columns, string prefix = "", string suffix = "") =>
+            string.Join(", ", columns.Select(col => prefix + col.Name + suffix));
     }
 }

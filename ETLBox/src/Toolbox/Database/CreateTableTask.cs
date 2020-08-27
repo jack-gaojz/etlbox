@@ -162,7 +162,7 @@ $@"CREATE TABLE {TN.QuotatedFullName} (
         }
 
         string PrimaryKeySql => CreatePrimaryKeyConstraint();
-        string CreateTableDefinition(ITableColumn col)
+        string CreateTableDefinition(TableColumn col)
         {
             string dataType = string.Empty;
             dataType = CreateDataTypeSql(col);
@@ -175,7 +175,7 @@ $@"CREATE TABLE {TN.QuotatedFullName} (
             return $@"{QB}{col.Name}{QE} {dataType} {collationSql} {defaultSql} {identitySql} {nullSql} {computedColumnSql} {comment}";
         }
 
-        private string CreateDataTypeSql(ITableColumn col)
+        private string CreateDataTypeSql(TableColumn col)
         {
             if (ConnectionType == ConnectionManagerType.SqlServer && col.HasComputedColumn)
                 return string.Empty;
@@ -185,7 +185,7 @@ $@"CREATE TABLE {TN.QuotatedFullName} (
                 return DataTypeConverter.TryConvertDbDataType(col.DataType, this.ConnectionType);
         }
 
-        private string CreateIdentitySql(ITableColumn col)
+        private string CreateIdentitySql(TableColumn col)
         {
             if (ConnectionType == ConnectionManagerType.SQLite) return string.Empty;
             else
@@ -207,7 +207,7 @@ $@"CREATE TABLE {TN.QuotatedFullName} (
             }
         }
 
-        private string CreateNotNullSql(ITableColumn col)
+        private string CreateNotNullSql(TableColumn col)
         {
             string nullSql = string.Empty;
             if (ConnectionType == ConnectionManagerType.Postgres && col.IsIdentity) return string.Empty;
@@ -219,7 +219,7 @@ $@"CREATE TABLE {TN.QuotatedFullName} (
             return nullSql;
         }
 
-        private string CreateCollationSql(ITableColumn col)
+        private string CreateCollationSql(TableColumn col)
         {
             if (IgnoreCollation)
                 return string.Empty;
@@ -246,7 +246,7 @@ $@"CREATE TABLE {TN.QuotatedFullName} (
             return result;
         }
 
-        private string CreateDefaultSql(ITableColumn col)
+        private string CreateDefaultSql(TableColumn col)
         {
             string defaultSql = string.Empty;
             if (!col.IsPrimaryKey)
@@ -254,7 +254,7 @@ $@"CREATE TABLE {TN.QuotatedFullName} (
             return defaultSql;
         }
 
-        private string CreateComputedColumnSql(ITableColumn col)
+        private string CreateComputedColumnSql(TableColumn col)
         {
             if (col.HasComputedColumn && !DbConnectionManager.SupportComputedColumns)
                 throw new ETLBoxNotSupportedException("Computed columns are not supported.");
@@ -265,7 +265,7 @@ $@"CREATE TABLE {TN.QuotatedFullName} (
                 return string.Empty;
         }
 
-        private string CreateCommentSql(ITableColumn col)
+        private string CreateCommentSql(TableColumn col)
         {
             if (ConnectionType == ConnectionManagerType.MySql && !string.IsNullOrWhiteSpace(col.Comment))
                 return $"COMMENT '{col.Comment}'";

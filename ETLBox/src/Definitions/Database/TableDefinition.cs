@@ -26,8 +26,7 @@ namespace ETLBox.ControlFlow
             }
         }
 
-        public string AllColumnsWithoutIdentity => Columns.Where(col => !col.IsIdentity).AsString();
-
+        public string AllColumnsWithoutIdentity => TableColumn.ColumnsAsString(Columns.Where(col => !col.IsIdentity)); //.AsString();
 
         public TableDefinition()
         {
