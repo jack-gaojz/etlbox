@@ -2,11 +2,24 @@
 
 namespace ETLBox.ControlFlow
 {
+    /// <summary>
+    /// Defines a procedure
+    /// </summary>
     public class ProcedureDefinition
     {
+        /// <summary>
+        /// Name of the procedure
+        /// </summary>
         public string Name { get; set; }
+
+        /// <summary>
+        /// The sql code of the procudure
+        /// </summary>
         public string Definition { get; set; }
 
+        /// <summary>
+        /// List of parameters for the procedure
+        /// </summary>
         public List<ProcedureParameter> Parameter { get; set; }
 
         public ProcedureDefinition()
