@@ -88,7 +88,19 @@ ORDER BY sch.name, tbls.name, cols.column_id
             return this;
         }
 
+        /// <summary>
+        /// Calculates the hash of a database based on the existing database objects (Sql Server only)
+        /// </summary>
+        /// <param name="schemaNames">List of schema names that should be included in the hash calculation</param>
+        /// <returns>A unique hash values for the schema</returns>
         public static string Calculate(List<string> schemaNames) => new CalculateDatabaseHashTask(schemaNames).Calculate().DatabaseHash;
+        /// <summary>
+        ///
+        /// Calculates the hash of a database based on the existing database objects (Sql Server only)
+        /// </summary>
+        /// <param name="connectionManager">The connection manager of the database you want to connect</param>
+        /// <param name="schemaNames">List of schema names that should be included in the hash calculation</param>
+        /// <returns>A unique hash values for the schema</returns>
         public static string Calculate(IConnectionManager connectionManager, List<string> schemaNames)
             => new CalculateDatabaseHashTask(schemaNames) { ConnectionManager = connectionManager }.Calculate().DatabaseHash;
 

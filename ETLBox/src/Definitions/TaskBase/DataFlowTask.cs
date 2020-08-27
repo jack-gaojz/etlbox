@@ -293,7 +293,7 @@ namespace ETLBox.DataFlow
         protected int? _loggingThresholdRows;
 
         /// <summary>
-        /// To avoid getting log message for every message, by default only log message are produced are 1000 rows
+        /// To avoid getting log message for every message, by default only log message are produced when 1000 rows
         /// are processed. Set this property to decrease or increase this value.
         /// </summary>
         public virtual int? LoggingThresholdRows

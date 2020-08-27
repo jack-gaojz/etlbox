@@ -34,12 +34,21 @@ namespace ETLBox.Logging
         /// </summary>
         public static string LoadProcessTable { get; set; } = DEFAULTLOADPROCESSTABLENAME;
 
+        /// <summary>
+        /// The default log table name
+        /// </summary>
         public const string DEFAULTLOGTABLENAME = "etlbox_log";
 
         /// <summary>
         /// TableName of the current log process logging table
         /// </summary>
         public static string LogTable { get; set; } = DEFAULTLOGTABLENAME;
+
+        /// <summary>
+        /// You can also set the logging database in the nlog.config file.
+        /// If you want to programmatically change the logging database,  use this method.
+        /// </summary>
+        /// <param name="connection">The new logging database connection manager</param>
 
         public static void AddLoggingDatabaseToConfig(IConnectionManager connection) => AddLoggingDatabaseToConfig(connection, LogLevel.Info);
 
@@ -48,6 +57,8 @@ namespace ETLBox.Logging
         /// If you want to programmatically change the logging database,  use this method.
         /// </summary>
         /// <param name="connection">The new logging database connection manager</param>
+        /// <param name="minLogLevel">The minimum log level at which logs are written into the database</param>
+        /// <param name="logTableName">The name of the log table where the logs are written into</param>
         public static void AddLoggingDatabaseToConfig(IConnectionManager connection, LogLevel minLogLevel, string logTableName = DEFAULTLOGTABLENAME)
         {
 
@@ -65,6 +76,11 @@ namespace ETLBox.Logging
         }
 
         static bool IsLayoutRendererRegisterd = false;
+
+        /// <summary>
+        /// Returns the current NLog Logger instance used for the default ETL logging
+        /// </summary>
+        /// <returns></returns>
         public static NLog.Logger GetLogger()
         {
             if (!IsLayoutRendererRegisterd)
