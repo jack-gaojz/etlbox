@@ -51,9 +51,9 @@ namespace ETLBoxTests.DataFlowTests
             });
             sourceTable.CreateTable(SqlConnection);
             SqlTask.ExecuteNonQuery(SqlConnection, "Insert demo data"
-                , $"INSERT INTO {tableName} (name, age, hashcode) VALUES('Bugs',12, '{HashHelper.Encrypt_Char40("1Bugs12")}')");
+                , $"INSERT INTO {tableName} (name, age, hashcode) VALUES('Bugs',12, '{HashHelper.CreateChar40Hash("1Bugs12")}')");
             SqlTask.ExecuteNonQuery(SqlConnection, "Insert demo data"
-                , $"INSERT INTO {tableName} (name, age, hashcode) VALUES('Coyote',10, '{HashHelper.Encrypt_Char40("2Coyote10")}')");
+                , $"INSERT INTO {tableName} (name, age, hashcode) VALUES('Coyote',10, '{HashHelper.CreateChar40Hash("2Coyote10")}')");
         }
 
 
@@ -71,7 +71,7 @@ namespace ETLBoxTests.DataFlowTests
                 row =>
                 {
                     Array.Resize(ref row, row.Length + 1);
-                    row[row.Length - 1] = HashHelper.Encrypt_Char40(String.Join("", row));
+                    row[row.Length - 1] = HashHelper.CreateChar40Hash(String.Join("", row));
                     return row;
                 });
 
@@ -108,8 +108,8 @@ namespace ETLBoxTests.DataFlowTests
             voidDest.Wait();
 
             //Assert
-            Assert.Equal(1, RowCountTask.Count(SqlConnection, $"dbo.HashMatchDestination", $"id = 1 AND name='Bugs' AND age = 12 AND hashcode = '{HashHelper.Encrypt_Char40("1Bugs12")}'"));
-            Assert.Equal(1, RowCountTask.Count(SqlConnection, $"dbo.HashMatchDestination", $"id = 2 AND name='Coyote' AND age = 8 AND hashcode = '{HashHelper.Encrypt_Char40("2Coyote8")}'"));
+            Assert.Equal(1, RowCountTask.Count(SqlConnection, $"dbo.HashMatchDestination", $"id = 1 AND name='Bugs' AND age = 12 AND hashcode = '{HashHelper.CreateChar40Hash("1Bugs12")}'"));
+            Assert.Equal(1, RowCountTask.Count(SqlConnection, $"dbo.HashMatchDestination", $"id = 2 AND name='Coyote' AND age = 8 AND hashcode = '{HashHelper.CreateChar40Hash("2Coyote8")}'"));
 
         }
 

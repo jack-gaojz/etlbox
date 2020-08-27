@@ -4,18 +4,13 @@ using NLog.Targets;
 
 namespace ETLBox.Logging
 {
-
-    public class CreateDatabaseTarget
+    /// <summary>
+    /// Create a database target configuration for NLog, including insert statements.
+    /// This target is particular designed for the default etlbox log table.
+    /// </summary>
+    internal class CreateDatabaseTarget
     {
-        public ObjectNameDescriptor TN => new ObjectNameDescriptor(LogTableName, ConnectionManager.QB, ConnectionManager.QE);
-        public string QB => ConnectionManager.QB;
-        public string QE => ConnectionManager.QE;
-        public string PP => ConnectionManager.PP;
-
-
-
-
-        public string CommandText =>
+        internal string CommandText =>
 $@"INSERT 
     INTO {TN.QuotatedFullName}   
     ( 
@@ -44,7 +39,12 @@ $@"INSERT
             END 
     {FROMDUAL}";
 
-        public string LogDate
+        ObjectNameDescriptor TN => new ObjectNameDescriptor(LogTableName, ConnectionManager.QB, ConnectionManager.QE);
+        string QB => ConnectionManager.QB;
+        string QE => ConnectionManager.QE;
+        string PP => ConnectionManager.PP;
+
+        string LogDate
         {
             get
             {
@@ -58,7 +58,7 @@ $@"INSERT
                     return $"{PP}LogDate";
             }
         }
-        public string VARCHAR
+        string VARCHAR
         {
             get
             {
@@ -69,18 +69,19 @@ $@"INSERT
                 else return "VARCHAR";
             }
         }
-        public string INT => this.ConnectionManager.ConnectionManagerType == ConnectionManagerType.MySql ? "UNSIGNED" : "INT";
-        public string FROMDUAL => this.ConnectionManager.ConnectionManagerType == ConnectionManagerType.Oracle ? "FROM DUAL" : "";
-        public IConnectionManager ConnectionManager { get; set; }
-        public string LogTableName { get; set; }
+        string INT => this.ConnectionManager.ConnectionManagerType == ConnectionManagerType.MySql ? "UNSIGNED" : "INT";
+        string FROMDUAL => this.ConnectionManager.ConnectionManagerType == ConnectionManagerType.Oracle ? "FROM DUAL" : "";
 
-        public CreateDatabaseTarget(IConnectionManager connectionManager, string logTableName)
+        internal IConnectionManager ConnectionManager { get; set; }
+        internal string LogTableName { get; set; }
+
+        internal CreateDatabaseTarget(IConnectionManager connectionManager, string logTableName)
         {
             this.ConnectionManager = connectionManager;
             this.LogTableName = logTableName;
         }
 
-        public DatabaseTarget GetNLogDatabaseTarget()
+        internal DatabaseTarget GetNLogDatabaseTarget()
         {
             DatabaseTarget dbTarget = new DatabaseTarget();
             AddParameter(dbTarget, "LogDate", @"${date:format=yyyy-MM-dd HH\:mm\:ss.fff}");

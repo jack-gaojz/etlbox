@@ -5,9 +5,17 @@ using System.Text;
 
 namespace ETLBox.Helper
 {
+    /// <summary>
+    /// This class creates unique strings containing hash values.
+    /// </summary>
     public static class HashHelper
     {
-        public static string Encrypt_Char40(string text)
+        /// <summary>
+        /// Creates a 40 character unique hash string
+        /// </summary>
+        /// <param name="text">Text that needs to be hashed</param>
+        /// <returns>A unique readable hash string with 40 characters</returns>
+        public static string CreateChar40Hash(string text)
         {
             if (text != null)
             {
@@ -21,7 +29,11 @@ namespace ETLBox.Helper
                 return "";
         }
 
-        public static string Encrypt_Char40(ILoggableTask task) => Encrypt_Char40(task.TaskName + "|" + task.TaskType + "|" + task.GetHashCode());
-        //public static string Encrypt_Char40(ILoggableTask task, string id) => Encrypt_Char40(task.TaskName + "|" + task.TaskType + "|" + id);
+        /// <summary>
+        /// Creates a unique hash string from a loggable task
+        /// </summary>
+        /// <param name="task">The ETLBox loggable task</param>
+        /// <returns>A unique readable hash string with 40 character</returns>
+        public static string CreateChar40Hash(ILoggableTask task) => CreateChar40Hash(task.TaskName + "|" + task.TaskType + "|" + task.GetHashCode());
     }
 }

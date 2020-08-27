@@ -5,9 +5,25 @@ using System.Text;
 
 namespace ETLBox.Logging
 {
+    /// <summary>
+    /// Defines a layout renderer for NLog
+    /// It will introduce
+    /// <code>
+    /// {etllog:LogType=message}
+    /// {etllog:LogType=type}
+    /// {etllog:LogType=action}
+    /// {etllog:LogType=hash}
+    /// {etllog:LogType=stage}
+    /// {etllog:LogType=loadprocesskey}
+    /// </code>
+    /// as layout renderer for the nlog configuration.
+    /// </summary>
     [LayoutRenderer("etllog")]
     public class ETLLogLayoutRenderer : LayoutRenderer
     {
+        /// <summary>
+        /// The default log type is message
+        /// </summary>
         [DefaultParameter]
         public string LogType { get; set; } = "message";
 

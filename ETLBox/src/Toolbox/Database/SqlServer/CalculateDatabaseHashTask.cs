@@ -37,7 +37,7 @@ namespace ETLBox.ControlFlow.Tasks
                 }
             }
                 .ExecuteReader();
-            DatabaseHash = HashHelper.Encrypt_Char40(String.Join("|", allColumns));
+            DatabaseHash = HashHelper.CreateChar40Hash(String.Join("|", allColumns));
         }
 
         /// <summary>

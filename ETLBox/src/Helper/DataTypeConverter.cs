@@ -12,10 +12,17 @@ namespace ETLBox.Helper
     /// </summary>
     public class DataTypeConverter : IDataTypeConverter
     {
-        public const string _REGEX = @"(.*?)char\((\d*)\)(.*?)";
 
-        public static bool IsCharTypeDefinition(string value) => new Regex(_REGEX, RegexOptions.IgnoreCase).IsMatch(value);
+        const string _REGEX = @"(.*?)char\((\d*)\)(.*?)";
 
+        static bool IsCharTypeDefinition(string value) => new Regex(_REGEX, RegexOptions.IgnoreCase).IsMatch(value);
+
+        /// <summary>
+        /// Returns the string length that a sql char datatype has in it's definition.
+        /// E.g. VARCHAR(40) would return 40, NVARCHAR2 ( 2 ) returns 2
+        /// </summary>
+        /// <param name="value">A sql character data type</param>
+        /// <returns>The string length defined in the data type - 0 if nothing could be found</returns>
         public static int GetStringLengthFromCharString(string value)
         {
             string possibleResult = Regex.Replace(value, _REGEX, "${2}", RegexOptions.IgnoreCase);
@@ -76,11 +83,20 @@ namespace ETLBox.Helper
             }
         }
 
-        public static Type GetTypeObject(string dbSpecificTypeName)
-        {
-            return Type.GetType(GetNETObjectTypeString(dbSpecificTypeName));
-        }
+        /// <summary>
+        /// Returns the .NET type object for a specific sql type.
+        /// E.g. the method would return the .NET type string for the sql type 'CHAR(10)'
+        /// </summary>
+        /// <param name="dbSpecificTypeName">The sql specific data type name</param>
+        /// <returns>The corresponding .NET data type</returns>
+        public static Type GetTypeObject(string dbSpecificTypeName) =>Type.GetType(GetNETObjectTypeString(dbSpecificTypeName));
 
+        /// <summary>
+        /// Returns the ADO.NET System.Data.DbType object for a specific sql type.
+        /// E.g. the method would return the System.Data.DbType.String for the sql type 'CHAR(10)'
+        /// </summary>
+        /// <param name="dbSpecificTypeName">The sql specific data type name</param>
+        /// <returns>The corresponding ADO .NET database type</returns>
         public static DbType GetDBType(string dbSpecificTypeName)
         {
             try
@@ -93,12 +109,21 @@ namespace ETLBox.Helper
             }
         }
 
-        public string TryConvertDbDataType(string dbSpecificTypeName, ConnectionManagerType connectionType)
-            => DataTypeConverter.TryGetDbSpecificType(dbSpecificTypeName, connectionType);
 
-        public static string TryGetDbSpecificType(string dbSpecificTypeName, ConnectionManagerType connectionType)
+        /// <inheritdoc/>
+        public string TryConvertDbDataType(string dataTypeName, ConnectionManagerType connectionType)
+            => DataTypeConverter.TryGetDbSpecificType(dataTypeName, connectionType);
+
+        /// <summary>
+        /// Tries to convert the data type into a database specific type.
+        /// E.g. the data type 'INT' would be converted to 'INTEGER' for SQLite connections.
+        /// </summary>
+        /// <param name="dataTypeName">A data type name</param>
+        /// <param name="connectionType">The database connection type</param>
+        /// <returns>The converted database specific type name</returns>
+        public static string TryGetDbSpecificType(string dataTypeName, ConnectionManagerType connectionType)
         {
-            var typeName = dbSpecificTypeName.Trim().ToUpper();
+            var typeName = dataTypeName.Trim().ToUpper();
             //Always normalize to some "standard" for Oracle!
             //https://docs.microsoft.com/en-us/sql/relational-databases/replication/non-sql/data-type-mapping-for-oracle-publishers?view=sql-server-ver15
             if (connectionType != ConnectionManagerType.Oracle)
@@ -116,7 +141,7 @@ namespace ETLBox.Helper
             {
                 if (typeName.Replace(" ", "") == "TEXT")
                     return "VARCHAR(MAX)";
-                return dbSpecificTypeName;
+                return dataTypeName;
             }
             else if (connectionType == ConnectionManagerType.Access)
             {
@@ -130,13 +155,13 @@ namespace ETLBox.Helper
                         return "LONGTEXT";
                     return typeName;
                 }
-                return dbSpecificTypeName;
+                return dataTypeName;
             }
             else if (connectionType == ConnectionManagerType.SQLite)
             {
                 if (typeName == "INT" || typeName == "BIGINT")
                     return "INTEGER";
-                return dbSpecificTypeName;
+                return dataTypeName;
             }
             else if (connectionType == ConnectionManagerType.Postgres)
             {
@@ -147,7 +172,7 @@ namespace ETLBox.Helper
                 }
                 else if (typeName == "DATETIME")
                     return "TIMESTAMP";
-                return dbSpecificTypeName;
+                return dataTypeName;
             }
             else if (connectionType == ConnectionManagerType.Oracle)
             {
@@ -166,11 +191,11 @@ namespace ETLBox.Helper
                     return "FLOAT(126)";
                 else if (typeName == "TEXT")
                     return "NCLOB";
-                return dbSpecificTypeName;
+                return dataTypeName;
             }
             else
             {
-                return dbSpecificTypeName;
+                return dataTypeName;
             }
         }
     }

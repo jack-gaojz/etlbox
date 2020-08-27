@@ -5,8 +5,18 @@ using TSQL.Statements;
 
 namespace ETLBox.Helper
 {
+    /// <summary>
+    /// Helper class for parsing sql statements
+    /// </summary>
     public static class SqlParser
     {
+        /// <summary>
+        /// This method attempts to parse column names from any sql statement.
+        /// E.g. SELECT 1 AS 'Test', Col2, t2.Col3 FROM table1 t1 INNER JOIN t2 ON t1.Id = t2.Id
+        /// will return Test, Col2 and Col3 als column names.
+        /// </summary>
+        /// <param name="sql">The sql code from which the column names should be parsed</param>
+        /// <returns>The names of the columns in the sql</returns>
         public static List<string> ParseColumnNames(string sql)
         {
 
@@ -35,9 +45,5 @@ namespace ETLBox.Helper
                 result.Add(prevToken);
             return result;
         }
-
-
-
-
     }
 }

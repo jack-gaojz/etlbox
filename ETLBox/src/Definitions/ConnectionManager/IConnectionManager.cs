@@ -53,7 +53,7 @@ namespace ETLBox.Connection
         /// </summary>
         string QB { get; }
         /// <summary>
-        /// The quotation begin character that is used in the database.
+        /// The quotation end character that is used in the database.
         /// E.g. SqlServer uses: ']' and Postgres: '"'
         /// </summary>
 

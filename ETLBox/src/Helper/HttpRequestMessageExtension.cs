@@ -6,9 +6,9 @@ using System.Text;
 
 namespace ETLBox.Helper
 {
-    public static class HttpRequestMessageExtensions
+    internal static class HttpRequestMessageExtensions
     {
-        public static HttpRequestMessage Clone(this HttpRequestMessage request)
+        internal static HttpRequestMessage Clone(this HttpRequestMessage request)
         {
             var clone = new HttpRequestMessage(request.Method, request.RequestUri)
             {
@@ -24,7 +24,7 @@ namespace ETLBox.Helper
             return clone;
         }
 
-        public static HttpContent Clone(this HttpContent content)
+        internal static HttpContent Clone(this HttpContent content)
         {
             if (content == null) return null;
 

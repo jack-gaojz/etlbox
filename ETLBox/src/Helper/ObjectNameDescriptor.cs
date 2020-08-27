@@ -4,29 +4,79 @@ using System.Text.RegularExpressions;
 
 namespace ETLBox.Helper
 {
+    /// <summary>
+    /// Applies database specific formatting to an object names.
+    /// E.g. schema.ViewName would create [schema].[ViewName] for SqlServer and "schema"."ViewName" for Postgres
+    /// </summary>
     public class ObjectNameDescriptor
     {
         private string _schema;
         private string _table;
 
+        /// <summary>
+        /// The name of the object that needs to have database spcific formatting applied
+        /// </summary>
         public string ObjectName { get; }
+
+        /// <summary>
+        /// The quotation begin character that is used in the database.
+        /// E.g. SqlServer uses: '[' and Postgres: '"'
+        /// </summary>
         public string QB { get; }
+
+        /// <summary>
+        /// The quotation end character that is used in the database.
+        /// E.g. SqlServer uses: ']' and Postgres: '"'
+        /// </summary>
         public string QE { get; }
 
+        /// <summary>
+        /// The object name with quotes.
+        /// E.g. schema.ViewName would create "ViewName"
+        /// </summary>
         public string QuotatedObjectName => _table.StartsWith(QB) ? _table : QB + _table + QE;
+
+        /// <summary>
+        /// The object name without any quoting.
+        /// E.g. "schema"."ViewName" would create ViewName
+        /// </summary>
         public string UnquotatedObjectName => _table.StartsWith(QB) ? _table.Replace(QB, string.Empty).Replace(QE, string.Empty) : _table;
 
+        /// <summary>
+        /// The schema name without any quoting.
+        /// E.g. "schema"."ViewName" would create schema
+        /// </summary>
         public string UnquotatedSchemaName =>
             String.IsNullOrWhiteSpace(_schema) ? string.Empty : _schema.StartsWith(QB) ?
             _schema.Replace(QB, string.Empty).Replace(QE, string.Empty) : _schema;
+
+        /// <summary>
+        /// The schema name with quotes.
+        /// E.g. "schema"."ViewName" would create "schema"
+        /// </summary>
         public string QuotatedSchemaName =>
             String.IsNullOrWhiteSpace(_schema) ? string.Empty : _schema.StartsWith(QB) ? _schema : QB + _schema + QE;
 
+        /// <summary>
+        /// The whole name with quotes.
+        /// E.g. schema.ViewName would create "schema"."ViewName"
+        /// </summary>
         public string QuotatedFullName =>
             String.IsNullOrWhiteSpace(_schema) ? QuotatedObjectName : QuotatedSchemaName + '.' + QuotatedObjectName;
+
+        /// <summary>
+        /// The whole name without any  quotation
+        /// E.g. "schema"."ViewName" would create schema.ViewName
+        /// </summary>
         public string UnquotatedFullName =>
            String.IsNullOrWhiteSpace(_schema) ? UnquotatedObjectName : UnquotatedSchemaName + '.' + UnquotatedObjectName;
 
+        /// <summary>
+        /// Creates a new instance and already parses the values. Right after initialization you can access the values in the properties.
+        /// </summary>
+        /// <param name="objectName">The full object name (e.g. Schema.ViewName)</param>
+        /// <param name="qb">The database specific quotation start (e.g. '[' for Sql Server)</param>
+        /// <param name="qe">The database specific quotation start (e.g. ']' for Sql Server)</param>
         public ObjectNameDescriptor(string objectName, string qb, string qe)
         {
             ObjectName = objectName;
@@ -51,7 +101,6 @@ namespace ETLBox.Helper
                 _table = m[1].Value.Trim().StartsWith(".") ? m[1].Value.Trim().Substring(1) : m[1].Value.Trim();
             }
         }
-
         private string Expr
         {
             get

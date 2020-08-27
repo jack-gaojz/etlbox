@@ -58,7 +58,7 @@ namespace ETLBox.ControlFlow
             get
             {
                 if (_taskHash == null)
-                    return HashHelper.Encrypt_Char40(this);
+                    return HashHelper.CreateChar40Hash(this);
                 else
                     return _taskHash;
             }

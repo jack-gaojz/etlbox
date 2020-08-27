@@ -1,16 +1,17 @@
 ﻿namespace ETLBox.Helper
 {
+    /// <summary>
+    /// Extension methods for strings
+    /// </summary>
     public static class StringExtension
     {
-        public static string NullOrSqlString(this string s) => s == null ? "NULL" : $"'{s.Replace("'", "''")}'";
-
         /// <summary>
         ///		This replicates the functionality of case-insensitive functionality built into Replace in .Net Core.
         /// </summary>
         /// <param name="toSearch"></param>
         /// <param name="find"></param>
         /// <param name="replace"></param>
-        /// <returns></returns>
+        /// <returns>The string with replaced values</returns>
         public static string ReplaceIgnoreCase(this string toSearch, string find, string replace)
         {
             int index = toSearch.IndexOf(
