@@ -8,6 +8,10 @@ using System.Threading.Tasks.Dataflow;
 
 namespace ETLBox.DataFlow
 {
+    /// <summary>
+    /// The base implementation for a source component.
+    /// </summary>
+    /// <typeparam name="TOutput">Type of outgoing data</typeparam>
     public abstract class DataFlowSource<TOutput> : DataFlowComponent, IDataFlowSource<TOutput>
     {
         /// <summary>

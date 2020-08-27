@@ -9,6 +9,9 @@ using TSQL.Clauses;
 
 namespace ETLBox.DataFlow
 {
+    /// <summary>
+    /// A base class for data flow components
+    /// </summary>
     public abstract class DataFlowComponent : LoggableTask, IDataFlowComponent, IDataFlowLogging
     {
         #region Component properties

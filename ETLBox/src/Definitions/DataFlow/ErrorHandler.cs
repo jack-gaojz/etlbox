@@ -5,11 +5,17 @@ using System.Threading.Tasks.Dataflow;
 
 namespace ETLBox.DataFlow
 {
+    /// <summary>
+    /// Works as a source component for any errors. Another component
+    /// can use this source to redirect errors into the error data flow.
+    /// </summary>
     public class ErrorHandler
     {
+        /// <summary>
+        /// SourceBlock from the underlying TPL.Dataflow which is used as output buffer for the error messages.
+        /// </summary>
         public ISourceBlock<ETLBoxError> ErrorSourceBlock => ErrorBuffer;
         internal BufferBlock<ETLBoxError> ErrorBuffer { get; set; }
-        public bool HasErrorBuffer => ErrorBuffer != null;
 
 
         public void LinkErrorTo(IDataFlowDestination<ETLBoxError> target, Task completion)

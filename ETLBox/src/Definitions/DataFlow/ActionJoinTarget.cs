@@ -7,16 +7,23 @@ using System.Threading.Tasks.Dataflow;
 
 namespace ETLBox.DataFlow
 {
+    /// <summary>
+    /// A target block that serves as a destination for components that can have multiple inputs.
+    /// </summary>
+    /// <typeparam name="TInput">Type of ingoing data</typeparam>
     public class ActionJoinTarget<TInput> : DataFlowJoinTarget<TInput>
     {
+        /// <inheritdoc/>
         public override ITargetBlock<TInput> TargetBlock => JoinAction;
-        ActionBlock<TInput> JoinAction;
-        Action<TInput> Action;
+
         public ActionJoinTarget(DataFlowComponent parent, Action<TInput> action)
         {
             Action = action;
             CreateLinkInInternalFlow(parent);
         }
+
+        ActionBlock<TInput> JoinAction;
+        Action<TInput> Action;
 
         protected override void InternalInitBufferObjects()
         {
