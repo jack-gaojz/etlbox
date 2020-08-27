@@ -11,6 +11,7 @@ namespace ETLBox.DataFlow
     public abstract class DataFlowExecutableSource<TOutput> : DataFlowSource<TOutput>, IDataFlowExecutableSource<TOutput>
     {
         #region Buffer and completion
+        /// <inheritdoc/>
         public override ISourceBlock<TOutput> SourceBlock => this.Buffer;
         protected BufferBlock<TOutput> Buffer { get; set; } = new BufferBlock<TOutput>();
         internal override Task BufferCompletion => Buffer.Completion;

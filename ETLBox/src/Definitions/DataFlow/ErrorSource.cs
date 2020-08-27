@@ -5,8 +5,15 @@ using System.Threading.Tasks.Dataflow;
 
 namespace ETLBox.DataFlow
 {
+    /// <summary>
+    /// Works as a source component for any errors. Another component
+    /// can use this source to redirect errors into the error data flow.
+    /// </summary>
     public class ErrorSource : DataFlowExecutableSource<ETLBoxError>
     {
+        /// <summary>
+        /// If set to another error source, all message send to this source will redirected.
+        /// </summary>
         public ErrorSource Redirection { get; set; }
 
         public ErrorSource()
@@ -28,6 +35,11 @@ namespace ETLBox.DataFlow
             lp.LinkBlocksWithPredicates(SourceBlock, s.TargetBlock);
         }
 
+        /// <summary>
+        /// Sends the error message into the error data flow
+        /// </summary>
+        /// <param name="e">The exception message</param>
+        /// <param name="jsonRow">The serialized erroneous row</param>
         public void Send(Exception e, string jsonRow)
         {
             if (Redirection != null) Redirection.Send(e, jsonRow);
@@ -44,6 +56,12 @@ namespace ETLBox.DataFlow
             }
         }
 
+        /// <summary>
+        /// Serialized a row using the default json serialization
+        /// </summary>
+        /// <typeparam name="T">Type of the row</typeparam>
+        /// <param name="row">The errorneous row</param>
+        /// <returns>The faulty row serialized as json</returns>
         public static string ConvertErrorData<T>(T row)
         {
             try
