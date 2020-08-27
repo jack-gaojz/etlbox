@@ -29,6 +29,10 @@ namespace ETLBox.DataFlow
         int BatchSize { get; set; }
     }
 
+    /// <summary>
+    /// Implemented by data flow destinations that allow writing data in a stream
+    /// </summary>
+    /// <typeparam name="TInput">Type of ingoing data</typeparam>
     public interface IDataFlowStreamDestination<TInput> : IDataFlowDestination<TInput>
     {
         /// <summary>

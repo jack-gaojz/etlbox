@@ -112,6 +112,10 @@ namespace ETLBox.DataFlow
         Task ExecuteAsync();
     }
 
+    /// <summary>
+    /// Implemented by data flow sources that allow reading data from a stream source
+    /// </summary>
+    /// <typeparam name="TOutput">Type of outgoing data</typeparam>
     public interface IDataFlowStreamSource<TOutput> : IDataFlowExecutableSource<TOutput>
     {
         /// <summary>
