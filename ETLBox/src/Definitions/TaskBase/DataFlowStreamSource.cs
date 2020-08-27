@@ -11,9 +11,7 @@ namespace ETLBox.DataFlow
     {
         #region Public properties
 
-        /// <summary>
-        /// The Url of the webservice (e.g. https://test.com/foo) or the file name (relative or absolute).
-        /// </summary>
+        /// <inheritdoc/>
         public string Uri
         {
             get
@@ -29,36 +27,19 @@ namespace ETLBox.DataFlow
         }
         private string _uri;
 
-        /// <summary>
-        /// This func returns the next url that is used for reading data. It will be called until <see cref="HasNextUri"/> returns false.
-        /// The incoming <see cref="StreamMetaData"/> holds information about the current progress and other meta data from the response, like unparsed
-        /// json data that contains references to the next page of the response.
-        /// This property can be used if you want to read multiple files or if you want to paginate through web responses.
-        /// </summary>
+        /// <inheritdoc/>
         public Func<StreamMetaData, string> GetNextUri { get; set; }
 
-        /// <summary>
-        /// This func determines if another request is started to read additional data from the next uri.
-        /// <see cref="StreamMetaData"/> has information about the current progress and other meta data from the response.
-        /// </summary>
+        /// <inheritdoc/>
         public Func<StreamMetaData, bool> HasNextUri { get; set; }
 
-        /// <summary>
-        /// Specifies the resource type. By default requests are made with HttpClient.
-        /// Specify ResourceType.File if you want to read from a json file.
-        /// </summary>
+        /// <inheritdoc/>
         public ResourceType ResourceType { get; set; }
 
-        /// <summary>
-        /// The System.Net.Http.HttpClient uses for the request. Use this client if you want to
-        /// add or change the http request data, e.g. you can add your authorization information here.
-        /// </summary>
+        /// <inheritdoc/>
         public HttpClient HttpClient { get; set; } = new HttpClient();
 
-        /// <summary>
-        /// The System.Net.Http.HttpRequestMessage use for the request from the HttpClient. Add your request
-        /// message here, e.g. your POST body.
-        /// </summary>
+        /// <inheritdoc/>
         public HttpRequestMessage HttpRequestMessage { get; set; } = new HttpRequestMessage();
 
         #endregion

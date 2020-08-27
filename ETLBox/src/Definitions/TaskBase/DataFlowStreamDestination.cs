@@ -5,21 +5,21 @@ using System.Threading.Tasks.Dataflow;
 
 namespace ETLBox.DataFlow
 {
+    /// <summary>
+    /// The base implementation for a destination that allows writing of data in a stream.
+    /// </summary>
+    /// <typeparam name="TInput">Type of ingoing data</typeparam>
     public abstract class DataFlowStreamDestination<TInput> : DataFlowDestination<TInput>, IDataFlowStreamDestination<TInput>
     {
         #region Public properties
-        /* Public properties */
-        /// <summary>
-        /// The Url of the webservice (e.g. https://test.com/foo) or the file name (relative or absolute)
-        /// </summary>
+
+        /// <inheritdoc/>
         public string Uri { get; set; }
 
-        /// <summary>
-        /// Specifies the resourc type. ResourceType.
-        /// Specify ResourceType.File if you want to write into a file.
-        /// </summary>
+        /// <inheritdoc/>
         public ResourceType ResourceType { get; set; }
 
+        /// <inheritdoc/>
         public HttpClient HttpClient { get; set; } = new HttpClient();
 
         #endregion

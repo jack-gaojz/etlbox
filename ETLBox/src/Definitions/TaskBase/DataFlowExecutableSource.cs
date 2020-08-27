@@ -8,9 +8,14 @@ using System.Threading.Tasks.Dataflow;
 
 namespace ETLBox.DataFlow
 {
+    /// <summary>
+    /// Base implementation for a source that can be executed.
+    /// </summary>
+    /// <typeparam name="TOutput"></typeparam>
     public abstract class DataFlowExecutableSource<TOutput> : DataFlowSource<TOutput>, IDataFlowExecutableSource<TOutput>
     {
         #region Buffer and completion
+
         /// <inheritdoc/>
         public override ISourceBlock<TOutput> SourceBlock => this.Buffer;
         protected BufferBlock<TOutput> Buffer { get; set; } = new BufferBlock<TOutput>();
@@ -48,6 +53,8 @@ namespace ETLBox.DataFlow
         #endregion
 
         #region Execution and IDataFlowExecutableSource
+
+        /// <inheritdoc/>
         public void Execute()
         {
             InitNetworkRecursively();
@@ -55,6 +62,7 @@ namespace ETLBox.DataFlow
             Completion.RunSynchronously();
         }
 
+        /// <inheritdoc/>
         public Task ExecuteAsync()
         {
             InitNetworkRecursively();

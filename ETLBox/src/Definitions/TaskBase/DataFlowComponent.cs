@@ -16,11 +16,7 @@ namespace ETLBox.DataFlow
     {
         #region Component properties
 
-        /// <summary>
-        /// Each component can have one or more buffers to improve throughput and allow faster processing of data.
-        /// Set this value to restrict the number of rows that can be stored in the buffer.
-        /// The default value is -1 (unlimited)
-        /// </summary>
+        /// <inheritdoc/>
         public int MaxBufferSize
         {
             get
@@ -49,10 +45,7 @@ namespace ETLBox.DataFlow
         /// </summary>
         public List<DataFlowComponent> Successors { get; protected set; } = new List<DataFlowComponent>();
 
-        /// <summary>
-        /// The completion task of the component. A component is completed when all predecessors (if any) are
-        /// completed and the current component has completed its buffer.
-        /// </summary>
+        /// <inheritdoc/>
         public Task Completion { get; internal set; }
         internal virtual Task BufferCompletion { get; }
         protected Task PredecessorCompletion { get; set; }
@@ -165,9 +158,7 @@ namespace ETLBox.DataFlow
 
         #region Completion tasks handling
 
-        /// <summary>
-        /// When a component has completed and processed all rows, the OnCompletion action is executed.
-        /// </summary>
+        /// <inheritdoc/>
         public Action OnCompletion { get; set; }
 
         protected void SetCompletionTaskRecursively()
@@ -254,10 +245,7 @@ namespace ETLBox.DataFlow
 
         #region Error Handling
 
-        /// <summary>
-        /// If a component encountered an exception or entered a fault state because another component
-        /// in the data flow faulted, the thrown exception will be stored in this property.
-        /// </summary>
+        /// <inheritdoc/>
         public Exception Exception { get; set; }
 
         /// <summary>
@@ -295,10 +283,7 @@ namespace ETLBox.DataFlow
 
         protected int? _loggingThresholdRows;
 
-        /// <summary>
-        /// To avoid getting log message for every message, by default only log message are produced when 1000 rows
-        /// are processed. Set this property to decrease or increase this value.
-        /// </summary>
+        /// <inheritdoc/>
         public virtual int? LoggingThresholdRows
         {
             get
@@ -314,9 +299,7 @@ namespace ETLBox.DataFlow
             }
         }
 
-        /// <summary>
-        /// The amount of rows the current component has currently processed.
-        /// </summary>
+        /// <inheritdoc/>
         public int ProgressCount { get; set; }
 
         protected bool HasLoggingThresholdRows => LoggingThresholdRows != null && LoggingThresholdRows > 0;
