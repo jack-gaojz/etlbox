@@ -55,7 +55,7 @@ namespace ETLBox.Logging
         public string StartMessage { get; set; }
         public string Source { get; set; } = "ETL";
 
-        public long? _loadProcessId;
+        long? _loadProcessId;
         public long? LoadProcessId
         {
             get

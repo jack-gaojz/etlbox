@@ -32,8 +32,7 @@ namespace ETLBox.Logging
             Logging.CurrentLoadProcess = rlp.LoadProcess;
         }
 
-        /* Public properties */
-        public long? _loadProcessId;
+        long? _loadProcessId;
         public long? LoadProcessId
         {
             get

@@ -43,7 +43,7 @@ namespace ETLBox.Logging
         }
 
         /* Public properties */
-        public long? _loadProcessId;
+        long? _loadProcessId;
         public long? LoadProcessId
         {
             get
@@ -59,7 +59,7 @@ namespace ETLBox.Logging
         public List<LoadProcess> AllLoadProcesses { get; set; }
 
         public LoadProcess LastFinished { get; private set; }
-        public LoadProcess LastTransfered { get; private set; }
+        public LoadProcess LastTransferred { get; private set; }
         public ReadOptions ReadOption { get; set; } = ReadOptions.ReadSingleProcess;
 
         public string Sql

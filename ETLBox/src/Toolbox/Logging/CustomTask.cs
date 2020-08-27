@@ -8,8 +8,9 @@ namespace ETLBox.Logging
     /// </summary>
     public class CustomTask : ControlFlowTask
     {
-        /* ITask interface */
+        /// <inheritdoc/>
         public override string TaskName { get; set; }
+
         public void Execute()
         {
             throw new Exception("A custom task can't be used without an Action!");

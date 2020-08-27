@@ -33,7 +33,7 @@ namespace ETLBox.Logging
         }
 
         /* Public properties */
-        public long? _loadProcessId;
+        long? _loadProcessId;
         public long? LoadProcessId
         {
             get
