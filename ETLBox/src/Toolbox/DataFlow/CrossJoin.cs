@@ -156,8 +156,8 @@ namespace ETLBox.DataFlow.Transformations
                 catch (ETLBoxException) { throw; }
                 catch (Exception e)
                 {
-                    ThrowOrRedirectError(e, string.Concat(ErrorHandler.ConvertErrorData<TInput1>(inMemoryRow), "  |--| ",
-                        ErrorHandler.ConvertErrorData<TInput2>(passingRow)));
+                    ThrowOrRedirectError(e, string.Concat(ErrorSource.ConvertErrorData<TInput1>(inMemoryRow), "  |--| ",
+                        ErrorSource.ConvertErrorData<TInput2>(passingRow)));
                     LogProgress();
                 }
             }

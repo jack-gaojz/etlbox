@@ -20,6 +20,9 @@ namespace ETLBox.DataFlow
     [AttributeUsage(AttributeTargets.Property)]
     public class CompareColumn : Attribute
     {
+        /// <summary>
+        /// Marks this property as column used for comparison in a Merge operation
+        /// </summary>
         public CompareColumn()
         {
         }

@@ -6,6 +6,10 @@ using System.Text.RegularExpressions;
 
 namespace ETLBox.Helper
 {
+    /// <summary>
+    /// This class provides static methods and an implementation of IDataTypeConverter that converts
+    /// various sql data types into the right database specific database or into a .NET data type.
+    /// </summary>
     public class DataTypeConverter : IDataTypeConverter
     {
         public const string _REGEX = @"(.*?)char\((\d*)\)(.*?)";

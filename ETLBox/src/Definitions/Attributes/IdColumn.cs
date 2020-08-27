@@ -19,6 +19,9 @@ namespace ETLBox.DataFlow
     [AttributeUsage(AttributeTargets.Property)]
     public class IdColumn : Attribute
     {
+        /// <summary>
+        /// This property is used as an Id column for a Merge operation.
+        /// </summary>
         public IdColumn()
         {
         }

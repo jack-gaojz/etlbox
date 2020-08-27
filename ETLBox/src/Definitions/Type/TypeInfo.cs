@@ -5,12 +5,29 @@ using System.Reflection;
 
 namespace ETLBox.DataFlow
 {
+    /// <summary>
+    /// Used to gather information about used type in the data flow component.
+    /// </summary>
     public class TypeInfo
     {
+        /// <summary>
+        /// Property names of the type
+        /// </summary>
         public PropertyInfo[] Properties { get; set; }
+        /// <summary>
+        /// Mapping of property name and its index the <see cref="Properties"/> array.
+        /// </summary>
         protected Dictionary<string, int> PropertyIndex { get; set; } = new Dictionary<string, int>();
         internal int PropertyLength { get; set; }
+
+        /// <summary>
+        /// Indicates if the type is an array (e.g. string[])
+        /// </summary>
         public bool IsArray { get; set; } = true;
+
+        /// <summary>
+        /// Indicates if the type is an ExpandoObject
+        /// </summary>
         public bool IsDynamic { get; set; }
         internal int ArrayLength { get; set; }
 
@@ -20,6 +37,10 @@ namespace ETLBox.DataFlow
             Typ = typ;
         }
 
+        /// <summary>
+        /// Reads the type information from <see cref="Typ"/>.
+        /// </summary>
+        /// <returns>The TypeInfo object containing information about the Typ.</returns>
         public TypeInfo GatherTypeInfo()
         {
             IsArray = Typ.IsArray;

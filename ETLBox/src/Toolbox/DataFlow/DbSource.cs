@@ -270,7 +270,7 @@ namespace ETLBox.DataFlow.Connectors
                 }
                 catch (Exception e)
                 {
-                    ThrowOrRedirectError(e, ErrorHandler.ConvertErrorData<TOutput>(_row));
+                    ThrowOrRedirectError(e, ErrorSource.ConvertErrorData<TOutput>(_row));
                     _row = default;
                 }
             });
@@ -301,7 +301,7 @@ namespace ETLBox.DataFlow.Connectors
                 }
                 catch (Exception e)
                 {
-                    ThrowOrRedirectError(e, ErrorHandler.ConvertErrorData<TOutput>(_row));
+                    ThrowOrRedirectError(e, ErrorSource.ConvertErrorData<TOutput>(_row));
                     _row = default;
                 }
             });
@@ -321,7 +321,7 @@ namespace ETLBox.DataFlow.Connectors
                 }
                 catch (Exception e)
                 {
-                    ThrowOrRedirectError(e, ErrorHandler.ConvertErrorData<TOutput>(_row));
+                    ThrowOrRedirectError(e, ErrorSource.ConvertErrorData<TOutput>(_row));
                     _row = default;
                 }
             });

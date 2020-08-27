@@ -9,7 +9,15 @@ namespace ETLBox.DataFlow
     [AttributeUsage(AttributeTargets.Property)]
     public class GroupColumn : Attribute
     {
+        /// <summary>
+        /// Property name used for groupin in the aggregation output object.
+        /// </summary>
         public string AggregationGroupingProperty { get; set; }
+
+        /// <summary>
+        /// Sets the property name used for grouping in the aggregation output object
+        /// </summary>
+        /// <param name="aggregationGroupingProperty">Property name used for grouping in the output object</param>
         public GroupColumn(string aggregationGroupingProperty)
         {
             AggregationGroupingProperty = aggregationGroupingProperty;

@@ -10,28 +10,74 @@ using System.Text;
 namespace ETLBox.Helper
 {
     /// <summary>
-    /// This class creates the necessary sql statements that simulate the missing bulk insert function in Odbc connections.
-    /// Normally this will be a insert into with multiple values.
-    /// For access databases this will differ.
+    /// This class creates the necessary sql statements that simulate the missing bulk insert function in various database or Odbc/OleDb connections.
+    /// Normally this will be a insert into with multiple values, but depedning on the database type this can be different.
     /// </summary>
+    /// <typeparam name="T">ADO.NET database parameter type</typeparam>
     public class BulkInsertSql<T> where T : DbParameter, new()
     {
+        #region Public properties
+        /// <summary>
+        /// Indicates that the values are stored in parameter objects.
+        /// Default is true.
+        /// </summary>
         public bool UseParameterQuery { get; set; } = true;
+
+        /// <summary>
+        /// Indicates that the parameter variables in the sql have a name
+        /// </summary>
         public bool UseNamedParameters { get; set; }
-        public List<T> Parameters { get; set; }
-        StringBuilder QueryText { get; set; }
-        List<string> SourceColumnNames { get; set; }
-        List<string> DestColumnNames { get; set; }
+
+        /// <summary>
+        /// A list of parameters that contain the parameter objects for the generated sql query.
+        /// Only has values if <see cref="UseParameterQuery"/> is true.
+        /// </summary>
+        public List<T> Parameters { get; internal set; }
+
+        /// <summary>
+        /// When creating a bulk insert sql statement for Access, a dummy table is needed.
+        /// The name of the dummy table is specified here.
+        /// </summary>
         public string AccessDummyTableName { get; set; }
+
+        /// <summary>
+        /// The type of the database that the bulk insert statement is designed for
+        /// </summary>
         public ConnectionManagerType ConnectionType { get; set; }
+
+        /// <summary>
+        /// The quotatation begin character that the database uses. (E.g. '[' for SqlServer or '"' for Postgres)
+        /// </summary>
         public string QB { get; set; }
+
+        /// <summary>
+        /// The quotatation end character that the database uses. (E.g. ']' for SqlServer or '"' for Postgres)
+        /// </summary>
         public string QE { get; set; }
+
+        /// <summary>
+        /// The formatted table name of the destination table
+        /// </summary>
         public ObjectNameDescriptor TN => new ObjectNameDescriptor(TableName, QB, QE);
-        internal string TableName { get; set; }
-        private int ParameterNameCount { get; set; }
+
+        #endregion
+
+        #region Implementation
+
+        string TableName;
+        int ParameterNameCount;
         string ParameterPlaceholder => ConnectionType == ConnectionManagerType.Oracle ? ":" : "@";
         bool IsAccessDatabase => ConnectionType == ConnectionManagerType.Access;
+        StringBuilder QueryText;
+        List<string> SourceColumnNames;
+        List<string> DestColumnNames;
 
+        /// <summary>
+        /// Create the sql that can be used as a bulk insert.
+        /// </summary>
+        /// <param name="data">The data that should be inserted into the destination table</param>
+        /// <param name="tableName">The name of the destination table</param>
+        /// <returns></returns>
         public string CreateBulkInsertStatement(ITableData data, string tableName)
         {
             InitObjects();
@@ -166,6 +212,6 @@ namespace ETLBox.Helper
                 QueryText.AppendLine(")");
         }
 
+        #endregion
     }
-
 }

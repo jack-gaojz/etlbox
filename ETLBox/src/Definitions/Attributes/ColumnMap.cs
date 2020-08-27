@@ -18,7 +18,15 @@ namespace ETLBox.DataFlow
     [AttributeUsage(AttributeTargets.Property)]
     public class ColumnMap : Attribute
     {
+        /// <summary>
+        /// Name of the column in the database
+        /// </summary>
         public string ColumnName { get; set; }
+
+        /// <summary>
+        /// Create a mapping between the current property and a database column
+        /// </summary>
+        /// <param name="columnName">Name of the column in the database</param>
         public ColumnMap(string columnName)
         {
             ColumnName = columnName;

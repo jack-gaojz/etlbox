@@ -3,7 +3,7 @@
 namespace ETLBox.DataFlow
 {
     /// <summary>
-    /// This attribute defines that this property is used to store the lookup value of the property from the object
+    /// This attribute defines that this property is used to match with the property of the object
     /// used in the Source for a Lookup identified by the given lookupSourcePropertyName.
     /// </summary>
     /// <example>
@@ -24,10 +24,18 @@ namespace ETLBox.DataFlow
     /// </code>
     /// </example>
     [AttributeUsage(AttributeTargets.Property)]
-    public class RetrieveColumn : Attribute
+    public class MatchColumn : Attribute
     {
+        /// <summary>
+        /// Name of the corresponding column in the lookup object.
+        /// </summary>
         public string LookupSourcePropertyName { get; set; }
-        public RetrieveColumn(string lookupSourcePropertyName)
+
+        /// <summary>
+        /// This property is used to check if is matches with the lookup data .
+        /// </summary>
+        /// <param name="lookupSourcePropertyName">Name of the property in the lookup object.</param>
+        public MatchColumn(string lookupSourcePropertyName)
         {
             LookupSourcePropertyName = lookupSourcePropertyName;
         }
