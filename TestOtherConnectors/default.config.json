@@ -1,5 +1,0 @@
-{
-    "DataFlow": {
-        "SqlConnectionString": "Data Source=10.211.55.2;User Id=sa;Password=YourStrong@Passw0rd;Initial Catalog=ETLBox_DataFlow"
-    }
-}
