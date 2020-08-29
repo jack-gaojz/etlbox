@@ -195,14 +195,14 @@ GROUP BY task_hash")
 
 
         [Fact]
-        public void CheckHashValuesEquality()
+        public void CheckHashValuesAreNotEqual()
         {
             //Arrange
             SqlTask.ExecuteNonQuery(SqlConnection, "Test Task - same name", "Select 1 as test");
             //Act
             SqlTask.ExecuteNonQuery(SqlConnection, "Test Task - same name", "Select 2 as test");
             //Assert
-            Assert.Equal(4, new SqlTask("Check if hash are equal",
+            Assert.Equal(2, new SqlTask("Check if hash are not equal",
                 $@"SELECT COUNT(*) from etlbox_log GROUP BY task_hash")
             {
                 DisableLogging = true,
