@@ -20,6 +20,7 @@ namespace ETLBox.DataFlow.Connectors
     /// </summary>
     /// <typeparam name="TInput">Type of ingoing data.</typeparam>
     public class DbMerge<TInput> : DataFlowTransformation<TInput, TInput>, IDataFlowBatchDestination<TInput>
+        where TInput : class
     {
         #region Public properties
 
@@ -322,7 +323,7 @@ namespace ETLBox.DataFlow.Connectors
         LookupTransformation<TInput, TInput> Lookup;
         DbSource<TInput> DestinationTableAsSource;
         DbDestination<TInput> DestinationTable;
-        IList<TInput> InputData => Lookup.LookupData;
+        ICollection<TInput> InputData => Lookup.LookupData;
         Dictionary<string, TInput> InputDataDict;
         CustomSource<TInput> OutputSource;
         bool WasTruncationExecuted;
@@ -451,7 +452,7 @@ namespace ETLBox.DataFlow.Connectors
                 return false;
         }
 
-        private TInput UpdateRowWithDeltaInfo(TInput row)
+        private TInput UpdateRowWithDeltaInfo(TInput row, ICache<TInput, TInput> cache)
         {
             if (InputDataDict == null) InitInputDataDictionary();
             SetChangeDate(row, DateTime.Now);
