@@ -15,7 +15,7 @@ namespace ETLBox.DataFlow
         public string AggregationProperty { get; set; }
 
         /// <summary>
-        /// Method for the aggreation (e.g. Sum, Min, Max, etc.)
+        /// Method for the aggregation (e.g. Sum, Min, Max, etc.)
         /// </summary>
         public AggregationMethod AggregationMethod { get; set; }
 
@@ -24,7 +24,7 @@ namespace ETLBox.DataFlow
         /// Sets the property name in the aggregation output object and the aggregation method
         /// </summary>
         /// <param name="aggregationProperty">Property name in the aggregation output object.</param>
-        /// <param name="aggregationMethod">Method for the aggreation (e.g. Sum, Min, Max, etc.)</param>
+        /// <param name="aggregationMethod">Method for the aggregation (e.g. Sum, Min, Max, etc.)</param>
         public AggregateColumn(string aggregationProperty, AggregationMethod aggregationMethod)
         {
             AggregationProperty = aggregationProperty;

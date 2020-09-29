@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
@@ -52,6 +54,12 @@ namespace ETLBox.DataFlow
 
         /// <inheritdoc/>
         public void Execute()
+        {
+            Post();                        
+            Task.WaitAll(FindAllDestinationsInNetwork().Select ( dest => dest.Completion).ToArray());
+        }
+
+        public void Post()
         {
             InitNetworkRecursively();
             OnExecutionDoSynchronousWork();

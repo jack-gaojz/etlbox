@@ -19,7 +19,7 @@ namespace ETLBox.DataFlow.Connectors
     /// A delta table is generated that stores information if a records was inserted, updated, deleted or hasn't been touched (existed).
     /// </summary>
     /// <typeparam name="TInput">Type of ingoing data.</typeparam>
-    public class DbMerge<TInput> : DataFlowTransformation<TInput, TInput>, IDataFlowBatchDestination<TInput>
+    public class DbMerge<TInput> : DataFlowTransformation<TInput, TInput>, IDataFlowBatchDestination<TInput>, IDataFlowWaitableDestination
     {
         #region Public properties
 

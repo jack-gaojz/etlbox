@@ -9,7 +9,15 @@ namespace ETLBox.DataFlow
         /// <summary>
         /// All predecessor that are linked to this component.
         /// </summary>
-        List<DataFlowComponent> Predecessors { get; }
+        List<DataFlowComponent> Predecessors { get; }    
+    }
+
+    public interface IDataFlowWaitableDestination : IDataFlowComponent
+    {
+        /// <summary>
+        /// Waits for the completion of the component.
+        /// </summary>
+        void Wait();
     }
 
     public interface IDataFlowDestination<TInput> : IDataFlowDestination

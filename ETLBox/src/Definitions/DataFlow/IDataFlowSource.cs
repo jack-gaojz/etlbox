@@ -44,7 +44,7 @@ namespace ETLBox.DataFlow
         /// Every component can be linked to one or more component. If you link multiple components,
         /// provide a <see cref="System.Predicate{TOutput}"/> that describe which row is send to which target.
         /// Make sure that all rows will be send to a target - use the <see cref="ETLBox.DataFlow.Connectors.VoidDestination"/>
-        /// if you want to discared rows.
+        /// if you want to discard rows.
         /// </summary>
         /// <param name="target">Transformation or destination that the block is linked to.</param>
         /// <returns>The linked component.</returns>
@@ -71,7 +71,7 @@ namespace ETLBox.DataFlow
         /// Every component can be linked to one or more component. If you link multiple components,
         /// provide a <see cref="System.Predicate{TOutput}"/> that describe which row is send to which target.
         /// Make sure that all rows will be send to a target - use the <see cref="ETLBox.DataFlow.Connectors.VoidDestination"/>
-        /// if you want to discared rows.
+        /// if you want to discard rows.
         /// </summary>
         /// <typeparam name="TConvert">Will convert the output type of the linked component.</typeparam>
         /// <param name="target">Transformation or destination that the block is linked to.</param>
@@ -100,8 +100,9 @@ namespace ETLBox.DataFlow
     /// <typeparam name="TOutput">Type of outgoing data</typeparam>
     public interface IDataFlowExecutableSource<TOutput> : IDataFlowSource<TOutput>
     {
+
         /// <summary>
-        /// Starts the data flow synchronously. This method will return when all data was posted into the flow
+        /// Starts the data flow synchronously. This method will return when all data has arrived at the destinations in the data flow.
         /// </summary>
         void Execute();
 
@@ -110,6 +111,12 @@ namespace ETLBox.DataFlow
         /// </summary>
         /// <returns></returns>
         Task ExecuteAsync();
+
+        /// <summary>
+        /// Starts the data flow synchronously. This method will return when all data was posted into the flow - not all data may has 
+        /// arrived at the destinations yet.
+        /// </summary>
+        void Post();
     }
 
     /// <summary>

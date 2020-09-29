@@ -238,6 +238,32 @@ namespace ETLBox.DataFlow
                 pre.FaultPredecessorsRecursively(e);
         }
 
+        internal List<IDataFlowWaitableDestination> FindAllDestinationsInNetwork()
+        {
+            List<IDataFlowWaitableDestination> destinations = new List<IDataFlowWaitableDestination>();
+            List<IDataFlowComponent> visited = new List<IDataFlowComponent>();
+            FindAllDestinationRecursively(visited, destinations);
+            return destinations;
+        }
+
+        protected void FindAllDestinationRecursively(List<IDataFlowComponent> visited, List<IDataFlowWaitableDestination> destinations)
+        {
+            var comp = this as IDataFlowComponent;
+            if (comp != null && !visited.Contains(comp))
+                visited.Add(comp);
+
+            foreach (DataFlowComponent predecessor in Predecessors)
+                if (!visited.Contains(comp))
+                    predecessor.FindAllDestinationRecursively(visited, destinations);
+
+            var dest = this as IDataFlowWaitableDestination;
+            if (dest != null && !destinations.Contains(dest))
+                destinations.Add(dest);
+
+            foreach (DataFlowComponent successor in Successors)
+                    successor.FindAllDestinationRecursively(visited, destinations);
+        }
+
         #endregion
 
         #region Error Handling
